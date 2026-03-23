@@ -27,4 +27,18 @@ model User {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  logs      AuditLog[]
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String   // Who did it?
+  action      String   // CREATE, UPDATE, DELETE
+  entity      String   // Which table? (e.g., "Grade", "Fee")
+  entityId    String   // The ID of the record changed
+  oldData     Json?    // State before change
+  newData     Json?    // State after change
+  ipAddress   String?  // From which IP?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
 }

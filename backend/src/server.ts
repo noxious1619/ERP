@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import academicRoutes from './routes/academicRoutes.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json()); // Essential for reading the JSON we send from Postman
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/academic', academicRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

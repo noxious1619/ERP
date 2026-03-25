@@ -21,6 +21,7 @@ enum Role {
 
 model User {
   id           String   @id @default(uuid())
+  name         String
   email        String   @unique
   passwordHash String
   role         Role     @default(STUDENT)
@@ -28,6 +29,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   logs      AuditLog[]
+  timetable Timetable[]
 }
 
 model AuditLog {
@@ -41,4 +43,67 @@ model AuditLog {
   ipAddress   String?  // From which IP?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model AcademicYear {
+  id        String    @id @default(uuid())
+  name      String    // e.g., "2025-2026"
+  isCurrent Boolean   @default(false)
+  classes   Class[]
+  createdAt DateTime  @default(now())
+}
+
+model Class {
+  id             String        @id @default(uuid())
+  name           String        // e.g., "Grade 10"
+  academicYearId String
+  academicYear   AcademicYear  @relation(fields: [academicYearId], references: [id])
+  sections       Section[]
+  subjects       Subject[]     // Subjects assigned to this grade level
+}
+
+model Section {
+  id        String      @id @default(uuid())
+  name      String      // e.g., "Section A"
+  classId   String
+  class     Class       @relation(fields: [classId], references: [id])
+  timetable Timetable[]
+}
+
+model Subject {
+  id        String      @id @default(uuid())
+  name      String      // e.g., "Mathematics"
+  code      String      // e.g., "MATH101"
+  classId   String
+  class     Class       @relation(fields: [classId], references: [id])
+  timetable Timetable[]
+}
+
+model Timetable {
+  id        String   @id @default(uuid())
+  day       DayOfWeek
+  period    Int      // e.g., 1, 2, 3...
+  startTime String   // e.g., "08:00"
+  endTime   String   // e.g., "08:45"
+  
+  sectionId String
+  section   Section  @relation(fields: [sectionId], references: [id])
+  
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  
+  teacherId String
+  teacher   User     @relation(fields: [teacherId], references: [id])
+
+  @@unique([sectionId, day, period]) // Prevents two subjects in one section at the same time
+  @@unique([teacherId, day, period]) // Prevents a teacher being in two places at once
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
 }

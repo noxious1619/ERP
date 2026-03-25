@@ -39,12 +39,32 @@ async function main() {
       passwordHash: hashedPassword,
       role: Role.SUPER_ADMIN,
       isActive: true,
+      name: "Super Admin",
     },
   });
 
   console.log("✅ Seed successful!");
   console.log(`User Created: ${superAdmin.email}`);
   console.log(`Role: ${superAdmin.role}`);
+
+  //------ Create a Teacher user as well for testing purposes ------
+
+  const teacherEmail = "teacher@erp.com";
+  const teacherExists = await prisma.user.findFirst({ where: { email: teacherEmail } });
+
+  if (!teacherExists) {
+    const hashedTeacherPassword = await bcrypt.hash("Teacher@123", 10);
+    const teacher = await prisma.user.create({
+      data: {
+        email: teacherEmail,
+        passwordHash: hashedTeacherPassword,
+        name: "Mr. Vikram Sharma", 
+        role: Role.TEACHER,
+        isActive: true,
+      },
+    });
+    console.log(`✅ Teacher Created: ${teacher.email} (ID: ${teacher.id})`);
+  }
 }
 
 main()

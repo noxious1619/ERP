@@ -49,23 +49,58 @@ async function main() {
 
   //------ Create a Teacher user as well for testing purposes ------
 
-  const teacherEmail = "teacher@erp.com";
-  const teacherExists = await prisma.user.findFirst({ where: { email: teacherEmail } });
+  // const teacherEmail = "teacher@erp.com";
+  // const teacherExists = await prisma.user.findFirst({ where: { email: teacherEmail } });
 
-  if (!teacherExists) {
-    const hashedTeacherPassword = await bcrypt.hash("Teacher@123", 10);
-    const teacher = await prisma.user.create({
-      data: {
-        email: teacherEmail,
-        passwordHash: hashedTeacherPassword,
-        name: "Mr. Vikram Sharma", 
-        role: Role.TEACHER,
-        isActive: true,
-      },
-    });
-    console.log(`✅ Teacher Created: ${teacher.email} (ID: ${teacher.id})`);
-  }
-}
+  // if (!teacherExists) {
+  //   const hashedTeacherPassword = await bcrypt.hash("Teacher@123", 10);
+  //   const teacher = await prisma.user.create({
+  //     data: {
+  //       email: teacherEmail,
+  //       passwordHash: hashedTeacherPassword,
+  //       name: "Mr. Vikram Sharma", 
+  //       role: Role.TEACHER,
+  //       isActive: true,
+  //     },
+  //   });
+  //   console.log(`✅ Teacher Created: ${teacher.email} (ID: ${teacher.id})`);
+  // }
+
+  // const academicYear = await prisma.academicYear.create({
+  //     data: {
+  //       name: "2026-2027",
+  //       isCurrent: true,
+  //     },
+  //   });
+
+  //   // 3. Create Class (Grade 10)
+  //   const class10 = await prisma.class.create({
+  //     data: {
+  //       name: "Grade 10",
+  //       academicYearId: academicYear.id,
+  //     },
+  //   });
+
+  //   // 4. Create Section (Section A)
+  //   const sectionA = await prisma.section.create({
+  //     data: {
+  //       name: "Section A",
+  //       classId: class10.id,
+  //     },
+  //   });
+
+  //   // 5. Create Subject (Mathematics)
+  //   const math = await prisma.subject.create({
+  //     data: {
+  //       name: "Mathematics",
+  //       code: "MATH101",
+  //       classId: class10.id,
+  //     },
+  //   });
+
+  //   console.log("✅ School Infrastructure Created!");
+  //   console.log(`📍 Section ID to use in Postman: ${sectionA.id}`);
+  // }
 
 main()
   .catch((e) => {

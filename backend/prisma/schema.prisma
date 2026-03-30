@@ -32,6 +32,8 @@ model User {
   timetable        Timetable[]
   student          Student?
   attendanceMarked Attendance[]
+  notices          Notice[]
+  noticeViews      NoticeView[]
 }
 
 model AuditLog {
@@ -65,12 +67,13 @@ model Class {
 }
 
 model Section {
-  id        String      @id @default(uuid())
-  name      String // e.g., "Section A"
-  classId   String
-  class     Class       @relation(fields: [classId], references: [id])
-  timetable Timetable[]
-  students  Student[]
+  id          String       @id @default(uuid())
+  name        String // e.g., "Section A"
+  classId     String
+  class       Class        @relation(fields: [classId], references: [id])
+  timetable   Timetable[]
+  students    Student[]
+  attendances Attendance[]
 }
 
 model Subject {
@@ -160,6 +163,8 @@ model Attendance {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  section   Section? @relation(fields: [sectionId], references: [id])
+  sectionId String?
 
   @@unique([studentId, date])
 }
@@ -168,5 +173,43 @@ enum AttendanceStatus {
   PRESENT
   ABSENT
   LATE
-  EXCUSED
+  HALF_DAY
+}
+
+model Notice {
+  id         String         @id @default(uuid())
+  title      String
+  content    String         @db.Text
+  targetType TargetType // GLOBAL, ROLE, CLASS, SECTION
+  targetId   String? // ID of the Class or Section
+  priority   NoticePriority @default(STANDARD)
+  author     User           @relation(fields: [authorId], references: [id])
+  authorId   String
+  createdAt  DateTime       @default(now())
+  expiresAt  DateTime?
+  views      NoticeView[]
+}
+
+model NoticeView {
+  id       String   @id @default(uuid())
+  notice   Notice   @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  noticeId String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  viewedAt DateTime @default(now())
+
+  @@unique([noticeId, userId])
+}
+
+enum TargetType {
+  GLOBAL
+  ROLE
+  CLASS
+  SECTION
+}
+
+enum NoticePriority {
+  STANDARD
+  HIGH
+  URGENT
 }

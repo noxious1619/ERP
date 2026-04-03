@@ -34,6 +34,8 @@ model User {
   attendanceMarked Attendance[]
   notices          Notice[]
   noticeViews      NoticeView[]
+  assignments      Assignment[]
+  gradedSubmissions Submission[] @relation("Grader")
 }
 
 model AuditLog {
@@ -58,31 +60,34 @@ model AcademicYear {
 }
 
 model Class {
-  id             String       @id @default(uuid())
-  name           String // e.g., "Grade 10"
-  academicYearId String
-  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
-  sections       Section[]
-  subjects       Subject[] // Subjects assigned to this grade level
+  id                String       @id @default(uuid())
+  name              String // e.g., "Grade 10"
+  academicYearId    String
+  academicYear      AcademicYear @relation(fields: [academicYearId], references: [id])
+  sections          Section[]
+  subjects          Subject[] // Subjects assigned to this grade level
+  assignments       Assignment[]
 }
 
 model Section {
-  id          String       @id @default(uuid())
-  name        String // e.g., "Section A"
-  classId     String
-  class       Class        @relation(fields: [classId], references: [id])
-  timetable   Timetable[]
-  students    Student[]
-  attendances Attendance[]
+  id              String       @id @default(uuid())
+  name            String // e.g., "Section A"
+  classId         String
+  class           Class        @relation(fields: [classId], references: [id])
+  timetable       Timetable[]
+  students        Student[]
+  attendances     Attendance[]
+  assignments     Assignment[]
 }
 
 model Subject {
-  id        String      @id @default(uuid())
-  name      String // e.g., "Mathematics"
-  code      String // e.g., "MATH101"
-  classId   String
-  class     Class       @relation(fields: [classId], references: [id])
-  timetable Timetable[]
+  id             String      @id @default(uuid())
+  name           String // e.g., "Mathematics"
+  code           String // e.g., "MATH101"
+  classId        String
+  class          Class       @relation(fields: [classId], references: [id])
+  timetable      Timetable[]
+  assignments     Assignment[]
 }
 
 model Timetable {
@@ -133,6 +138,7 @@ model Student {
   isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  submissions     Submission[]
 }
 
 model Parent {
@@ -212,4 +218,62 @@ enum NoticePriority {
   STANDARD
   HIGH
   URGENT
+}
+
+model Assignment {
+  id           String       @id @default(uuid())
+  title        String
+  content      String       @db.Text
+  fileUrl      String?      
+  dueDate      DateTime
+  maxScore     Int          @default(100)
+  
+  subjectId    String
+  subject      Subject      @relation(fields: [subjectId], references: [id])
+  
+  classId      String       
+  class        Class        @relation(fields: [classId], references: [id])
+  
+  sectionId    String?      
+  section      Section?     @relation(fields: [sectionId], references: [id])
+
+  teacherId    String       
+  teacher      User         @relation(fields: [teacherId], references: [id])
+
+  submissions  Submission[] 
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Submission {
+  id           String           @id @default(uuid())
+  assignmentId String
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  studentId    String
+  student      Student          @relation(fields: [studentId], references: [id])
+  
+  fileUrl      String?          
+  content      String?          @db.Text
+  
+  submittedAt  DateTime         @default(now())
+  status       SubmissionStatus @default(SUBMITTED)
+
+  score        Float?
+  remarks      String?
+  
+  gradedById   String?          
+  gradedBy     User?            @relation("Grader", fields: [gradedById], references: [id])
+  
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([assignmentId, studentId]) 
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  LATE
+  GRADED
 }

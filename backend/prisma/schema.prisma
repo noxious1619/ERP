@@ -60,24 +60,25 @@ model AcademicYear {
 }
 
 model Class {
-  id                String       @id @default(uuid())
-  name              String // e.g., "Grade 10"
-  academicYearId    String
-  academicYear      AcademicYear @relation(fields: [academicYearId], references: [id])
-  sections          Section[]
-  subjects          Subject[] // Subjects assigned to this grade level
-  assignments       Assignment[]
+  id                   String       @id @default(uuid())
+  name                 String // e.g., "Grade 10"
+  academicYearId       String
+  academicYear         AcademicYear @relation(fields: [academicYearId], references: [id])
+  sections             Section[]
+  subjects             Subject[] // Subjects assigned to this grade level
+  assignments          Assignment[]
+  assessmentComponents AssessmentComponent[]
 }
 
 model Section {
-  id              String       @id @default(uuid())
-  name            String // e.g., "Section A"
-  classId         String
-  class           Class        @relation(fields: [classId], references: [id])
-  timetable       Timetable[]
-  students        Student[]
-  attendances     Attendance[]
-  assignments     Assignment[]
+  id                   String       @id @default(uuid())
+  name                 String // e.g., "Section A"
+  classId              String
+  class                Class        @relation(fields: [classId], references: [id])
+  timetable            Timetable[]
+  students             Student[]
+  attendances          Attendance[]
+  assignments          Assignment[]
 }
 
 model Subject {
@@ -88,6 +89,7 @@ model Subject {
   class          Class       @relation(fields: [classId], references: [id])
   timetable      Timetable[]
   assignments     Assignment[]
+  assessmentComponents AssessmentComponent[]
 }
 
 model Timetable {
@@ -139,6 +141,8 @@ model Student {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   submissions     Submission[]
+  marks           Mark[]
+  calculatedResults CalculatedResult[]
 }
 
 model Parent {
@@ -276,4 +280,101 @@ enum SubmissionStatus {
   SUBMITTED
   LATE
   GRADED
+}
+
+//Grading system database schema
+
+enum DisplayMode {
+  PERCENTAGE
+  CGPA
+  GRADE
+}
+
+enum ComponentType {
+  THEORY
+  PRACTICAL
+  INTERNAL
+  VIVA
+}
+
+// 1. The Container for a specific examination period
+model ExamTerm {
+  id                  String                @id @default(uuid())
+  name                String                // e.g., "Term 1", "Finals 2026"
+  components          AssessmentComponent[]
+  results             CalculatedResult[]
+  createdAt           DateTime              @default(now())
+}
+
+// 2. The Rulebook: Defines weights for each subject/class
+model AssessmentComponent {
+  id            String        @id @default(uuid())
+  name          String        // e.g., "Theory", "Lab"
+  type          ComponentType @default(THEORY)
+  maxMarks      Float         // e.g., 70
+  weightage     Float         // e.g., 0.7 (The 70% rule)
+  
+  // Relations
+  termId        String
+  term          ExamTerm      @relation(fields: [termId], references: [id])
+  subjectId     String
+  subject       Subject       @relation(fields: [subjectId], references: [id])
+  classId       String
+  class         Class         @relation(fields: [classId], references: [id])
+  marks         Mark[]
+
+  @@index([termId, subjectId, classId]) // Fast lookup for the engine
+}
+
+// 3. The Raw Data: Teacher's input
+model Mark {
+  id                    String              @id @default(uuid())
+  studentId             String
+  student               Student             @relation(fields: [studentId], references: [id])
+  
+  assessmentComponentId String
+  assessment            AssessmentComponent @relation(fields: [assessmentComponentId], references: [id])
+  
+  marksObtained         Float
+  isAbsent              Boolean             @default(false)
+  teacherId             String
+  
+  updatedAt             DateTime            @updatedAt
+
+  @@unique([studentId, assessmentComponentId]) // Prevents double marking
+}
+
+// 4. The Performance Cache: Stores the final math
+model CalculatedResult {
+  id              String   @id @default(uuid())
+  studentId       String
+  student         Student  @relation(fields: [studentId], references: [id]) 
+  subjectId       String
+  termId          String
+  term            ExamTerm @relation(fields: [termId], references: [id])
+  
+  finalPercentage Float    // The pure 0-100 score
+  grade           String?
+  isStale         Boolean  @default(false) // Trigger for re-calculation
+  isComplete      Boolean  @default(false) // True only if all components have marks
+  
+  updatedAt       DateTime @updatedAt
+
+  @@unique([studentId, subjectId, termId]) // One summary per subject per term
+}
+
+// 5. The Transformer Rules: For Toggle Logic
+model GradingScale {
+  id          String @id @default(uuid())
+  minPercent  Float  // e.g., 81
+  maxPercent  Float  // e.g., 90
+  grade       String // e.g., "A2"
+  gradePoint  Float  // e.g., 9.0
+}
+
+// 6. Global Switch
+model SchoolConfig {
+  id                String      @id @default(uuid())
+  reportDisplayMode DisplayMode @default(PERCENTAGE)
+  passingPercent    Float       @default(33.0)
 }

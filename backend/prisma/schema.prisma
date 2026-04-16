@@ -17,24 +17,26 @@ enum Role {
   ADMIN
   TEACHER
   STUDENT
+  FINANCE
+  PARENT
 }
 
 model User {
-  id               String       @id @default(uuid())
-  name             String
-  email            String       @unique
-  passwordHash     String
-  role             Role         @default(STUDENT)
-  isActive         Boolean      @default(true)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  logs             AuditLog[]
-  timetable        Timetable[]
-  student          Student?
-  attendanceMarked Attendance[]
-  notices          Notice[]
-  noticeViews      NoticeView[]
-  assignments      Assignment[]
+  id                String       @id @default(uuid())
+  name              String
+  email             String       @unique
+  passwordHash      String
+  role              Role         @default(STUDENT)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  logs              AuditLog[]
+  timetable         Timetable[]
+  student           Student?
+  attendanceMarked  Attendance[]
+  notices           Notice[]
+  noticeViews       NoticeView[]
+  assignments       Assignment[]
   gradedSubmissions Submission[] @relation("Grader")
 }
 
@@ -52,43 +54,45 @@ model AuditLog {
 }
 
 model AcademicYear {
-  id        String   @id @default(uuid())
-  name      String // e.g., "2025-2026"
-  isCurrent Boolean  @default(false)
-  classes   Class[]
-  createdAt DateTime @default(now())
+  id            String         @id @default(uuid())
+  name          String // e.g., "2025-2026"
+  isCurrent     Boolean        @default(false)
+  classes       Class[]
+  createdAt     DateTime       @default(now())
+  feeComponents FeeComponent[]
 }
 
 model Class {
-  id                   String       @id @default(uuid())
+  id                   String                @id @default(uuid())
   name                 String // e.g., "Grade 10"
   academicYearId       String
-  academicYear         AcademicYear @relation(fields: [academicYearId], references: [id])
+  academicYear         AcademicYear          @relation(fields: [academicYearId], references: [id])
   sections             Section[]
   subjects             Subject[] // Subjects assigned to this grade level
   assignments          Assignment[]
   assessmentComponents AssessmentComponent[]
+  feeComponents        FeeComponent[]
 }
 
 model Section {
-  id                   String       @id @default(uuid())
-  name                 String // e.g., "Section A"
-  classId              String
-  class                Class        @relation(fields: [classId], references: [id])
-  timetable            Timetable[]
-  students             Student[]
-  attendances          Attendance[]
-  assignments          Assignment[]
+  id          String       @id @default(uuid())
+  name        String // e.g., "Section A"
+  classId     String
+  class       Class        @relation(fields: [classId], references: [id])
+  timetable   Timetable[]
+  students    Student[]
+  attendances Attendance[]
+  assignments Assignment[]
 }
 
 model Subject {
-  id             String      @id @default(uuid())
-  name           String // e.g., "Mathematics"
-  code           String // e.g., "MATH101"
-  classId        String
-  class          Class       @relation(fields: [classId], references: [id])
-  timetable      Timetable[]
-  assignments     Assignment[]
+  id                   String                @id @default(uuid())
+  name                 String // e.g., "Mathematics"
+  code                 String // e.g., "MATH101"
+  classId              String
+  class                Class                 @relation(fields: [classId], references: [id])
+  timetable            Timetable[]
+  assignments          Assignment[]
   assessmentComponents AssessmentComponent[]
 }
 
@@ -122,27 +126,28 @@ enum DayOfWeek {
 }
 
 model Student {
-  id              String       @id @default(uuid())
-  admissionNumber String       @unique
-  rollNumber      String?
-  firstName       String
-  lastName        String
-  dateOfBirth     DateTime
-  gender          String
-  address         String?
-  phoneNumber     String?
-  userId          String?      @unique // Link to their login account
-  user            User?        @relation(fields: [userId], references: [id])
-  sectionId       String
-  section         Section      @relation(fields: [sectionId], references: [id])
-  parents         Parent[]
-  attendance      Attendance[]
-  isActive        Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  submissions     Submission[]
-  marks           Mark[]
+  id                String             @id @default(uuid())
+  admissionNumber   String             @unique
+  rollNumber        String?
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime
+  gender            String
+  address           String?
+  phoneNumber       String?
+  userId            String?            @unique // Link to their login account
+  user              User?              @relation(fields: [userId], references: [id])
+  sectionId         String
+  section           Section            @relation(fields: [sectionId], references: [id])
+  parents           Parent[]
+  attendance        Attendance[]
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  submissions       Submission[]
+  marks             Mark[]
   calculatedResults CalculatedResult[]
+  feeRecords        MonthlyFeeRecord[]
 }
 
 model Parent {
@@ -225,55 +230,55 @@ enum NoticePriority {
 }
 
 model Assignment {
-  id           String       @id @default(uuid())
-  title        String
-  content      String       @db.Text
-  fileUrl      String?      
-  dueDate      DateTime
-  maxScore     Int          @default(100)
-  
-  subjectId    String
-  subject      Subject      @relation(fields: [subjectId], references: [id])
-  
-  classId      String       
-  class        Class        @relation(fields: [classId], references: [id])
-  
-  sectionId    String?      
-  section      Section?     @relation(fields: [sectionId], references: [id])
+  id       String   @id @default(uuid())
+  title    String
+  content  String   @db.Text
+  fileUrl  String?
+  dueDate  DateTime
+  maxScore Int      @default(100)
 
-  teacherId    String       
-  teacher      User         @relation(fields: [teacherId], references: [id])
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
 
-  submissions  Submission[] 
-  
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  classId String
+  class   Class  @relation(fields: [classId], references: [id])
+
+  sectionId String?
+  section   Section? @relation(fields: [sectionId], references: [id])
+
+  teacherId String
+  teacher   User   @relation(fields: [teacherId], references: [id])
+
+  submissions Submission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Submission {
-  id           String           @id @default(uuid())
+  id           String     @id @default(uuid())
   assignmentId String
-  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  
-  studentId    String
-  student      Student          @relation(fields: [studentId], references: [id])
-  
-  fileUrl      String?          
-  content      String?          @db.Text
-  
-  submittedAt  DateTime         @default(now())
-  status       SubmissionStatus @default(SUBMITTED)
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
-  score        Float?
-  remarks      String?
-  
-  gradedById   String?          
-  gradedBy     User?            @relation("Grader", fields: [gradedById], references: [id])
-  
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
 
-  @@unique([assignmentId, studentId]) 
+  fileUrl String?
+  content String? @db.Text
+
+  submittedAt DateTime         @default(now())
+  status      SubmissionStatus @default(SUBMITTED)
+
+  score   Float?
+  remarks String?
+
+  gradedById String?
+  gradedBy   User?   @relation("Grader", fields: [gradedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([assignmentId, studentId])
 }
 
 enum SubmissionStatus {
@@ -299,77 +304,77 @@ enum ComponentType {
 
 // 1. The Container for a specific examination period
 model ExamTerm {
-  id                  String                @id @default(uuid())
-  name                String                // e.g., "Term 1", "Finals 2026"
-  components          AssessmentComponent[]
-  results             CalculatedResult[]
-  createdAt           DateTime              @default(now())
+  id         String                @id @default(uuid())
+  name       String // e.g., "Term 1", "Finals 2026"
+  components AssessmentComponent[]
+  results    CalculatedResult[]
+  createdAt  DateTime              @default(now())
 }
 
 // 2. The Rulebook: Defines weights for each subject/class
 model AssessmentComponent {
-  id            String        @id @default(uuid())
-  name          String        // e.g., "Theory", "Lab"
-  type          ComponentType @default(THEORY)
-  maxMarks      Float         // e.g., 70
-  weightage     Float         // e.g., 0.7 (The 70% rule)
-  
+  id        String        @id @default(uuid())
+  name      String // e.g., "Theory", "Lab"
+  type      ComponentType @default(THEORY)
+  maxMarks  Float // e.g., 70
+  weightage Float // e.g., 0.7 (The 70% rule)
+
   // Relations
-  termId        String
-  term          ExamTerm      @relation(fields: [termId], references: [id])
-  subjectId     String
-  subject       Subject       @relation(fields: [subjectId], references: [id])
-  classId       String
-  class         Class         @relation(fields: [classId], references: [id])
-  marks         Mark[]
+  termId    String
+  term      ExamTerm @relation(fields: [termId], references: [id])
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  marks     Mark[]
 
   @@index([termId, subjectId, classId]) // Fast lookup for the engine
 }
 
 // 3. The Raw Data: Teacher's input
 model Mark {
-  id                    String              @id @default(uuid())
-  studentId             String
-  student               Student             @relation(fields: [studentId], references: [id])
-  
+  id        String  @id @default(uuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
   assessmentComponentId String
   assessment            AssessmentComponent @relation(fields: [assessmentComponentId], references: [id])
-  
-  marksObtained         Float
-  isAbsent              Boolean             @default(false)
-  teacherId             String
-  
-  updatedAt             DateTime            @updatedAt
+
+  marksObtained Float
+  isAbsent      Boolean @default(false)
+  teacherId     String
+
+  updatedAt DateTime @updatedAt
 
   @@unique([studentId, assessmentComponentId]) // Prevents double marking
 }
 
 // 4. The Performance Cache: Stores the final math
 model CalculatedResult {
-  id              String   @id @default(uuid())
-  studentId       String
-  student         Student  @relation(fields: [studentId], references: [id]) 
-  subjectId       String
-  termId          String
-  term            ExamTerm @relation(fields: [termId], references: [id])
-  
-  finalPercentage Float    // The pure 0-100 score
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  subjectId String
+  termId    String
+  term      ExamTerm @relation(fields: [termId], references: [id])
+
+  finalPercentage Float // The pure 0-100 score
   grade           String?
-  isStale         Boolean  @default(false) // Trigger for re-calculation
-  isComplete      Boolean  @default(false) // True only if all components have marks
-  
-  updatedAt       DateTime @updatedAt
+  isStale         Boolean @default(false) // Trigger for re-calculation
+  isComplete      Boolean @default(false) // True only if all components have marks
+
+  updatedAt DateTime @updatedAt
 
   @@unique([studentId, subjectId, termId]) // One summary per subject per term
 }
 
 // 5. The Transformer Rules: For Toggle Logic
 model GradingScale {
-  id          String @id @default(uuid())
-  minPercent  Float  // e.g., 81
-  maxPercent  Float  // e.g., 90
-  grade       String // e.g., "A2"
-  gradePoint  Float  // e.g., 9.0
+  id         String @id @default(uuid())
+  minPercent Float // e.g., 81
+  maxPercent Float // e.g., 90
+  grade      String // e.g., "A2"
+  gradePoint Float // e.g., 9.0
 }
 
 // 6. Global Switch
@@ -377,4 +382,53 @@ model SchoolConfig {
   id                String      @id @default(uuid())
   reportDisplayMode DisplayMode @default(PERCENTAGE)
   passingPercent    Float       @default(33.0)
+}
+
+// 1. The Global Status Enum (Keep as is)
+enum FeeStatus {
+  PENDING
+  SUBMITTED
+  VERIFIED
+  BOUNCED
+}
+
+//FeeComponentTables
+
+model FeeComponent {
+  id              String @id @default(uuid())
+  feeName         String
+  amount          Float
+  applicableMonth Int    @default(0)
+
+  // Relations
+  classId        String
+  class          Class        @relation(fields: [classId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([classId, academicYearId, feeName, applicableMonth])
+}
+
+// 3. UPDATED: The Monthly Ledger
+model MonthlyFeeRecord {
+  id        String  @id @default(uuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  month     Int // 1 (April) to 12 (March)
+  year      Int // 2026, 2027 etc.
+  amountDue Float // Calculated by summing all relevant FeeComponents
+  status    FeeStatus @default(PENDING)
+
+  // Finance Person Inputs
+  paymentMode String? // CASH, CHECK, ONLINE
+  referenceNo String? // Check Number or UTR
+  remarks     String?
+  verifiedBy  String? // ID of the Finance Person who verified
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, month, year])
 }

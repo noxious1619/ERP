@@ -9,6 +9,7 @@ import attendanceRoutes from './routes/attendanceRoute.js'
 import assignmentRoutes from './routes/assignmentRoutes.js';
 import gradeRoutes from './routes/gradeRoutes.js';
 import financeRoutes from './routes/financeRoutes.js';
+import calendarRoutes from './routes/calendarRoutes.js';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/grades', gradeRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

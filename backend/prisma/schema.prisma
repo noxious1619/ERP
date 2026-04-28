@@ -55,11 +55,12 @@ model AuditLog {
 
 model AcademicYear {
   id            String         @id @default(uuid())
-  name          String // e.g., "2025-2026"
+  name          String         // e.g., "2025-2026"
   isCurrent     Boolean        @default(false)
   classes       Class[]
-  createdAt     DateTime       @default(now())
   feeComponents FeeComponent[]
+  holidays      Holiday[]
+  createdAt     DateTime       @default(now())
 }
 
 model Class {
@@ -288,7 +289,6 @@ enum SubmissionStatus {
 }
 
 //Grading system database schema
-
 enum DisplayMode {
   PERCENTAGE
   CGPA
@@ -431,4 +431,32 @@ model MonthlyFeeRecord {
   updatedAt DateTime @updatedAt
 
   @@unique([studentId, month, year])
+}
+
+enum HolidayType {
+  GAZETTED
+  INTERNAL
+  EMERGENCY
+}
+
+enum HolidayAudience {
+  ALL
+  STUDENT
+  STAFF
+}
+
+model Holiday {
+  id              String          @id @default(uuid())
+  title           String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime
+  type            HolidayType     @default(GAZETTED)
+  appliesTo       HolidayAudience @default(ALL)
+  academicYearId  String
+  academicYear    AcademicYear    @relation(fields: [academicYearId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([startDate, endDate]) // Speeds up the "is today a holiday?" query
 }

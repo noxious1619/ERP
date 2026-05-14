@@ -1,16 +1,18 @@
-import LoginPage from "./pages/auth/Login";
-import StudentDashboard from "./pages/student/studentDashboard";
-import OtpScreen from "./pages/auth/OtpScreen";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import StudentDashboard_2 from "./pages/student/StudentDashboard_2";
-import StudentDashboard_3 from "./pages/student/StudentDahsboard_3";
-
-
-export default function App() {
-  // return <LoginPage />;
-  // return <OtpScreen />;
-  // return <ForgotPassword />;
-  return <StudentDashboard />;
-  // return <StudentDashboard_2 />;
-  // return <StudentDashboard_3 />;
-}
+import { Routes, Route, Navigate } from "react-router-dom";
+import Dashboard from "./pages/Student/Dashboard";
+import Timetable from "./pages/Student/Timetable";
+import WeeklyTimetable from "./pages/Student/WeeklyTimetable";
+const App = () => {
+  return (
+    <Routes>
+      {/* Default Route */}
+      <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+      {/* Dashboard */}
+      <Route path="/student/dashboard" element={<Dashboard />} />
+      {/* Timetable */}
+      <Route path="/student/timetable" element={<Timetable />} />
+      <Route path="/student/timetable/weekly" element={<WeeklyTimetable />} />
+    </Routes>
+  );
+};
+export default App;

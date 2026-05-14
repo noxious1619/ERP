@@ -4,6 +4,7 @@ import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
 import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
 import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
+
 const TimetableHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -29,7 +30,7 @@ const TimetableHeader = () => {
     <div className="flex items-start justify-between">
       {/* Left Content */}
       <div>
-        <h1 className="text-[44px] font-bold leading-[52px] text-[#3851F7]">
+        <h1 className="text-[44px] font-bold leading-[52px] text-[#2D3335]">
           My Timetable
         </h1>
         <p className="mt-2 text-[16px] font-medium text-[#6B6B6B]">
@@ -75,7 +76,7 @@ const TimetableHeader = () => {
         <div className="relative">
           <button
             onClick={() => setShowNotifications((prev) => !prev)}
-            className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] "
+            className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] cursor-pointer "
           >
             <img src={notification} alt="Notification" className="h-6 w-6" />
 
@@ -86,7 +87,10 @@ const TimetableHeader = () => {
           {showNotifications && <NotificationDropdown />}
         </div>
         {/* Profile */}
-        <div className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md">
+        <div
+          onClick={() => navigate("/student/profile")}
+          className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer"
+        >
           <img
             src={profileImage}
             alt="Student"

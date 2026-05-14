@@ -8,11 +8,14 @@ import attendance from "../../../assets/Student/Dashboard/Navbar/attendance.png"
 import exams from "../../../assets/Student/Dashboard/Navbar/exams.png";
 import setting from "../../../assets/Student/Dashboard/Navbar/setting.png";
 import notification from "../../../assets/Student/Dashboard/Navbar/notification.svg";
+import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
+
 type NavItem = {
   label: string;
   icon: string;
   href: string;
 };
+
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: dashboard, href: "/student/dashboard" },
   { label: "Timetable", icon: timetable, href: "/student/timetable" },
@@ -21,7 +24,9 @@ const navItems: NavItem[] = [
   { label: "Attendance ", icon: attendance, href: "/student/attendance" },
   { label: "Notices", icon: notification, href: "/student/notices" },
   { label: "Settings", icon: setting, href: "/student/settings" },
+  { label: "Profile", icon: profileImage, href: "/student/profile" },
 ];
+
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
   const { pathname } = useLocation(); // ← reads the current URL path
@@ -47,6 +52,7 @@ const Sidebar: React.FC = () => {
         <div className="w-10 h-10 rounded-full bg-[linear-gradient(135deg,#2B3674_0%,#5C63C7_55%,#A8AEFF_100%)] flex items-center justify-center shrink-0">
           <img src={logoIcon} alt="EdaOS Logo" className="w-5 h-5" />
         </div>
+
         <div
           className={`
             flex flex-col leading-tight whitespace-nowrap transition-all duration-300
@@ -59,6 +65,7 @@ const Sidebar: React.FC = () => {
           <span className="text-[#5A5F67] text-xs">Student Portal</span>
         </div>
       </div>
+
       {/* Navigation */}
       <nav className="flex flex-col gap-2">
         {navItems.map((item) => {
@@ -82,7 +89,14 @@ const Sidebar: React.FC = () => {
               <img
                 src={item.icon}
                 alt={item.label}
-                className="w-5 h-5 shrink-0"
+                className={`
+    shrink-0 object-cover
+    ${
+      item.label === "Profile"
+        ? "w-10 h-10 rounded-full border-2 border-white shadow-sm"
+        : "w-5 h-5"
+    }
+  `}
               />
 
               <span
@@ -100,4 +114,5 @@ const Sidebar: React.FC = () => {
     </aside>
   );
 };
+
 export default Sidebar;

@@ -31,17 +31,17 @@ const TopBar: React.FC = () => {
         {/* Notification Bell */}
         <button
           onClick={() => setShowNotifications((prev) => !prev)}
-          className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer"
         >
           <img src={notification} alt="Notifications" className="h-4 w-4" />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
         </button>
         {/* Help */}
-        <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50">
+        <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer">
           <img src={question} alt="Help" className="h-4 w-4" />
         </button>
         {/* Settings */}
-        <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50">
+        <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer">
           <img src={setting} alt="Settings" className="h-4 w-4" />
         </button>
         {/* Dropdown */}

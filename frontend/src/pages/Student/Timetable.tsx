@@ -7,7 +7,7 @@ const Timetable = () => {
   return (
     <div className="flex min-h-screen bg-[#F5F6FA]">
       <Navbar />
-      <div className="flex-1 min-w-0 overflow-y-auto">
+      <div className="flex-1 min-w-0 h-screen overflow-y-auto">
         <div className="px-8 py-8">
           <TimetableHeader />
           <div className="mt-8 flex items-start gap-6">

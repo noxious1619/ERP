@@ -7,7 +7,7 @@ const WeeklyTimetable = () => {
       {/* Navbar */}
       <Navbar />
       {/* Main Content */}
-      <div className="flex-1 overflow-x-auto">
+      <div className="flex-1 overflow-x-auto h-screen overflow-y-auto">
         <div className=" px-10 py-8">
           {/* Header */}
           <TimetableHeader />

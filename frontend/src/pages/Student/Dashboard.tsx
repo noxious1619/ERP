@@ -10,9 +10,9 @@ import Calendar from "../../components/Student/Dashboard/Calendar";
 import YourSubjects from "../../components/Student/Dashboard/YourSubjects";
 const Dashboard = () => {
   return (
-    <div className="flex gap-8 items-start">
+    <div className="flex gap-4  ">
       <Navbar />
-      <div className="flex-1 min-w-0 flex flex-col gap-6">
+      <div className="flex-1 min-w-0 flex flex-col gap-6  h-screen overflow-y-auto px-8">
         <TopBar />
         <div className=" flex gap-8">
           <div className="flex-1 min-w-0">
@@ -28,11 +28,13 @@ const Dashboard = () => {
           {/* Left Content */}
           <div className="flex-1 min-w-0 flex flex-col gap-5">
             <TimetableSection />
+
             <div className="flex gap-5 items-start">
               <div className="flex-1 min-w-0">
                 <Homework />
               </div>
-              <div className="flex-1 min-w-0 ">
+
+              <div className="flex-1 min-w-0">
                 <NoticeBoard />
               </div>
             </div>
@@ -48,4 +50,5 @@ const Dashboard = () => {
     </div>
   );
 };
+
 export default Dashboard;

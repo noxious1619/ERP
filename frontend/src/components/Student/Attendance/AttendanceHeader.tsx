@@ -1,0 +1,84 @@
+import { useState, useRef, useEffect } from "react";
+import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
+import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
+import studentAvatar from "../../../assets/Student/Timetable/Header/profile.png";
+import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
+import { useNavigate } from "react-router";
+
+const AttendanceHeader: React.FC = () => {
+  const navigate = useNavigate();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="flex items-start justify-between">
+      {/* Left Side */}
+      <div>
+        <h1 className="text-[44px] font-bold leading-none text-[#2D3335]">
+          Attendance Tracker
+        </h1>
+
+        <p className="mt-3 text-[17px] font-medium text-[#6E6E6E]">
+          Your consistency matters, keep showing up.
+        </p>
+      </div>
+
+      {/* Right Side Icons */}
+      <div className="flex items-center gap-6 pt-2">
+        {/* Search */}
+        <button className="flex items-center justify-center cursor-pointer ">
+          <img
+            src={search}
+            alt="Search"
+            className="h-[24px] w-[24px] object-contain"
+          />
+        </button>
+
+        {/* Notification */}
+        <button
+          onClick={() => setShowNotifications((prev) => !prev)}
+          className="relative flex items-center justify-cente cursor-pointer"
+        >
+          <img
+            src={notification}
+            alt="Notifications"
+            className="h-[24px] w-[24px] object-contain"
+          />
+          {/* Red Dot */}
+          <span className="absolute right-[-2px] top-[1px] h-[7px] w-[7px] rounded-full bg-[#D9475C]" />
+        </button>
+
+        {/* Profile Avatar */}
+        <button
+          onClick={() => navigate("/student/profile")}
+          className="overflow-hidden rounded-full cursor-pointer"
+        >
+          <img
+            src={studentAvatar}
+            alt="Student"
+            className="h-[52px] w-[52px] rounded-full object-cover"
+          />
+        </button>
+
+        {/* Dropdown */}
+        {showNotifications && <NotificationDropdown />}
+      </div>
+    </div>
+  );
+};
+
+export default AttendanceHeader;

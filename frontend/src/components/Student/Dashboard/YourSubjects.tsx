@@ -44,7 +44,7 @@ const subjects = [
 ];
 const YourSubjects = () => {
   return (
-    <div className="mx-auto mt-5">
+    <div className=" mt-5">
       {/* Heading */}
       <h2 className="text-[16px] font-bold text-black">Your Subjects</h2>
 

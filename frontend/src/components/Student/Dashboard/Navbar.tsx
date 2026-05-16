@@ -90,11 +90,11 @@ const Sidebar: React.FC = () => {
                 src={item.icon}
                 alt={item.label}
                 className={`
-    shrink-0 object-cover
+    shrink-0 
     ${
       item.label === "Profile"
         ? "w-10 h-10 rounded-full border-2 border-white shadow-sm"
-        : "w-5 h-5"
+        : "w-6 h-6"
     }
   `}
               />

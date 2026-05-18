@@ -5,14 +5,14 @@ import { restrictTo } from '../middleware/roleMiddleware.js'; // Import the new 
 import { loginLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
+router.use(protect);
 
 router.post('/login',loginLimiter, login);
-router.get('/me', protect, (req: any, res) => {
+router.get('/me', (req: any, res) => {
   res.json({ message: "Authenticated!", user: req.user });
 });
 
 router.get('/admin-dashboard', 
-  protect, 
   restrictTo('SUPER_ADMIN'), 
   (req: any, res) => {
     res.json({ message: "Welcome to the Secret Admin Dashboard! 🔐" });

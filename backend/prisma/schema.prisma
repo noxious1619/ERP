@@ -22,22 +22,117 @@ enum Role {
 }
 
 model User {
-  id                String       @id @default(uuid())
-  name              String
-  email             String       @unique
-  passwordHash      String
-  role              Role         @default(STUDENT)
-  isActive          Boolean      @default(true)
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Profiles
+  student Student?
+  teacher Teacher?
+  staff   Staff?
+  parent  Parent?
+
+  // Relations
   logs              AuditLog[]
-  timetable         Timetable[]
-  student           Student?
-  attendanceMarked  Attendance[]
+  attendanceMarked  Attendance[] @relation("MarkedBy")
   notices           Notice[]
   noticeViews       NoticeView[]
   assignments       Assignment[]
   gradedSubmissions Submission[] @relation("Grader")
+  timetables        Timetable[]
+}
+
+model Student {
+  id                String             @id @default(uuid())
+  admissionNumber   String             @unique
+  rollNumber        String?
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime
+  gender            String
+  address           String?
+  phoneNumber       String?
+  userId            String?            @unique
+  user              User?              @relation(fields: [userId], references: [id])
+  sectionId         String
+  section           Section            @relation(fields: [sectionId], references: [id])
+  parents           Parent[]           @relation("StudentToParent")
+  attendance        Attendance[]
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  submissions       Submission[]
+  marks             Mark[]
+  calculatedResults CalculatedResult[]
+  feeRecords        MonthlyFeeRecord[]
+}
+
+model Parent {
+  id               String  @id @default(uuid())
+  fatherName       String?
+  fatherPhone      String?
+  motherName       String?
+  motherPhone      String?
+  emergencyPhone   String
+  fatherOccupation String?
+  motherOccupation String?
+  address          String?
+
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+
+  students Student[] @relation("StudentToParent")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Teacher {
+  id             String    @id @default(uuid())
+  firstName      String    @default("")
+  lastName       String    @default("")
+  gender         String?
+  dateOfBirth    DateTime?
+  employeeId     String    @unique
+  qualification  String?
+  specialization String?
+  bio            String?
+  experience     Int?
+  joiningDate    DateTime
+  designation    String    @default("Teacher")
+  status         String    @default("ACTIVE")
+  email          String?   @unique
+  phone          String?
+  address        String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  classTeacherOf Section?  @relation("ClassTeacher") // If they lead a section
+  sections       Section[]
+  subjects       Subject[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Staff {
+  id          String   @id @default(uuid())
+  employeeId  String   @unique
+  department  String
+  designation String
+  joiningDate DateTime
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {
@@ -55,7 +150,7 @@ model AuditLog {
 
 model AcademicYear {
   id            String         @id @default(uuid())
-  name          String         // e.g., "2025-2026"
+  name          String // e.g., "2025-2026"
   isCurrent     Boolean        @default(false)
   classes       Class[]
   feeComponents FeeComponent[]
@@ -76,14 +171,18 @@ model Class {
 }
 
 model Section {
-  id          String       @id @default(uuid())
-  name        String // e.g., "Section A"
-  classId     String
-  class       Class        @relation(fields: [classId], references: [id])
-  timetable   Timetable[]
-  students    Student[]
-  attendances Attendance[]
-  assignments Assignment[]
+  id             String       @id @default(uuid())
+  name           String // "Section A"
+  classId        String
+  academicClass  Class        @relation(fields: [classId], references: [id])
+  timetable      Timetable[]
+  students       Student[]
+  attendances    Attendance[]
+  assignments    Assignment[]
+  classTeacherId String?      @unique
+  classTeacher   Teacher?     @relation("ClassTeacher", fields: [classTeacherId], references: [id])
+  teacher        Teacher?     @relation(fields: [teacherId], references: [id])
+  teacherId      String?
 }
 
 model Subject {
@@ -95,26 +194,33 @@ model Subject {
   timetable            Timetable[]
   assignments          Assignment[]
   assessmentComponents AssessmentComponent[]
+  teacher              Teacher?              @relation(fields: [teacherId], references: [id])
+  teacherId            String?
 }
 
 model Timetable {
-  id        String    @id @default(uuid())
-  day       DayOfWeek
-  period    Int // e.g., 1, 2, 3...
-  startTime String // e.g., "08:00"
-  endTime   String // e.g., "08:45"
+  id         String    @id @default(uuid())
+  day        DayOfWeek
+  period     Int // 1, 2, 3
+  startTime  String // "08:00" (stored in 24h format)
+  endTime    String // "08:45"
+  room       String? // "Room 402B" or "Lab 3"
+  color      String? // "bg-blue-100 text-blue-800" (for UI theme)
+  isBreak    Boolean   @default(false)
+  breakLabel String? // e.g., "Coffee Break & Social"
 
+  // Relations turn optional to support break blocks cleanly
   sectionId String
   section   Section @relation(fields: [sectionId], references: [id])
 
-  subjectId String
-  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id])
 
-  teacherId String
-  teacher   User   @relation(fields: [teacherId], references: [id])
+  teacherId String?
+  teacher   User?   @relation(fields: [teacherId], references: [id])
 
-  @@unique([sectionId, day, period]) // Prevents two subjects in one section at the same time
-  @@unique([teacherId, day, period]) // Prevents a teacher being in two places at once
+  @@unique([sectionId, day, period])
+  @@unique([teacherId, day, period])
 }
 
 enum DayOfWeek {
@@ -126,46 +232,6 @@ enum DayOfWeek {
   SATURDAY
 }
 
-model Student {
-  id                String             @id @default(uuid())
-  admissionNumber   String             @unique
-  rollNumber        String?
-  firstName         String
-  lastName          String
-  dateOfBirth       DateTime
-  gender            String
-  address           String?
-  phoneNumber       String?
-  userId            String?            @unique // Link to their login account
-  user              User?              @relation(fields: [userId], references: [id])
-  sectionId         String
-  section           Section            @relation(fields: [sectionId], references: [id])
-  parents           Parent[]
-  attendance        Attendance[]
-  isActive          Boolean            @default(true)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  submissions       Submission[]
-  marks             Mark[]
-  calculatedResults CalculatedResult[]
-  feeRecords        MonthlyFeeRecord[]
-}
-
-model Parent {
-  id             String    @id @default(uuid())
-  fatherName     String?
-  fatherPhone    String?
-  motherName     String?
-  motherPhone    String?
-  emergencyPhone String
-  primaryContact String    @default("FATHER")
-  email          String?
-  occupation     String?
-  address        String?
-  students       Student[]
-  createdAt      DateTime  @default(now())
-}
-
 model Attendance {
   id     String           @id @default(uuid())
   date   DateTime         @default(now())
@@ -175,7 +241,7 @@ model Attendance {
   student   Student @relation(fields: [studentId], references: [id])
 
   markedById String
-  markedBy   User   @relation(fields: [markedById], references: [id])
+  markedBy   User   @relation("MarkedBy", fields: [markedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -446,17 +512,17 @@ enum HolidayAudience {
 }
 
 model Holiday {
-  id              String          @id @default(uuid())
-  title           String
-  description     String?
-  startDate       DateTime
-  endDate         DateTime
-  type            HolidayType     @default(GAZETTED)
-  appliesTo       HolidayAudience @default(ALL)
-  academicYearId  String
-  academicYear    AcademicYear    @relation(fields: [academicYearId], references: [id])
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             String          @id @default(uuid())
+  title          String
+  description    String?
+  startDate      DateTime
+  endDate        DateTime
+  type           HolidayType     @default(GAZETTED)
+  appliesTo      HolidayAudience @default(ALL)
+  academicYearId String
+  academicYear   AcademicYear    @relation(fields: [academicYearId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([startDate, endDate]) // Speeds up the "is today a holiday?" query
 }

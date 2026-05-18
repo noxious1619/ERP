@@ -10,58 +10,57 @@ import csv from "csv-parser";
 // 1. ADMIT STUDENT (The "Atomic" Transaction)
 export const admitStudent = async (req: Request, res: Response) => {
   const { 
-    email, password, firstName, lastName, dateOfBirth, gender, 
-    address, phoneNumber, sectionId, admissionNumber, 
-    fatherName, fatherPhone, motherName, motherPhone, 
-    emergencyPhone, parentEmail, occupation 
+    email, 
+    password, 
+    firstName, 
+    lastName, 
+    dateOfBirth, 
+    gender, 
+    address, 
+    phoneNumber, 
+    sectionId, 
+    admissionNumber,
+    rollNumber
   } = req.body;
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create Login Identity
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = await tx.user.create({
         data: {
           email,
           passwordHash: hashedPassword,
-          role: Role.STUDENT,
-          name: `${firstName} ${lastName}`,
+          role: "STUDENT",
+          name: `${firstName} ${lastName}`.trim(),
         },
       });
 
-      // 2. Create Student with Parent details
       const student = await tx.student.create({
         data: {
           admissionNumber,
+          rollNumber: rollNumber || null,
           firstName,
           lastName,
           dateOfBirth: new Date(dateOfBirth),
           gender,
-          address,        
-          phoneNumber,    
+          address: address || null,        
+          phoneNumber: phoneNumber || null,    
           sectionId,
-          userId: user.id,
-          parents: {
-            create: {
-              fatherName,
-              fatherPhone,
-              motherName,
-              motherPhone,
-              email: parentEmail,      
-              occupation,              
-              emergencyPhone: emergencyPhone || fatherPhone || motherPhone,
-              address: address,        
-            }
-          }
-        },
-        include: { parents: true }
+          userId: user.id
+        }
       });
+
       return student;
     });
 
-    res.status(201).json({ success: true, data: result });
+    return res.status(201).json({ success: true, data: result });
+
   } catch (error: any) {
-    res.status(400).json({ success: false, message: "Admission failed", error: error.message });
+    return res.status(400).json({ 
+      success: false, 
+      message: "Admission system execution failed", 
+      error: error.message 
+    });
   }
 };
 

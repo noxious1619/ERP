@@ -4,6 +4,7 @@ import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
 import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
 import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
+import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 
 const TimetableHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -33,8 +34,8 @@ const TimetableHeader = () => {
         <h1 className="text-[44px] font-bold leading-[52px] text-[#2D3335]">
           My Timetable
         </h1>
-        <p className="mt-2 text-[16px] font-medium text-[#6B6B6B]">
-          Today is Monday, Jan 12th
+        <p className="text-sm font-semibold text-gray-400 mt-1">
+          {getDynamicHeaderDate()}
         </p>
       </div>
       {/* Right Controls */}

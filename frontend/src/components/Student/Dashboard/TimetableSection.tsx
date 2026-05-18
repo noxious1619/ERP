@@ -22,6 +22,35 @@ const timetableData = [
     room: "ROOM-101",
     isActive: true,
   },
+  {
+    id: 2,
+    subject: "English",
+    startTime: "10:00 AM",
+    endTime: "11:00 AM",
+    professorName: "Prof. Michael Chen",
+    professorAvatar: avtar,
+    room: "ROOM-101",
+    isActive: true,
+  },
+  {
+    id: 2,
+    subject: "English",
+    startTime: "10:00 AM",
+    endTime: "11:00 AM",
+    professorName: "Prof. Michael Chen",
+    professorAvatar: avtar,
+    room: "ROOM-101",
+    isActive: true,
+  },{
+    id: 2,
+    subject: "English",
+    startTime: "10:00 AM",
+    endTime: "11:00 AM",
+    professorName: "Prof. Michael Chen",
+    professorAvatar: avtar,
+    room: "ROOM-101",
+    isActive: true,
+  },
 ];
 const TimetableSection: React.FC = () => {
   return (

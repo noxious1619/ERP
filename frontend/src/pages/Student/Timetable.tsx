@@ -15,8 +15,8 @@ const Timetable = () => {
             <div className="flex-1 min-w-0">
               <TimetableSchedule />
             </div>
-            {/* RIGHT — always fixed */}
-            <div className="w-[360px] shrink-0 bg-gray-100 px-5 py-6 ">
+            {/* RIGHT*/}
+            <div className="w-90 shrink-0 bg-gray-100 px-5 py-6 ">
               <Calendar variant="timetable" />
               {/* Date Schedule */}
               <DateScheduleCard />

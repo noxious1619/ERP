@@ -15,7 +15,6 @@ import { restrictTo } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-// All grade routes require being logged in
 router.use(protect);
 
 // 1. Create an Exam Term (e.g., "Term 1")

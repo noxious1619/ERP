@@ -37,6 +37,9 @@ const Dashboard = () => {
               <div className="flex-1 min-w-0">
                 <NoticeBoard />
               </div>
+              <div className="flex-1 min-w-0">
+                <NoticeBoard />
+              </div>
             </div>
             <YourSubjects />
           </div>

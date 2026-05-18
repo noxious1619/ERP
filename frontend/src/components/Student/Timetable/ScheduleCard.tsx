@@ -1,4 +1,6 @@
 import React from "react";
+import {MapPin, User} from "lucide-react";
+
 interface TimetableScheduleCardProps {
   time: string;
   isActive?: boolean;
@@ -22,7 +24,7 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
   return (
     <div className="flex items-start gap-6">
       {/* ── Time Column ── */}
-      <div className="w-[90px] shrink-0 pt-3 text-right">
+      <div className="w-25  shrink-0 pt-3 text-right">
         <p
           className={`text-sm font-semibold leading-tight ${
             isActive ? "text-[#3B4FE8]" : "text-gray-400"
@@ -53,7 +55,7 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
           <div className="bg-white border border-gray-200 border-l-4 border-l-[#3B4FE8] rounded-2xl shadow-md px-5 py-4">
             <div className="flex items-center justify-between mb-3">
               {/* LIVE badge */}
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#3B4FE8] bg-[#EEF0FF] px-2.5 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#3B4FE8] bg-[#EEF0FF] px-2.5 py-0.5 rounded-full animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B4FE8]" />
                 LIVE
               </span>
@@ -61,22 +63,24 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
             </div>
             <p className="text-lg font-bold text-gray-900 mb-1.5">{subject}</p>
             <p className="text-xs text-gray-400 flex items-center gap-1.5">
-              <ProfessorIcon />
+              <User className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.8} />
               {professor}
             </p>
           </div>
         ) : (
-          /* INACTIVE CARD — light gray bg, room top-left, duration top-right */
           <div className="bg-blue-300/10 rounded-3xl  px-5 py-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-gray-400 font-medium">{room}</span>
+              <span className="text-xs flex gap-1 text-gray-400 font-medium">
+                <MapPin className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.8} />
+                {room}
+              </span>
               <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
                 {duration}
               </span>
             </div>
             <p className="text-lg font-bold text-gray-900 mb-1.5">{subject}</p>
             <p className="text-xs text-gray-400 flex items-center gap-1.5">
-              <ProfessorIcon />
+              <User className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.8} />
               {professor}
             </p>
           </div>
@@ -85,20 +89,6 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
     </div>
   );
 };
-const ProfessorIcon = () => (
-  <svg
-    className="w-3.5 h-3.5 shrink-0 text-gray-400"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-    />
-  </svg>
-);
+
 
 export default TimetableScheduleCard;

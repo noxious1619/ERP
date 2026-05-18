@@ -10,6 +10,9 @@ import assignmentRoutes from './routes/assignmentRoutes.js';
 import gradeRoutes from './routes/gradeRoutes.js';
 import financeRoutes from './routes/financeRoutes.js';
 import calendarRoutes from './routes/calendarRoutes.js';
+import teacherRoutes from './routes/teacherRotutes.js';
+import staffRoutes from './routes/staffRoutes.js';
+import parentRoutes from './routes/parentRoutes.js';
 
 dotenv.config();
 
@@ -24,6 +27,9 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/academic', academicRoutes);
 app.use("/api/students", studentRoutes);
+app.use('/api/teachers', teacherRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/parents', parentRoutes);
 app.use("/api/notices", noticeRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/assignments', assignmentRoutes);

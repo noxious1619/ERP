@@ -5,11 +5,12 @@ import { restrictTo } from '../middleware/roleMiddleware.js';
 import { upload } from "../middleware/uploadMiddleware.js";
 
 const router = Router();
+router.use(protect);
+
 
 // 1. ADMIT: 
 router.post(
   "/admit", 
-  protect, 
   restrictTo("SUPER_ADMIN", "ADMIN"), 
   admitStudent
 );
@@ -17,7 +18,6 @@ router.post(
 // 2. SEARCH: 
 router.get(
   "/", 
-  protect, 
   restrictTo("SUPER_ADMIN", "ADMIN", "TEACHER"), 
   getAllStudents
 );
@@ -25,13 +25,11 @@ router.get(
 // 3. PROFILE: 
 router.get(
   "/me", 
-  protect, 
   getStudentProfile
 );
 
 router.post(
   "/bulk-admit", 
-  protect, 
   restrictTo("ADMIN", "SUPER_ADMIN"), 
   upload.single("file"), 
   bulkAdmitStudents

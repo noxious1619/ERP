@@ -1,11 +1,6 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 
-/**
- * CREATE ASSIGNMENT
- * Logic: Teachers create a task for a specific Class (Required) 
- * and an optional Section.
- */
 export const createAssignment = async (req: Request, res: Response) => {
   try {
     const { 
@@ -101,7 +96,6 @@ export const getStudentAssignments = async (req: Request, res: Response) => {
       },
       orderBy: { dueDate: 'asc' } // Optional: Sort by due date
     });
-
     res.status(200).json({ success: true, data: assignments });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

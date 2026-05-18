@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { logActivity } from '../lib/auditService.js';
+import { normalizeTimetable } from '../helper/timetableHelper.js';
 
 export const createAcademicYear = async (req: any, res: Response) => {
   try {
@@ -106,30 +107,165 @@ export const createSubject = async (req: any, res: Response) => {
   }
 };
 
-export const createTimetableEntry = async (req: any, res: Response) => {
+export const createTimetableEntry = async (req: Request, res: Response) => {
   try {
-    const { day, period, startTime, endTime, sectionId, subjectId, teacherId } = req.body;
+    const { 
+      day, 
+      period, 
+      startTime, 
+      endTime, 
+      room, 
+      color, 
+      isBreak, 
+      breakLabel, 
+      sectionId, 
+      subjectId, 
+      teacherId 
+    } = req.body;
 
-    const teacherConflict = await prisma.timetable.findFirst({
-      where: { day, period, teacherId }
-    });
-    if (teacherConflict) return res.status(400).json({ message: "Teacher is already assigned to another section at this time." });
+    const formattedDay = day.toUpperCase();
+    const periodNumber = Number(period);
+    const treatAsBreak = Boolean(isBreak);
 
-    // 2. Check if Section already has a class at this time
+    if (!treatAsBreak) {
+      if (teacherId) {
+        const teacherConflict = await prisma.timetable.findFirst({
+          where: { 
+            day: formattedDay as any, 
+            period: periodNumber, 
+            teacherId 
+          }
+        });
+        if (teacherConflict) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Teacher is already assigned to another section at this time." 
+          });
+        }
+      }
+    }
+
     const sectionConflict = await prisma.timetable.findFirst({
-      where: { day, period, sectionId }
+      where: { 
+        day: formattedDay as any, 
+        period: periodNumber, 
+        sectionId 
+      }
     });
-    if (sectionConflict) return res.status(400).json({ message: "This section already has a subject scheduled for this period." });
+    if (sectionConflict) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "This section already has a scheduled block for this period." 
+      });
+    }
 
-    // 3. If no conflicts, create the entry
+    // 3. Create database entry with proper dynamic column typing
     const entry = await prisma.timetable.create({
-      data: { day, period, startTime, endTime, sectionId, subjectId, teacherId }
+      data: {
+        day: formattedDay as any,
+        period: periodNumber,
+        startTime,
+        endTime,
+        room: room || null,
+        color: color || null,
+        isBreak: treatAsBreak,
+        breakLabel: treatAsBreak ? (breakLabel || "Recess") : null,
+        sectionId,
+        subjectId: treatAsBreak ? null : subjectId,
+        teacherId: treatAsBreak ? null : teacherId
+      }
     });
 
-    logActivity(req.user.id, 'CREATE', 'Timetable', entry.id, null, entry);
+    return res.status(201).json({ success: true, data: entry });
 
-    res.status(201).json({ success: true, data: entry });
-  } catch (error) {
-    res.status(500).json({ message: "Error creating timetable entry", error });
+  } catch (error: any) {
+    return res.status(500).json({ 
+      success: false, 
+      message: "Error creating timetable entry", 
+      error: error.message 
+    });
+  }
+};
+
+export const getStudentTimetable = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userId = (req as any).user.id;
+    const { day } = req.query;
+    if ( !day || typeof day !== 'string'){
+      return res.status(400).json({
+        success: false,
+        message:
+          'Valid day parameter is required.'
+      });
+    }
+    const studentProfile =
+      await prisma.student.findUnique({
+        where: {
+          userId
+        },
+        select: {
+          sectionId: true
+        }
+      });
+    if (!studentProfile) {
+      return res.status(404).json({
+        success: false,
+        message:
+          'Student profile not found.'
+      });
+    }
+
+    if (!studentProfile.sectionId) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Student is not assigned to any section.'
+      });
+    }
+
+    const timetableRows = await prisma.timetable.findMany({
+        where: {
+          sectionId:
+            studentProfile.sectionId,
+          day:
+            day.toUpperCase() as any
+        },
+        include: {
+          subject: {
+            select: {
+              name: true
+            }
+          },
+          teacher: {
+            select: {
+              name: true,
+            }
+          }
+        },
+        orderBy: {
+          period: 'asc'
+        }
+      });
+
+    // Normalize response
+    const normalizedSchedule =
+      normalizeTimetable(
+        timetableRows,
+        day
+      );
+    return res.status(200).json({
+      success: true,
+      data: normalizedSchedule
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message:
+        'Failed to fetch timetable.',
+      error: error.message
+    });
   }
 };

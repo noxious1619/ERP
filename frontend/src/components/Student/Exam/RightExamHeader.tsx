@@ -1,69 +1,62 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
 import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-import question from "../../../assets/Student/Dashboard/TopBar/question.svg";
-import setting from "../../../assets/Student/Dashboard/TopBar/setting.png";
+import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
+import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 
 const RightHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
       ) {
         setShowNotifications(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
   return (
-    <div className="flex items-center justify-end gap-8">
-      {/* Notification */}
-      <div className="relative">
+    <div className="flex items-center justify-end gap-8 items-start ">
+      {/* Search */}
+      <button className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6]">
+        <img src={search} alt="Search" className="h-6 w-6" />
+      </button>
+
+      {/*  Notification  */}
+      <div className="relative" ref={notificationRef}>
         <button
           onClick={() => setShowNotifications((prev) => !prev)}
-          className="transition-transform duration-200 hover:scale-105 cursor-pointer"
+          className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] cursor-pointer"
         >
-          <img
-            src={notification}
-            alt="Notification"
-            className="h-[24px] w-[24px]"
-          />
+          <img src={notification} alt="Notification" className="h-6 w-6" />
+          {/* Unread dot */}
+          <div className="absolute right-[1px] top-[2px] h-[8px] w-[8px] rounded-full bg-[#FF4B6E]" />
         </button>
-        {/* Dropdown */}
-        {showNotifications && <NotificationDropdown />}
-
-        {/* Red Dot */}
-        <div
-          className="
-            absolute
-            right-0
-            top-[1px]
-            h-[8px]
-            w-[8px]
-            rounded-full
-            bg-[#E54866]
-          "
-        />
+        {showNotifications && (
+          <NotificationDropdown onClose={() => setShowNotifications(false)} />
+        )}
       </div>
 
-      {/* Help */}
-      <button className="transition-transform duration-200 hover:scale-105">
-        <img src={question} alt="Help" className="h-[24px] w-[24px]" />
-      </button>
-
-      {/* Settings */}
-      <button className="transition-transform duration-200 hover:scale-105">
-        <img src={setting} alt="Settings" className="h-[24px] w-[24px]" />
-      </button>
+      {/* Profile */}
+      <div
+        onClick={() => navigate("/student/profile")}
+        className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer flex items-center justify-end items-start mt-[-12px]"
+      >
+        <img
+          src={profileImage}
+          alt="Student"
+          className="h-full w-full object-cover"
+        />
+      </div>
     </div>
   );
 };

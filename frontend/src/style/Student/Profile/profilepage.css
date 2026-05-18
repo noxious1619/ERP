@@ -1,44 +1,29 @@
-/* ============================================
-   Profile Page Background — exact match
-   Colors sourced from design reference (Image 2)
-   ============================================ */
-
 .profile-gradient-bg {
   position: relative;
   min-height: 100vh;
+  background: #ffffff;
   overflow: hidden;
-
-  /*
-    Image 2 analysis:
-    - Base is a very clean near-white (#F8FAFC)
-    - A soft pink/rose radial blob sits at ~60% from left, ~40% from top
-      (roughly centre-right of the content area, behind the cards)
-    - A soft lavender/periwinkle blob bleeds in from the top-left corner
-    - Everything else is pure white — no wide linear sweep
-  */
-  background-color: #F8FAFC;
-
-  background-image:
-    /* Pink/rose-purple blob — centre-right, strong and visible through cards */
-    radial-gradient(
-      ellipse 60% 55% at 62% 38%,
-      rgba(192, 185, 255, 0.82) 0%,    /* #C0B9FF purple-pink core — strong */
-      rgba(188, 188, 238, 0.55) 30%,   /* #BCBCEE lavender mid              */
-      rgba(210, 205, 255, 0.25) 55%,   /* soft outer glow                   */
-      rgba(248, 250, 252, 0.00) 75%    /* transparent edge                  */
-    ),
-    /* Lavender wash top-left — more visible */
-    radial-gradient(
-      ellipse 55% 60% at -5% 5%,
-      rgba(192, 192, 193, 0.65) 0%,    /* #C0C0C1 stronger                  */
-      rgba(188, 188, 238, 0.35) 40%,   /* #BCBCEE bleed                     */
-      transparent 68%
-    );
 }
-
+.profile-gradient-bg::before {
+  content: "";
+  position: absolute;
+  top: 100px;
+  left: 420px;
+  width: 1200px;
+  height: 1800px;
+  background: #d7e2ff;
+  filter: blur(180px);
+  opacity: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.profile-gradient-bg > * {
+  position: relative;
+  z-index: 1;
+}
 /* ============================================
    Grid / dot-line pattern — bottom-right corner
-   Matches the faint grid seen in the screenshot
    ============================================ */
 .profile-gradient-bg::after {
   content: "";
@@ -47,69 +32,40 @@
   pointer-events: none;
   z-index: 0;
 
-  /*
-    SVG grid: thin lines (#0E254D / #9C9C9C at low opacity)
-    matching the subtle grid in the bottom-right of the design
-  */
   background-image:
-    /* Vertical lines — stronger opacity */
     repeating-linear-gradient(
       to right,
-      rgba(14, 37, 77, 0.18) 0px,
-      rgba(14, 37, 77, 0.18) 1px,
+      rgba(14, 37, 77, 0.15) 0px,
+      rgba(14, 37, 77, 0.15) 1px,
       transparent 1px,
       transparent 48px
     ),
-    /* Horizontal lines — stronger opacity */
     repeating-linear-gradient(
       to bottom,
-      rgba(14, 37, 77, 0.18) 0px,
-      rgba(14, 37, 77, 0.18) 1px,
+      rgba(14, 37, 77, 0.15) 0px,
+      rgba(14, 37, 77, 0.15) 1px,
       transparent 1px,
       transparent 48px
     );
-
-  /* Grid visible across more of the right half, not just the corner */
   -webkit-mask-image: radial-gradient(
-    ellipse 75% 75% at 100% 100%,
-    rgba(0, 0, 0, 0.80) 0%,
-    rgba(0, 0, 0, 0.45) 40%,
-    rgba(0, 0, 0, 0.15) 65%,
+    ellipse 70% 70% at 100% 100%,
+    rgba(0, 0, 0, 0.75) 0%,
+    rgba(0, 0, 0, 0.40) 40%,
+    rgba(0, 0, 0, 0.12) 65%,
     transparent 80%
   );
   mask-image: radial-gradient(
-    ellipse 75% 75% at 100% 100%,
-    rgba(0, 0, 0, 0.80) 0%,
-    rgba(0, 0, 0, 0.45) 40%,
-    rgba(0, 0, 0, 0.15) 65%,
+    ellipse 70% 70% at 100% 100%,
+    rgba(0, 0, 0, 0.75) 0%,
+    rgba(0, 0, 0, 0.40) 40%,
+    rgba(0, 0, 0, 0.12) 65%,
     transparent 80%
   );
 }
-
-/* Make sure all direct children sit above the pseudo-element */
+/* All children above pseudo-elements */
 .profile-gradient-bg > * {
   position: relative;
   z-index: 1;
 }
 
 
-/* ============================================
-   Colour reference palette (from Image 2)
-   Use these CSS variables anywhere in the app
-   ============================================ */
-:root {
-  --color-white-40:        rgba(255, 255, 255, 0.40);   /* #FFFFFF · 40% */
-  --color-ink:             #060202;                      /* #060202        */
-  --color-lavender-40:     rgba(192, 192, 193, 0.40);   /* #C0C0C1 · 40% */
-  --color-periwinkle-11:   rgba(188, 188, 238, 0.11);   /* #BCBCEE · 11% */
-  --color-white-0:         rgba(255, 255, 255, 0.00);   /* #FFFFFF · 0%   */
-  --color-navy:            #0E254D;                      /* #0E254D        */
-  --color-purple-light:    #C0B9FF;                      /* #C0B9FF        */
-  --color-mid-grey:        #9C9C9C;                      /* #9C9C9C        */
-  --color-rose:            #A8364B;                      /* #A8364B        */
-  --color-rose-40:         rgba(168, 54, 75, 0.40);     /* #A8364B · 40%  */
-  --color-silver:          #B6B6B6;                      /* #B6B6B6        */
-  --color-red:             #DF0630;                      /* #DF0630        */
-  --color-surface:         #F8FAFC;                      /* #F8FAFC        */
-  --color-white-10:        rgba(255, 255, 255, 0.10);   /* #FFFFFF · 10%  */
-}

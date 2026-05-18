@@ -46,7 +46,7 @@ const noticesYesterday = [
 
 const NoticeCards = () => {
   return (
-    <div className="mt-12">
+    <div className="mt-8">
       {/* TODAY */}
       <div>
         <h3 className="text-[18px] font-[700] text-[#666666]">Today</h3>
@@ -59,7 +59,7 @@ const NoticeCards = () => {
           <div className="absolute left-[13px] top-0 h-[12px] w-[12px] rounded-full bg-[#3A71FF]" />
 
           {/* Bottom Dot */}
-          <div className="absolute bottom-8 left-[13px] h-[12px] w-[12px] rounded-full bg-[#3A71FF]" />
+          <div className="absolute bottom-0 left-[13px] h-[12px] w-[12px] rounded-full bg-[#3A71FF]" />
 
           <div className="flex flex-col gap-9">
             {noticesToday.map((notice) => (

@@ -81,8 +81,8 @@ const Sidebar: React.FC = () => {
                 ${collapsed ? "justify-center px-0" : "gap-3 px-3"}
                 ${
                   isActive
-                    ? "bg-white text-[#2d2f6b] shadow-[0px_1px_5px_0px_rgba(0,0,0,0.10)] font-semibold"
-                    : "text-[#8a92a6] hover:bg-white hover:text-[#2d2f6b]"
+                    ? "bg-rgba(255, 255, 255, 0.1) text-[#2d2f6b] rounded-3xl shadow-[0px_1px_5px_0px_rgba(0,0,0,0.10)] font-semibold"
+                    : "text-[#8a92a6] hover:bg-gray-200 hover:text-[#2d2f6b]"
                 }
               `}
             >

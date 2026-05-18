@@ -17,10 +17,10 @@ const AcademicPerformance = () => {
   return (
     <div>
       {/* Card */}
-      <div className="mt-6 h-[250px] w-full overflow-hidden  bg-white/40 rounded-3xl shadow-[0px_4px_88px_0px_rgba(0,0,0,0.05)] px-12 py-5">
+      <div className="mt-6 h-[250px] w-full overflow-hidden  bg-white/40 rounded-3xl shadow-[0px_4px_88px_0px_rgba(0,0,0,0.05)] px-8 py-5">
         {/* Top */}
         <div className="flex items-start justify-between">
-          <h3 className="text-[20px] font-semibold text-[#141414]">
+          <h3 className="text-[24px] font-semibold text-[#060202] ">
             Performance Trend
           </h3>
 

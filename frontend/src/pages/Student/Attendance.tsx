@@ -13,14 +13,14 @@ const AttendanceTracker = () => {
 
       {/* Main Wrapper */}
       <div
-        className="flex flex-1 h-screen overflow-y-auto"
+        className="flex flex-1 h-screen overflow-y-auto overflow-x-hidden"
         style={{
           background:
-            "linear-gradient(to right, white 0%, white calc(100% - 370px), #F7F7F7 calc(100% - 370px), #F7F7F7 100%)",
+            "linear-gradient(to right, white 0%, white calc(100% - 380px), #F7F7F7 calc(100% - 490px), #F7F7F7 100%)",
         }}
       >
         {/* LEFT CONTENT */}
-        <div className="flex-1 px-12 mt-8">
+        <div className="flex-1 px-5 mt-8 ">
           <AttendanceHeader />
           <div className="mt-12 flex flex-col gap-8 py-10">
             <div className="flex items-start gap-8">
@@ -34,8 +34,8 @@ const AttendanceTracker = () => {
         </div>
 
         {/* RIGHT SIDEBAR - transparent bg now, parent handles it */}
-        <div className="w-[370px] shrink-0 ">
-          <div className="p-8 ml-6">
+        <div className="w-[360px] bg-gray-100 shrink-0 ">
+          <div className="p-4 ">
             <AttendanceYearlyChart />
             <TakeLeaveCard />
           </div>

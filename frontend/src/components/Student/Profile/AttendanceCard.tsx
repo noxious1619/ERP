@@ -31,7 +31,7 @@ const AttendanceCard = () => {
         </div>
 
         {/* Percentage Bars */}
-        <div className="absolute right-[50px] top-0 flex items-start gap-2">
+        <div className="absolute right-[20px] top-0 flex items-start gap-2">
           {/* Present */}
           <div className="flex h-38 w-16 items-end justify-center rounded-b-[42px] rounded-t-[2px] bg-[#0C0CC1] pb-7 shadow-[0_10px_25px_rgba(12,12,193,0.18)]">
             <span className="text-[22px] font-bold text-white">75%</span>

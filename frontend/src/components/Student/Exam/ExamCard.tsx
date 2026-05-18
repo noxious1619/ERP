@@ -58,12 +58,12 @@ const ExamCard = ({
 
         {/* Content */}
         <div>
-          <h3 className="text-[17px] font-[700] uppercase text-[#484848]">
+          <h3 className="text-[20px] font-[700] uppercase text-[#484848]">
             {title}
           </h3>
 
-          <p className="mt-2 max-w-[360px] text-[13px] leading-[18px] text-[#484747]">
-            <span className="font-[700] text-[#484848] font-bold">
+          <p className="mt-2 max-w-[360px] text-[16px] leading-[18px] text-[#484747]">
+            <span className="font-[700] text-[#484848] font-bold text-[15px]">
               Syllabus :
             </span>{" "}
             {syllabus}
@@ -76,7 +76,7 @@ const ExamCard = ({
         {/* 3×3 grid background */}
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="border border-black/20" />
+            <div key={i} className="border border-[#BEBFC0] opacity-50" />
           ))}
         </div>
 

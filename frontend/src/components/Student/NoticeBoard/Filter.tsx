@@ -11,7 +11,7 @@ const NoticeBoardFilters = () => {
   return (
     <div
       className="
-        mt-10
+        mt-4
         border-b
         border-[#D9D9D9]
       "

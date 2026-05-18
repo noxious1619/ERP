@@ -1,4 +1,5 @@
-import { Sigma, Microscope, Languages } from "lucide-react";
+import { Sigma, Microscope, Languages, X } from "lucide-react";
+
 const notifications = [
   {
     id: 1,
@@ -46,17 +47,31 @@ const notifications = [
     unread: false,
   },
 ];
-const NotificationDropdown = () => {
+
+interface NotificationDropdownProps {
+  onClose: () => void;
+}
+
+const NotificationDropdown = ({ onClose }: NotificationDropdownProps) => {
   return (
     <div className="fixed right-[74px] top-[62px] z-50 w-[430px] overflow-hidden rounded-[10px] bg-white shadow-[0px_8px_50px_10px_rgba(0,0,0,0.15)] backdrop-blur-[2500px]">
       {/* Arrow pointer */}
       <div className="absolute right-[74px] top-[-10px] h-5 w-5 rotate-45 border-l border-t border-[#E8E8E8] bg-white" />
 
-      <div className="px-6 pt-5 pb-4">
+      <div className="px-6 pt-5 pb-4 flex items-center justify-between">
         <h2 className="text-[20px] font-semibold text-[#111111]">
           Notifications
         </h2>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-[#8B8B8B] transition-colors hover:bg-[#F2F2F2] hover:text-[#111111]"
+          aria-label="Close notifications"
+        >
+          <X size={18} />
+        </button>
       </div>
+
       <div className="flex items-center gap-9 border-b border-[#E9E9E9] px-5">
         <button className="relative pb-3 text-[15px] font-semibold text-black">
           All
@@ -66,6 +81,7 @@ const NotificationDropdown = () => {
           <div className="absolute bottom-0 left-0 h-[2px] w-full bg-black" />
         </button>
       </div>
+
       <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-[#D0D0D0] scrollbar-track-transparent">
         {/* Today section */}
         <div className="border-b border-[#ECECEC] px-5 py-3 sticky top-0 bg-white z-10">
@@ -94,11 +110,11 @@ const NotificationDropdown = () => {
             )}
           </div>
         ))}
+
         {/* Yesterday section */}
         <div className="border-b border-[#ECECEC] px-5 py-3 sticky top-0 bg-white z-10">
           <p className="text-[12px] font-semibold text-[#1A1A1A]">Yesterday</p>
         </div>
-
         {notifications.slice(3).map((item) => (
           <div
             key={item.id}
@@ -121,4 +137,5 @@ const NotificationDropdown = () => {
     </div>
   );
 };
+
 export default NotificationDropdown;

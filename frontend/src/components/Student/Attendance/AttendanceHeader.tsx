@@ -8,12 +8,13 @@ import { useNavigate } from "react-router";
 const AttendanceHeader: React.FC = () => {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
       ) {
         setShowNotifications(false);
       }
@@ -49,18 +50,23 @@ const AttendanceHeader: React.FC = () => {
         </button>
 
         {/* Notification */}
-        <button
-          onClick={() => setShowNotifications((prev) => !prev)}
-          className="relative flex items-center justify-cente cursor-pointer"
-        >
-          <img
-            src={notification}
-            alt="Notifications"
-            className="h-[24px] w-[24px] object-contain"
-          />
-          {/* Red Dot */}
-          <span className="absolute right-[-2px] top-[1px] h-[7px] w-[7px] rounded-full bg-[#D9475C]" />
-        </button>
+        <div className="relative" ref={notificationRef}>
+          <button
+            onClick={() => setShowNotifications((prev) => !prev)}
+            className="relative flex items-center justify-center cursor-pointer"
+          >
+            <img
+              src={notification}
+              alt="Notifications"
+              className="h-[24px] w-[24px] object-contain"
+            />
+            {/* Red Dot */}
+            <span className="absolute right-[-2px] top-[1px] h-[7px] w-[7px] rounded-full bg-[#D9475C]" />
+          </button>
+          {showNotifications && (
+            <NotificationDropdown onClose={() => setShowNotifications(false)} />
+          )}
+        </div>
 
         {/* Profile Avatar */}
         <button
@@ -73,9 +79,6 @@ const AttendanceHeader: React.FC = () => {
             className="h-[52px] w-[52px] rounded-full object-cover"
           />
         </button>
-
-        {/* Dropdown */}
-        {showNotifications && <NotificationDropdown />}
       </div>
     </div>
   );

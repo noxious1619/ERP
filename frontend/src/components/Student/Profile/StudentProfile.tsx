@@ -68,15 +68,15 @@ const StudentProfile = () => {
         {studentInfo.map((item) => (
           <div
             key={item.label}
-            className="grid grid-cols-[82px_1fr] items-start gap-5"
+            className="grid grid-cols-[82px_1fr] items-start gap-8"
           >
             {/* Label */}
-            <span className="text-[13px] font-medium uppercase tracking-[0.5px] text-[#767676]">
+            <span className="text-[18px] font-medium uppercase tracking-[0.5px] text-[#767676]">
               {item.label}
             </span>
 
             {/* Value */}
-            <p className="text-[15px] font-semibold leading-[28px] text-black">
+            <p className="text-[20px] font-semibold leading-[28px] text-black">
               {item.value}
             </p>
           </div>

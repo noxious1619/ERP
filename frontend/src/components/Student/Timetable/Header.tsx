@@ -7,13 +7,13 @@ import NotificationDropdown from "../../../components/Student/Dashboard/Notifica
 
 const TimetableHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  // Close on outside click
+  const notificationRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
       ) {
         setShowNotifications(false);
       }
@@ -23,9 +23,11 @@ const TimetableHeader = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
   const navigate = useNavigate();
   const location = useLocation();
   const isWeekly = location.pathname === "/student/timetable/weekly";
+
   return (
     <div className="flex items-start justify-between">
       {/* Left Content */}
@@ -37,55 +39,47 @@ const TimetableHeader = () => {
           Today is Monday, Jan 12th
         </p>
       </div>
+
       {/* Right Controls */}
       <div className="flex items-center gap-6 pt-2">
         {/* Toggle */}
         <div className="flex items-center rounded-full bg-[#F2F2F2] p-[4px] shadow-sm">
-          {/* Daily */}
           <button
             onClick={() => navigate("/student/timetable")}
             className={`rounded-full px-7 py-2 text-[16px] font-semibold transition-all duration-300
-              ${
-                !isWeekly
-                  ? "bg-white text-[#3F5BF6] shadow-sm"
-                  : "text-[#5E5E5E]"
-              }
-            `}
+              ${!isWeekly ? "bg-white text-[#3F5BF6] shadow-sm" : "text-[#5E5E5E]"}`}
           >
             Daily
           </button>
-          {/* Weekly */}
           <button
             onClick={() => navigate("/student/timetable/weekly")}
             className={`rounded-full px-7 py-2 text-[16px] font-semibold transition-all duration-300
-              ${
-                isWeekly
-                  ? "bg-white text-[#3F5BF6] shadow-sm"
-                  : "text-[#5E5E5E]"
-              }
-            `}
+              ${isWeekly ? "bg-white text-[#3F5BF6] shadow-sm" : "text-[#5E5E5E]"}`}
           >
             Weekly
           </button>
         </div>
+
         {/* Search */}
         <button className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6]">
           <img src={search} alt="Search" className="h-6 w-6" />
         </button>
-        {/* Notification */}
-        <div className="relative">
+
+        {/*  Notification  */}
+        <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setShowNotifications((prev) => !prev)}
-            className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] cursor-pointer "
+            className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] cursor-pointer"
           >
             <img src={notification} alt="Notification" className="h-6 w-6" />
-
-            {/* Dot */}
+            {/* Unread dot */}
             <div className="absolute right-[1px] top-[2px] h-[8px] w-[8px] rounded-full bg-[#FF4B6E]" />
           </button>
-          {/* Dropdown */}
-          {showNotifications && <NotificationDropdown />}
+          {showNotifications && (
+            <NotificationDropdown onClose={() => setShowNotifications(false)} />
+          )}
         </div>
+
         {/* Profile */}
         <div
           onClick={() => navigate("/student/profile")}
@@ -101,4 +95,5 @@ const TimetableHeader = () => {
     </div>
   );
 };
+
 export default TimetableHeader;

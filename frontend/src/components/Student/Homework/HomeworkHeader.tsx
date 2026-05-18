@@ -5,14 +5,15 @@ import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
 import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import NotificationDropdown from "../../Student/Dashboard/NotificationDropdown";
 const HomeworkHeader = () => {
-  const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
       ) {
         setShowNotifications(false);
       }
@@ -43,7 +44,7 @@ const HomeworkHeader = () => {
         </button>
 
         {/* Notification */}
-        <div className="relative">
+        <div className="relative" ref={notificationRef}>
           <button
             className="transition-transform duration-200 hover:scale-105 cursor-pointer"
             onClick={() => setShowNotifications(!showNotifications)}
@@ -55,7 +56,9 @@ const HomeworkHeader = () => {
             />
           </button>
           {/* Dropdown */}
-          {showNotifications && <NotificationDropdown />}
+          {showNotifications && (
+            <NotificationDropdown onClose={() => setShowNotifications(false)} />
+          )}
 
           {/* Red Dot */}
           <div className="absolute right-[1px] top-[2px] h-[9px] w-[9px] rounded-full bg-[#E54866]" />

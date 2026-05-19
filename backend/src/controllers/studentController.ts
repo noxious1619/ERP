@@ -17,6 +17,10 @@ export const admitStudent = async (req: Request, res: Response) => {
     dateOfBirth, 
     gender, 
     address, 
+    city,
+    state,
+    bloodGroup,
+    profileImage,
     phoneNumber, 
     sectionId, 
     admissionNumber,
@@ -43,8 +47,12 @@ export const admitStudent = async (req: Request, res: Response) => {
           lastName,
           dateOfBirth: new Date(dateOfBirth),
           gender,
-          address: address || null,        
-          phoneNumber: phoneNumber || null,    
+          address: address || null,    
+          city: city || null,
+state: state || null,    
+          phoneNumber: phoneNumber || null,
+          bloodGroup: bloodGroup || null,
+profileImage: profileImage || null,    
           sectionId,
           userId: user.id
         }
@@ -82,9 +90,17 @@ export const getAllStudents = async (req: Request, res: Response) => {
         ]
       },
       include: {
-        section: { include: { class: true } },
-        user: { select: { email: true } }
-      }
+  section: {
+    include: {
+      academicClass: true
+    }
+  },
+  user: {
+    select: {
+      email: true
+    }
+  }
+}
     });
 
     res.status(200).json({ success: true, data: students });
@@ -124,21 +140,35 @@ export const bulkAdmitStudents = async (req: Request, res: Response) => {
             });
 
             return await tx.student.create({
-              data: {
-                admissionNumber: row.admissionNumber,
-                firstName: row.firstName,
-                lastName: row.lastName,
-                dateOfBirth: new Date(row.dateOfBirth),
-                gender: row.gender,
-                sectionId: row.sectionId,
-                userId: user.id,
-                parents: {
-                  create: {
-                    fatherName: row.fatherName,
-                    emergencyPhone: row.fatherPhone || row.motherPhone,
-                  }
-                }
-              }
+             data: {
+  admissionNumber: row.admissionNumber,
+  firstName: row.firstName,
+  lastName: row.lastName,
+  dateOfBirth: new Date(row.dateOfBirth),
+  gender: row.gender,
+
+  section: {
+    connect: {
+      id: row.sectionId
+    }
+  },
+
+  user: {
+    connect: {
+      id: user.id
+    }
+  },
+
+  parent: {
+    create: {
+      fatherName: row.fatherName,
+      fatherPhone: row.fatherPhone,
+      motherName: row.motherName,
+      motherPhone: row.motherPhone,
+      email: row.email
+    }
+  }
+}
             });
           });
           admittedStudents.push(student);
@@ -162,9 +192,9 @@ export const getStudentProfile = async (req: Request, res: Response) => {
       where: { userId },
       include: {
         section: {
-          include: { class: true } // See their Class (e.g., 10th) and Section (A)
+          include: {  academicClass: true} // See their Class (e.g., 10th) and Section (A)
         },
-        parents: true,
+        parent: true,
         user: {
           select: { email: true, name: true, role: true }
         }

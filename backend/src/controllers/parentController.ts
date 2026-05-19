@@ -3,23 +3,19 @@ import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
 
 export const createParentAccount = async (req: Request, res: Response) => {
-  const { email, password, emergencyPhone } = req.body;
-
+  const { email, password } = req.body;
   try {
     const result = await prisma.$transaction(async (tx) => {
       const parentProfile = await tx.parent.findFirst({
-        where: { emergencyPhone }
+        where: { email }, 
       });
-
       if (!parentProfile) {
-        throw new Error("No parent record found with this phone number. Please contact the administrator.");
+        throw new Error("No parent record found with this email. Please contact the administrator.");
       }
-
       // 2. Ensure this parent doesn't already have a login account
       if (parentProfile.userId) {
         throw new Error("This parent already has a login account.");
       }
-
       // 3. Create the User Identity
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await tx.user.create({

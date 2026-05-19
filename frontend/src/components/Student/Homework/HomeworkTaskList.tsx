@@ -31,6 +31,24 @@ const tasks = [
     status: "DUE TOMORROW",
     statusClass: "bg-gray-200 text-zinc-600",
   },
+  {
+    id: 4,
+    icon: chemistryIcon,
+    title: "Organic Synthesis Report",
+    subject: "Chemistry",
+    attachments: "No attachments",
+    status: "DUE TOMORROW",
+    statusClass: "bg-gray-200 text-zinc-600",
+  },
+  {
+    id: 5,
+    icon: chemistryIcon,
+    title: "Organic Synthesis Report",
+    subject: "Chemistry",
+    attachments: "No attachments",
+    status: "DUE TOMORROW",
+    statusClass: "bg-gray-200 text-zinc-600",
+  },
 ];
 
 const HomeworkTaskList = () => {

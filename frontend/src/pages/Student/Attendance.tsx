@@ -37,7 +37,6 @@ const AttendanceTracker = () => {
         <div className="w-[360px] bg-gray-100 shrink-0 ">
           <div className="p-4 ">
             <AttendanceYearlyChart />
-            <TakeLeaveCard />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import {MapPin, User} from "lucide-react";
+import { MapPin, User } from "lucide-react";
 
 interface TimetableScheduleCardProps {
   time: string;
@@ -7,6 +7,7 @@ interface TimetableScheduleCardProps {
   isBreak?: boolean;
   breakLabel?: string;
   room?: string;
+  color?: string | null;
   subject?: string;
   professor?: string;
   duration?: string;
@@ -17,6 +18,7 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
   isBreak = false,
   breakLabel,
   room,
+  color,
   subject,
   professor,
   duration,
@@ -52,7 +54,9 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
           </div>
         ) : isActive ? (
           /* ACTIVE CARD — white bg, blue-purple left border, shadow, LIVE badge */
-          <div className="bg-white border border-gray-200 border-l-4 border-l-[#3B4FE8] rounded-2xl shadow-md px-5 py-4">
+          <div
+            className={`bg-white border border-gray-200 border-l-4 rounded-2xl shadow-md px-5 py-4 ${color ? `border-l-${color}` : ""}`}
+          >
             <div className="flex items-center justify-between mb-3">
               {/* LIVE badge */}
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#3B4FE8] bg-[#EEF0FF] px-2.5 py-0.5 rounded-full animate-pulse">
@@ -71,7 +75,10 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
           <div className="bg-blue-300/10 rounded-3xl  px-5 py-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs flex gap-1 text-gray-400 font-medium">
-                <MapPin className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.8} />
+                <MapPin
+                  className="w-3.5 h-3.5 text-gray-400"
+                  strokeWidth={1.8}
+                />
                 {room}
               </span>
               <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">
@@ -89,6 +96,5 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
     </div>
   );
 };
-
 
 export default TimetableScheduleCard;

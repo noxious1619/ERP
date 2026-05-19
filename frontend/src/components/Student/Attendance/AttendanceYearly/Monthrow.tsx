@@ -45,7 +45,7 @@ export default function MonthRow({ month }: MonthRowProps) {
   return (
     <div className="flex items-start mb-[6px]">
       {/* Month label: fixed 28px width, right-aligned, aligns with pill grid */}
-      <span className="w-7 shrink-0 mr-[6px] pt-[2px] text-[9px] font-bold tracking-[0.04em] text-[#8A94A6] text-right select-none">
+      <span className="w-7 shrink-0 mr-[8px] pt-[2px] text-[9px] font-bold tracking-[0.04em] text-[#8A94A6] text-right select-none">
         {month}
       </span>
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import TimetableScheduleCard from "../../../components/Student/Timetable/ScheduleCard";
-
 interface TimetableItem {
   id: string;
   period: number;
@@ -17,7 +16,6 @@ interface TimetableItem {
   professor: string | null;
   duration?: string; // Optional field handled gracefully
 }
-
 const TimetableSchedule: React.FC = () => {
   const [scheduleItems, setScheduleItems] = useState<TimetableItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

@@ -3,11 +3,11 @@ const WeeklyProgressCard = () => {
     <div
       className="
         flex
-        h-90
+        h-84
         w-full
         flex-col
         px-9
-        py-10
+        py-8
         bg-white rounded-3xl shadow-[0px_24px_48px_-12px_rgba(110,59,216,0.06)]
       "
     >

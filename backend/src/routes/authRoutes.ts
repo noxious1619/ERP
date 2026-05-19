@@ -3,20 +3,18 @@ import { login } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js'; // Import the new middleware
 import { loginLimiter } from '../middleware/rateLimiter.js';
-
 const router = express.Router();
-router.use(protect);
-
+// PUBLIC ROUTE
 router.post('/login',loginLimiter, login);
+// PROTECTED ROUTES
+router.use(protect);
 router.get('/me', (req: any, res) => {
   res.json({ message: "Authenticated!", user: req.user });
 });
-
 router.get('/admin-dashboard', 
   restrictTo('SUPER_ADMIN'), 
   (req: any, res) => {
     res.json({ message: "Welcome to the Secret Admin Dashboard! 🔐" });
   }
 );
-
 export default router;

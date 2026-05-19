@@ -22,6 +22,7 @@ const HomeworkFilters = () => {
               font-semibold
               transition-all
               duration-200
+              cursor-pointer
 
               ${activeTab === tab ? "text-[#171B7A]" : "text-[#626262]"}
             `}

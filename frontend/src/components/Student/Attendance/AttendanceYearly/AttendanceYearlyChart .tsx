@@ -10,10 +10,7 @@ export default function AttendanceYearlyChart() {
     <div className="flex items-center justify-center w-full">
       {/* Card */}
       <div
-        className={[
-          "px-[40px] pt-[2px] pb-[14px] mt-2",
-          "w-fit min-w-[220px]",
-        ].join(" ")}
+        className={[" pt-[2px] pb-[14px] mt-2", "w-fit "].join(" ")}
       >
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-[10px]">

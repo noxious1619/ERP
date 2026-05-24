@@ -8,7 +8,7 @@ import RightSidebarHeader from "../../components/Student/NoticeBoard/RightSideba
 
 const NoticeBoard = () => {
   return (
-    <div className="flex min-h-screen bg-[#F7F7F7]">
+    <div className="flex min-h-screen bg-[#F8F9FE]">
       <Navbar />
       {/* MAIN LAYOUT */}
       <div className="flex flex-1 h-screen">

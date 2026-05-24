@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logoIcon from "../../../assets/Student/Dashboard/Navbar/logoIcon.png";
 import dashboard from "../../../assets/Student/Dashboard/Navbar/dashboard.png";
-import timetable1 from "../../../assets/Student/Dashboard/Navbar/timetable.png";
+import timetable from "../../../assets/Student/Dashboard/Navbar/timetable.png";
 import homework from "../../../assets/Student/Dashboard/Navbar/homework.png";
 import attendance from "../../../assets/Student/Dashboard/Navbar/attendance.png";
-import exams from "../../../assets/Student/Dashboard/Navbar/exams.png";
+import exams from "../../../assets/Student/Dashboard/Navbar/exam.png";
 import setting from "../../../assets/Student/Dashboard/Navbar/setting.png";
-import notification from "../../../assets/Student/Dashboard/Navbar/notification.svg";
-import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
+import notice from "../../../assets/Student/Dashboard/Navbar/notice.png";
 
 type NavItem = {
   label: string;
@@ -18,18 +17,17 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: dashboard, href: "/student/dashboard" },
-  { label: "Timetable", icon: timetable1, href: "/student/timetable" },
+  { label: "Timetable", icon: timetable, href: "/student/timetable" },
   { label: "Homework", icon: homework, href: "/student/homework" },
   { label: "Exams", icon: exams, href: "/student/exams" },
   { label: "Attendance ", icon: attendance, href: "/student/attendance" },
-  { label: "Notices", icon: notification, href: "/student/notices" },
+  { label: "Notices", icon: notice, href: "/student/notices" },
   { label: "Settings", icon: setting, href: "/student/settings" },
-  { label: "Profile", icon: profileImage, href: "/student/profile" },
 ];
 
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
-  const { pathname } = useLocation(); // ← reads the current URL path
+  const { pathname } = useLocation();
 
   return (
     <aside

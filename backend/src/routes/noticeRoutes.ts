@@ -6,7 +6,7 @@ import { restrictTo } from '../middleware/roleMiddleware.js'; // Import the new 
 const router = express.Router();
 
 // 📢 ADMINS ONLY: Create a new notice
-router.post('/', protect, restrictTo('ADMIN', 'SUPER_ADMIN'), createNotice);
+router.post('/', protect, restrictTo('ADMIN', 'SUPER_ADMIN',"TEACHER"), createNotice);
 
 // 👤 ALL USERS: Get notices specifically targeted to them
 router.get('/my', protect, getMyNotices);

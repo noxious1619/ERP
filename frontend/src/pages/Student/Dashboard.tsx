@@ -8,9 +8,10 @@ import NoticeBoard from "../../components/Student/Dashboard/NoticeBoard";
 import CalendarMessageCard from "../../components/Student/Dashboard/CalendarMessageCard";
 import Calendar from "../../components/Student/Dashboard/Calendar";
 import YourSubjects from "../../components/Student/Dashboard/YourSubjects";
+import Attendance from "../../components/Student/Dashboard/Attendance";
 const Dashboard = () => {
   return (
-    <div className="flex gap-4  ">
+    <div className="flex gap-4 bg-[#F8F9FE] ">
       <Navbar />
       <div className="flex-1 min-w-0 flex flex-col gap-6  h-screen overflow-y-auto px-8">
         <TopBar />
@@ -38,7 +39,7 @@ const Dashboard = () => {
                 <NoticeBoard />
               </div>
               <div className="flex-1 min-w-0">
-                <NoticeBoard />
+                <Attendance />
               </div>
             </div>
             <YourSubjects />

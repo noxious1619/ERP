@@ -15,19 +15,33 @@ const Homework = () => {
       <div className="sticky top-0 h-screen shrink-0">
         <Navbar />
       </div>
+
       {/* MAIN CONTENT + SIDEBAR WRAPPER */}
-      <div className="flex flex-1 min-w-0  ">
-        {/* LEFT CONTENT AREA — natural page scroll, no inner scrollbar */}
-        <div className="flex-1 px-10 py-10 min-w-0">
-          <HomeworkHeader />
-          <div className="mt-10">
-            <HomeworkFilters />
-            <HomeworkTaskList />
+      <div className="flex flex-1 min-w-0">
+        {/* LEFT CONTENT AREA */}
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+          
+          {/* STICKY HEADER SECTION — never scrolls */}
+          <div className="sticky top-0 z-10 bg-gray-50 px-10 pt-10 pb-4">
+            <HomeworkHeader />
+            <div className="mt-6">
+              <HomeworkFilters />
+            </div>
           </div>
+
+          {/* SCROLLABLE TASK LIST ONLY */}
+          <div className="flex-1 overflow-y-auto px-10 pb-10" style={{ scrollbarWidth: "none" }}>
+            <style>{`.task-scroll::-webkit-scrollbar { display: none; }`}</style>
+            <div className="task-scroll">
+              <HomeworkTaskList />
+            </div>
+          </div>
+
         </div>
-        {/* RIGHT SIDEBAR — fixed to viewport, scrollable only if content overflows, no scrollbar visible */}
+
+        {/* RIGHT SIDEBAR */}
         <div
-          className="w-[360px] shrink-0 bg-gray-100 "
+          className="w-[360px] shrink-0 bg-gray-100"
           style={{
             position: "sticky",
             top: 0,
@@ -36,14 +50,10 @@ const Homework = () => {
             scrollbarWidth: "none",
           }}
         >
-          <style>{`
-            .sidebar-hidden-scroll::-webkit-scrollbar { display: none; }
-          `}</style>
-
+          <style>{`.sidebar-hidden-scroll::-webkit-scrollbar { display: none; }`}</style>
           <div className="sidebar-hidden-scroll h-full overflow-y-auto py-4 px-6">
-            <div className="flex flex-col gap-6 ">
+            <div className="flex flex-col gap-6">
               <WeeklyProgressCard />
-
               {!showDeadlines ? (
                 <StatusCard onOpenDeadlines={() => setShowDeadlines(true)} />
               ) : (
@@ -56,5 +66,5 @@ const Homework = () => {
     </div>
   );
 };
-
 export default Homework;
+

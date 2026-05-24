@@ -17,13 +17,13 @@ const notices = [
 ];
 const NoticeBoard = () => {
   return (
-    <div className="w-full rounded-3xl bg-white px-5 py-11  shadow-[0px_15px_25px_10px_rgba(0,0,0,0.08)]">
+    <div className="w-full rounded-3xl bg-white  py-11  shadow-[0px_15px_25px_10px_rgba(0,0,0,0.08)]">
       {/* Header */}
-      <div className="flex justify-center">
-        <h2 className="text-[20px] font-bold text-black">Notice Board</h2>
+      <div className="flex justify-center ">
+        <h2 className="text-[20px] font-bold text-black ">Notice Board</h2>
       </div>
       {/* Notice List */}
-      <div className="mt-6 flex flex-col gap-2 px-8">
+      <div className="mt-6 flex flex-col gap-2 px-4">
         {notices.map((notice) => (
           <div
             key={notice.id}

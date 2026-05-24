@@ -26,7 +26,7 @@ const AttendanceHeader: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex items-start justify-between">
+    <div className="flex items-start justify-between ">
       {/* Left Side */}
       <div>
         <h1 className="text-[44px] font-bold leading-none text-[#2D3335]">

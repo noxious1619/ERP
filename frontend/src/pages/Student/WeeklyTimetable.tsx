@@ -4,7 +4,7 @@ import WeeklyTimetableGrid from "../../components/Student/Timetable/WeeklyTimeta
 
 const WeeklyTimetable = () => {
   return (
-    <div className="flex min-h-screen bg-[#F5F6FA]">
+    <div className="flex min-h-screen bg-[#F8F9FE]">
       <Navbar />
       <div className="flex flex-1 flex-col h-screen min-w-0">
         {/* Sticky Header */}

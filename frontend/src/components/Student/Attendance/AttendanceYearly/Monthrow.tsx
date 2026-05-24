@@ -55,7 +55,7 @@ export default function MonthRow({ month }: MonthRowProps) {
           <div
             key={wi}
             className="grid gap-x-[3px]"
-            style={{ gridTemplateColumns: "repeat(7, 20px)" }}
+            style={{ gridTemplateColumns: "repeat(7, 18px)" }}
           >
             {week.map((cell, ci) => (
               <div key={ci} className="flex justify-center">

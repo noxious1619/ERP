@@ -187,6 +187,159 @@ export const createTimetableEntry = async (req: Request, res: Response) => {
   }
 };
 
+export const createWeeklyTimetable = async (req: Request, res: Response) => {
+  try {
+    const { entries } = req.body;
+
+    if (!entries || !Array.isArray(entries) || entries.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error: 'entries' field must be a non-empty array."
+      });
+    }
+
+    // Wrap everything in a transaction for clean atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      const createdEntries = [];
+
+      for (const entry of entries) {
+        const {
+          day,
+          period,
+          startTime,
+          endTime,
+          room,
+          color,
+          isBreak,
+          breakLabel,
+          sectionId,
+          subjectId,
+          teacherId
+        } = entry;
+
+        const formattedDay = day.toUpperCase();
+        const periodNumber = Number(period);
+        const treatAsBreak = Boolean(isBreak);
+
+        // 1. Conflict check for Teacher (Skip if it's a structural break)
+        if (!treatAsBreak && teacherId) {
+          const teacherConflict = await tx.timetable.findFirst({
+            where: {
+              day: formattedDay as any,
+              period: periodNumber,
+              teacherId
+            }
+          });
+          if (teacherConflict) {
+            throw new Error(`Conflict: Teacher is already assigned at ${formattedDay}, Period ${periodNumber}.`);
+          }
+        }
+
+        // 2. Conflict check for Section
+        const sectionConflict = await tx.timetable.findFirst({
+          where: {
+            day: formattedDay as any,
+            period: periodNumber,
+            sectionId
+          }
+        });
+        if (sectionConflict) {
+          throw new Error(`Conflict: Section already has a class scheduled at ${formattedDay}, Period ${periodNumber}.`);
+        }
+
+        // 3. Stage the record creation
+        const newEntry = await tx.timetable.create({
+          data: {
+            day: formattedDay as any,
+            period: periodNumber,
+            startTime,
+            endTime,
+            room: room || null,
+            color: color || null,
+            isBreak: treatAsBreak,
+            breakLabel: treatAsBreak ? (breakLabel || "Recess") : null,
+            sectionId,
+            subjectId: treatAsBreak ? null : subjectId,
+            teacherId: treatAsBreak ? null : teacherId
+          }
+        });
+
+        createdEntries.push(newEntry);
+      }
+
+      return createdEntries;
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `Successfully created ${result.length} timetable entries.`,
+      data: result
+    });
+
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to create weekly schedule batch.",
+      error: error.message
+    });
+  }
+};
+
+export const getWeeklyTimetableBySection = async (req: Request, res: Response) => {
+  try {
+    const { sectionId } = req.params;
+
+    // 1. Validation check
+    if (!sectionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error: sectionId parameter is required."
+      });
+    }
+
+    // 2. Query all rows matching the section with relational data joined
+    const weeklySchedule = await prisma.timetable.findMany({
+      where: {
+        sectionId: sectionId
+      },
+      include: {
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        teacher: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      // Chronological sort by day and start time to keep output clean
+      orderBy: [
+        { day: "asc" },
+        { startTime: "asc" }
+      ]
+    });
+
+    // 3. Return the unified array payload
+    return res.status(200).json({
+      success: true,
+      count: weeklySchedule.length,
+      data: weeklySchedule
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Server Error: Could not retrieve the weekly timetable.",
+      error: error.message
+    });
+  }
+};
+
 export const getStudentTimetable = async (
   req: Request,
   res: Response
@@ -269,3 +422,4 @@ export const getStudentTimetable = async (
     });
   }
 };
+

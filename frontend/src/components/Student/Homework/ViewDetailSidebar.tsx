@@ -20,6 +20,8 @@ export interface HomeworkTask {
   givenBy: string; // teacher name e.g. "Miss. Archana Shah"
   description: string;
   teacherImages?: string[]; // empty / undefined → shows empty state
+  attachments: string;   // e.g., "1 attachment"
+  statusClass: string;
 }
 
 interface UploadedFile {

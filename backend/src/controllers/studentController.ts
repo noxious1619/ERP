@@ -32,10 +32,10 @@ export const admitStudent = async (req: Request, res: Response) => {
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = await tx.user.create({
         data: {
+          name: `${firstName} ${lastName}`.trim(),
           email,
           passwordHash: hashedPassword,
           role: "STUDENT",
-          name: `${firstName} ${lastName}`.trim(),
         },
       });
 

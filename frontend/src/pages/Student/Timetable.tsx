@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import useAuth from "../../hooks/useAuth"; // 1. Scan your global user details out of memory
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import TimetableHeader from "../../components/Student/Timetable/Header";
 import TimetableSchedule from "../../components/Student/Timetable/ScheduleSection";
@@ -21,19 +22,25 @@ interface TimetableEntry {
 }
 
 const Timetable = () => {
+  // 2. Consume live profile data from the hydrated context layer
+  const { studentData, loading: authLoading } = useAuth();
+
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [scheduleData, setScheduleData] = useState<TimetableEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [timetableLoading, setTimetableLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Your specific database section ID
-  const targetSectionId = "b7ffe974-a889-408e-886f-7a8109501ee2";
+  // 3. Extract the real, dynamic section ID assigned to Dishant Pandey!
+  const targetSectionId = studentData?.sectionId;
 
-  // Single Fetch Sequence: Grab the entire week's grid parameters at once
+  // Single Fetch Sequence: Grab records automatically whenever targetSectionId maps in
   useEffect(() => {
+    // Prevent execution if global auth hydration is still processing
+    if (!targetSectionId) return;
+
     const fetchWeeklyData = async () => {
       try {
-        setLoading(true);
+        setTimetableLoading(true);
         setError(null);
         const token = localStorage.getItem("token");
 
@@ -45,35 +52,48 @@ const Timetable = () => {
         );
 
         if (response.data.success) {
-          setScheduleData(response.data.data); // Caches the whole week array
+          setScheduleData(response.data.data);
         } else {
           setError("Failed to load timetable dataset.");
         }
       } catch (err: any) {
         setError(err.response?.data?.message || "Server linkage timeout.");
       } finally {
-        setLoading(false);
+        setTimetableLoading(false);
       }
     };
 
     fetchWeeklyData();
-  }, [targetSectionId]);
+  }, [targetSectionId]); // Listens tightly for when targetSectionId lands
+
+  // 4. Return a clean loading block during cold starts/refreshes to prevent component race-conditions
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FE] text-slate-400 font-semibold text-xs tracking-wider uppercase">
+        Verifying secure profile session...
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FE]">
       <Navbar />
       <div className="flex flex-1 flex-col h-screen min-w-0">
+        {/* Sticky Header */}
         <div className="px-10 pt-8 py-4 shrink-0 bg-[#F5F6FA]">
           <TimetableHeader />
         </div>
         
+        {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex items-start gap-6">
             
+            {/* LEFT - Main Weekly Timetable Grid */}
             <div className="flex-1 min-w-0">
               <TimetableSchedule />
             </div>
             
+            {/* RIGHT - Sidebar Frame */}
             <div className="w-90 shrink-0 bg-gray-100 px-5 py-6 rounded-[32px]">
               <CalendarSection 
                 variant="timetable" 
@@ -81,11 +101,10 @@ const Timetable = () => {
                 onDateSelect={setSelectedDate}
               />
               
-              {/* Pass both the selected date and the downloaded week data array down */}
               <DateScheduleCard 
                 selectedDate={selectedDate} 
                 timetableData={scheduleData}
-                isLoading={loading}
+                isLoading={timetableLoading}
                 isError={!!error}
               />
             </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import TimetableScheduleCard from "../../../components/Student/Timetable/ScheduleCard";
+import { getCurrentAPIDay } from "../../../utils/dateHelpers";
 interface TimetableItem {
   id: string;
   period: number;
@@ -20,6 +21,7 @@ const TimetableSchedule: React.FC = () => {
   const [scheduleItems, setScheduleItems] = useState<TimetableItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeDay, setActiveDay] = useState<string>(getCurrentAPIDay());
 
   useEffect(() => {
     const fetchTimetable = async () => {
@@ -29,8 +31,7 @@ const TimetableSchedule: React.FC = () => {
 
         const token = localStorage.getItem("token"); 
 
-        const response = await axios.get("http://localhost:5000/api/academic/timetable/student", {
-          params: { day: "monday" }, 
+        const response = await axios.get(`http://localhost:5000/api/academic/timetable/student?day=${activeDay}`, { 
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -58,11 +58,9 @@ export const getSectionAttendance = async (req: Request, res: Response) => {
     const attendanceDate = new Date(date as string);
     attendanceDate.setUTCHours(0, 0, 0, 0);
 
-    // 🔗 Fetches Section -> Class -> Students in one go
     const sectionInfo = await prisma.section.findUnique({
       where: { id: sectionId as string },
       include: {
-        class: true, // This brings in the "Class" name (e.g., "10")
         students: {
           select: {
             id: true,
@@ -78,15 +76,14 @@ export const getSectionAttendance = async (req: Request, res: Response) => {
     });
 
     if (!sectionInfo) {
-      return res.status(404).json({ success: false, message: "Section not found" });
+      return res.status(404).json({ success: false, message: "Section record not found" });
     }
 
     res.status(200).json({
       success: true,
       metadata: {
-        className: sectionInfo.class.name,
         sectionName: sectionInfo.name,
-        fullClass: `${sectionInfo.class.name}-${sectionInfo.name}`
+        fullClass: sectionInfo.name
       },
       data: sectionInfo.students.map(s => ({
         studentId: s.id,

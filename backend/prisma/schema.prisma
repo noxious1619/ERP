@@ -177,17 +177,16 @@ model Class {
 
 model Section {
   id             String       @id @default(uuid())
-  name           String // "Section A"
+  name           String       // e.g., "Alpha", "Omega"
   classId        String
-  academicClass  Class        @relation(fields: [classId], references: [id])
+  academicClass  Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classTeacherId String?      @unique
+  classTeacher   Teacher?     @relation("ClassTeacher", fields: [classTeacherId], references: [id])
+
   timetable      Timetable[]
   students       Student[]
   attendances    Attendance[]
   assignments    Assignment[]
-  classTeacherId String?      @unique
-  classTeacher   Teacher?     @relation("ClassTeacher", fields: [classTeacherId], references: [id])
-  teacher        Teacher?     @relation(fields: [teacherId], references: [id])
-  teacherId      String?
 }
 
 model Subject {

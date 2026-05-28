@@ -22,27 +22,28 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(STUDENT)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String          @id @default(uuid())
+  name              String
+  email             String          @unique
+  passwordHash      String
+  role              Role            @default(STUDENT)
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
   // Profiles
-  student Student?
-  teacher Teacher?
-  staff   Staff?
-  parent  Parent?
+  student           Student?
+  teacher           Teacher?
+  staff             Staff?
+  parent            Parent?
   // Relations
   logs              AuditLog[]
-  attendanceMarked  Attendance[] @relation("MarkedBy")
+  attendanceMarked  Attendance[]    @relation("MarkedBy")
   notices           Notice[]
   noticeViews       NoticeView[]
   assignments       Assignment[]
-  gradedSubmissions Submission[] @relation("Grader")
+  gradedSubmissions Submission[]    @relation("Grader")
   timetables        Timetable[]
+  createdExams      ScheduledExam[]
 }
 
 model Student {
@@ -68,8 +69,8 @@ model Student {
   user              User?              @relation(fields: [userId], references: [id])
   sectionId         String
   section           Section            @relation(fields: [sectionId], references: [id])
-  parentId          String? 
-  parent            Parent? @relation(fields: [parentId], references: [id])
+  parentId          String?
+  parent            Parent?            @relation(fields: [parentId], references: [id])
   attendance        Attendance[]
   // System Fields
   isActive          Boolean            @default(true)
@@ -83,18 +84,18 @@ model Student {
 }
 
 model Parent {
-  id            String  @id @default(uuid())
-  fatherName    String?
-  fatherPhone   String?
-  motherName    String?
-  motherPhone   String?
-  email         String?
+  id          String    @id @default(uuid())
+  fatherName  String?
+  fatherPhone String?
+  motherName  String?
+  motherPhone String?
+  email       String?
   // Relation
-  userId        String? @unique
-  user          User?   @relation(fields: [userId], references: [id])
-  students Student[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now()) @updatedAt
+  userId      String?   @unique
+  user        User?     @relation(fields: [userId], references: [id])
+  students    Student[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
 }
 
 model Teacher {
@@ -170,6 +171,7 @@ model Class {
   academicYear         AcademicYear          @relation(fields: [academicYearId], references: [id])
   sections             Section[]
   subjects             Subject[] // Subjects assigned to this grade level
+  scheduledExams       ScheduledExam[]
   assignments          Assignment[]
   assessmentComponents AssessmentComponent[]
   feeComponents        FeeComponent[]
@@ -194,10 +196,12 @@ model Subject {
   id                   String                @id @default(uuid())
   name                 String // e.g., "Mathematics"
   code                 String // e.g., "MATH101"
+  icon                 String?
   classId              String
   class                Class                 @relation(fields: [classId], references: [id])
   timetable            Timetable[]
   assignments          Assignment[]
+  scheduledExams       ScheduledExam[]
   assessmentComponents AssessmentComponent[]
   teacher              Teacher?              @relation(fields: [teacherId], references: [id])
   teacherId            String?
@@ -375,11 +379,42 @@ enum ComponentType {
 
 // 1. The Container for a specific examination period
 model ExamTerm {
-  id         String                @id @default(uuid())
-  name       String // e.g., "Term 1", "Finals 2026"
-  components AssessmentComponent[]
-  results    CalculatedResult[]
-  createdAt  DateTime              @default(now())
+  id             String                @id @default(uuid())
+  name           String // e.g., "Term 1", "Finals 2026"
+  components     AssessmentComponent[]
+  scheduledExams ScheduledExam[]
+  results        CalculatedResult[]
+  createdAt      DateTime              @default(now())
+}
+
+model ScheduledExam {
+  id String @id @default(uuid())
+
+  title    String
+  syllabus String?
+
+  examDate  DateTime
+  startTime String?
+  endTime   String?
+
+  totalMarks Float? @default(100)
+
+  termId String
+  term   ExamTerm @relation(fields: [termId], references: [id])
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  classId String
+  class   Class  @relation(fields: [classId], references: [id])
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([classId, examDate])
 }
 
 // 2. The Rulebook: Defines weights for each subject/class

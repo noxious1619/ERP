@@ -75,7 +75,7 @@ export const createSection = async (req: any, res: Response) => {
 
 export const createSubject = async (req: any, res: Response) => {
   try {
-    const { name, code, classId } = req.body;
+    const { name, code, classId ,icon  } = req.body;
 
     // 1. Check if the class exists first
     const parentClass = await prisma.class.findUnique({
@@ -91,7 +91,8 @@ export const createSubject = async (req: any, res: Response) => {
       data: { 
         name, 
         code: code.toUpperCase(), // Standardize codes like 'MATH101'
-        classId 
+        classId ,
+        icon: icon || null // Optional field for subject icon
       },
     });
 

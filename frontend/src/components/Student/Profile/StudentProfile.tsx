@@ -169,7 +169,7 @@ const StudentProfile = () => {
   if (error) {
     return (
       <div className="w-[460px] bg-red-50 text-red-700 p-6 rounded-3xl text-sm font-medium border border-red-100">
-        ⚠️ {error}
+         {error}
       </div>
     );
   }

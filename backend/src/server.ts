@@ -13,6 +13,7 @@ import calendarRoutes from './routes/calendarRoutes.js';
 import teacherRoutes from './routes/teacherRotutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import parentRoutes from './routes/parentRoutes.js';
+import examRoutes from './routes/examRoutes.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/grades', gradeRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/exams', examRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

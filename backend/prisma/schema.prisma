@@ -267,6 +267,14 @@ enum AttendanceStatus {
   HALF_DAY
 }
 
+enum NoticeCategory {
+  ANNOUNCEMENT
+  ACADEMIC
+  HOLIDAY
+  EXAM
+  SCHOOL_EVENT
+}
+
 model Notice {
   id         String         @id @default(uuid())
   title      String
@@ -274,6 +282,7 @@ model Notice {
   targetType TargetType // GLOBAL, ROLE, CLASS, SECTION
   targetId   String? // ID of the Class or Section
   priority   NoticePriority @default(STANDARD)
+  category   NoticeCategory  @default(ANNOUNCEMENT)
   author     User           @relation(fields: [authorId], references: [id])
   authorId   String
   createdAt  DateTime       @default(now())

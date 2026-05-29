@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-// import { PrismaClient, Role } from "../../generated/prisma/index.js";
 import { prisma } from '../lib/prisma.js';
 import { Role } from "../../generated/prisma/index.js";
 import bcrypt from "bcrypt";
@@ -165,7 +164,7 @@ export const bulkAdmitStudents = async (req: Request, res: Response) => {
       fatherPhone: row.fatherPhone,
       motherName: row.motherName,
       motherPhone: row.motherPhone,
-      email: row.email
+       email: row.parentEmail || null,
     }
   }
 }

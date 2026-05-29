@@ -45,3 +45,60 @@ export const createParentAccount = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+export const upsertParentForStudent = async (req: Request, res: Response) => {
+  const studentId = req.params.studentId;
+
+if (!studentId || Array.isArray(studentId)) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid student ID",
+  });
+}
+  const { fatherName, fatherPhone, motherName, motherPhone, email } = req.body;
+ 
+  try {
+    // 1. Check student exists
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+      include: { parent: true },
+    });
+ 
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+ 
+    let parent;
+ 
+    if (student.parentId) {
+      // 2a. Update existing parent record
+      parent = await prisma.parent.update({
+        where: { id: student.parentId },
+        data: {
+          fatherName: fatherName ?? undefined,
+          fatherPhone: fatherPhone ?? undefined,
+          motherName: motherName ?? undefined,
+          motherPhone: motherPhone ?? undefined,
+          email: email ?? undefined,
+        },
+      });
+    } else {
+      // 2b. Create a new parent and link to student in one transaction
+      parent = await prisma.$transaction(async (tx) => {
+        const newParent = await tx.parent.create({
+          data: { fatherName, fatherPhone, motherName, motherPhone, email },
+        });
+        await tx.student.update({
+          where: { id: studentId },
+          data: { parentId: newParent.id },
+        });
+        return newParent;
+      });
+    }
+ 
+    return res.status(200).json({ success: true, data: parent });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+ 

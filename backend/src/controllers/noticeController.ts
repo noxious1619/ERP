@@ -1,18 +1,18 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
-
 export const createNotice = async (req: Request, res: Response) => {
   try {
-    const { title, content, targetType, targetId, priority, expiresAt } = req.body;
+    const { title, content, targetType, targetId, priority, expiresAt, category } = req.body;
     const authorId = (req as any).user.id;
 
     const notice = await prisma.notice.create({
       data: {
         title,
         content,
-        targetType, 
+        targetType,
         targetId: targetId || null,
         priority: priority || 'STANDARD',
+        category: category || 'ANNOUNCEMENT',
         authorId,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
       },
@@ -30,14 +30,14 @@ export const createNotice = async (req: Request, res: Response) => {
 
 export const getMyNotices = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id; // From your 'protect' middleware
+    const userId = (req as any).user.id;
+    const { category } = req.query; // e.g. ?category=ACADEMIC
 
-    // 1. Get the student's enrollment context (Class & Section)
     const student = await prisma.student.findUnique({
       where: { userId },
-      select: { 
-        sectionId: true, 
-        section: { select: { classId: true } } 
+      select: {
+        sectionId: true,
+        section: { select: { classId: true } }
       }
     });
 
@@ -45,7 +45,6 @@ export const getMyNotices = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
-    // 2. Fetch notices that match the student's target scope
     const notices = await prisma.notice.findMany({
       where: {
         AND: [
@@ -58,18 +57,22 @@ export const getMyNotices = async (req: Request, res: Response) => {
             ]
           },
           {
-            // Only show notices that haven't expired yet
             OR: [
               { expiresAt: null },
               { expiresAt: { gt: new Date() } }
             ]
-          }
+          },
+          // Only apply category filter if it's not "ALL"
+          ...(category && category !== 'ALL'
+            ? [{ category: category as any }]
+            : []
+          )
         ]
       },
-      orderBy: { createdAt: 'desc' }, // Newest first
+      orderBy: { createdAt: 'desc' },
       include: {
         author: {
-          select: { name: true, role: true } // Show who posted it
+          select: { name: true, role: true }
         }
       }
     });

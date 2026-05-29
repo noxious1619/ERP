@@ -13,22 +13,21 @@ const Timetable = () => {
         <div className="px-10 pt-8 py-4 shrink-0 bg-[#F5F6FA]">
           <TimetableHeader />
         </div>
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex items-start gap-6">
-            {/* LEFT */}
-            <div className="flex-1 min-w-0">
-              <TimetableSchedule />
-            </div>
-            {/* RIGHT*/}
-            <div className="w-90 shrink-0 bg-gray-100 px-5 py-6 ">
-              <Calendar variant="timetable" />
-              <DateScheduleCard />
-            </div>
+        {/* Body */}
+        <div className="flex flex-1 overflow-hidden ">
+          {/* LEFT - default scrollbar scrolls only this */}
+          <div className="flex-1 overflow-y-auto px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TimetableSchedule />
+          </div>
+          {/* RIGHT - completely static, never moves */}
+          <div className="w-90 shrink-0 bg-gray-100 px-3 py-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Calendar variant="timetable" />
+            <DateScheduleCard />
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default Timetable;

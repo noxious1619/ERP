@@ -4,7 +4,6 @@ interface SubjectIconProps {
   size?: number;
   color?: string;
 }
-
 const MathsIcon = ({ size, color }: { size: number; color: string }) => (
   <svg width={size} height={size} viewBox="0 0 28 28" fill="none">
     <line

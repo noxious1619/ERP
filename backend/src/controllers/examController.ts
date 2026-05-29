@@ -79,17 +79,13 @@ export const getStudentUpcomingExams = async (req: any, res: Response) => {
     const formatted = exams.map(exam => {
 
       let status = "UPCOMING";
-
       const examDate = new Date(exam.examDate);
-
       if (today.toDateString() === examDate.toDateString()) {
         status = "ONGOING";
       }
-
       if (today > examDate) {
         status = "COMPLETED";
       }
-
       return {
         id: exam.id,
         title: exam.title,

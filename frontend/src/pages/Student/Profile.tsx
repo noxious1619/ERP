@@ -39,7 +39,7 @@ const Profile = () => {
           <div className="mt-10 flex items-start gap-6">
             {/* Left */}
             <div className="shrink-0">
-              <StudentProfile />
+              <StudentProfile  />
             </div>
 
             {/* Center */}

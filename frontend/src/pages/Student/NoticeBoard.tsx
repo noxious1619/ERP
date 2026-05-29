@@ -23,6 +23,7 @@ export interface Notice {
 const NoticeBoard = () => {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [allNotices, setAllNotices] = useState<Notice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +40,9 @@ const NoticeBoard = () => {
         });
         if (res.data.success) {
           setNotices(res.data.data);
+          if (activeFilter === "ALL") {
+            setAllNotices(res.data.data);
+          }
         } else {
           setError("Failed to fetch notices.");
         }
@@ -63,7 +67,12 @@ const NoticeBoard = () => {
             <Filters activeFilter={activeFilter} onFilterChange={setActiveFilter} />
           </div>
           <div className="flex-1 overflow-y-auto px-14 py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <NoticeCards notices={notices} isLoading={isLoading} error={error} />
+            <NoticeCards
+              notices={notices}
+              allNotices={allNotices}
+              isLoading={isLoading}
+              error={error}
+            />
           </div>
         </div>
         {/* RIGHT SIDEBAR */}

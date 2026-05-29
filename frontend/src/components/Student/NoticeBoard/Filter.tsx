@@ -1,8 +1,8 @@
-
 interface NoticeBoardFiltersProps {
   activeFilter: string;
   onFilterChange: (filter: string) => void;
 }
+
 const FILTERS = [
   { label: "All", value: "ALL" },
   { label: "Announcements", value: "ANNOUNCEMENT" },
@@ -11,6 +11,7 @@ const FILTERS = [
   { label: "Exams", value: "EXAM" },
   { label: "School events", value: "SCHOOL_EVENT" },
 ];
+
 const Filters = ({ activeFilter, onFilterChange }: NoticeBoardFiltersProps) => {
   return (
     <div className="mt-4 border-b border-[#D9D9D9]">
@@ -28,13 +29,7 @@ const Filters = ({ activeFilter, onFilterChange }: NoticeBoardFiltersProps) => {
             >
               {filter.label}
               {isActive && (
-                <span
-                  className="
-                    absolute bottom-0 left-1/2
-                    h-[3px] w-[44px] -translate-x-1/2
-                    rounded-full bg-[#111111]
-                  "
-                />
+                <span className="absolute bottom-0 left-0 h-[3px] w-full rounded-full bg-[#111111]" />
               )}
             </button>
           );
@@ -43,4 +38,5 @@ const Filters = ({ activeFilter, onFilterChange }: NoticeBoardFiltersProps) => {
     </div>
   );
 };
+
 export default Filters;

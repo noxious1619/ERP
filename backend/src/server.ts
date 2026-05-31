@@ -39,6 +39,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/exams', examRoutes);
 
+
 // Health Check
 app.get('/', (req, res) => {
   res.send('ERP Backend is running... 🚀');

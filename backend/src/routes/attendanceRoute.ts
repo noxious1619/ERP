@@ -1,5 +1,13 @@
 import express from 'express';
-import { markBulkAttendance, getSectionAttendance } from '../controllers/attendanceController.js';
+import { markBulkAttendance, 
+    getSectionAttendance,
+    updateStudentYearlyAttendance,
+    getStudentAttendancePercentage,
+    getStudentMonthlyTrends,
+    getStudentWeeklyTrends,
+    getStudentHeatmapGrid,
+
+} from '../controllers/attendanceController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
 
@@ -8,7 +16,37 @@ const router = express.Router();
 router.use(protect);
 
 
-router.post('/bulk', restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), markBulkAttendance);
-router.get('/section', restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), getSectionAttendance);
+router.post('/bulk', 
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    markBulkAttendance
+);
+router.get('/section', 
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    getSectionAttendance
+);
+router.put('/student/yearly', 
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    updateStudentYearlyAttendance
+);
+
+router.get('/attendanceData/student/:studentId/totalPercetage', 
+    restrictTo('STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    getStudentAttendancePercentage
+);
+
+router.get('/attendanceData/student/:studentId/monthly-trends',
+    restrictTo('STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    getStudentMonthlyTrends
+);
+
+router.get('/attendanceData/student/:studentId/weekly-trends',
+    restrictTo('STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    getStudentWeeklyTrends
+);
+
+router.get('/attendanceData/student/:studentId/heatmap',
+    restrictTo('STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    getStudentHeatmapGrid
+);
 
 export default router;

@@ -27,3 +27,8 @@ export const getDynamicHeaderDate = (): string => {
   // 5. Build and return the formatted value matching your design blueprint
   return `${dayName}, ${monthName} ${dayNum}${suffix}`;
 };
+
+export const getCurrentAPIDay = (): string => {
+  const now = new Date();
+  return now.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+};

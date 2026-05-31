@@ -5,39 +5,47 @@ import bcrypt from "bcrypt";
 
 export const registerTeacher = async (req: Request, res: Response) => {
   const { 
-    name, email, password, 
-    employeeId, qualification, specialization, 
-    experience, joiningDate, designation 
+    firstName, 
+    lastName, 
+    email, 
+    password, 
+    employeeId, 
+    qualification, 
+    specialization, 
+    experience, 
+    joiningDate, 
+    designation 
   } = req.body;
 
   try {
-    // 1. Transaction: Ensure both User and Teacher profile are created together
     const result = await prisma.$transaction(async (tx) => {
       
       const existingUser = await tx.user.findUnique({ where: { email } });
       if (existingUser) throw new Error("Email already registered");
 
-      const passwordHash = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await tx.user.create({
         data: {
-          name,
+          name: `${firstName} ${lastName}`.trim(),
           email,
-          passwordHash,
+          passwordHash: hashedPassword,
           role: "TEACHER", 
         },
       });
 
-      // Create the Teacher Profile linked to the User
       const teacher = await tx.teacher.create({
         data: {
+          firstName,         
+          lastName,           
           employeeId,
           qualification,
           specialization,
           experience: Number(experience),
           joiningDate: new Date(joiningDate),
           designation,
-          userId: user.id, // The 1:1 Handshake
+          userId: user.id,    
+          email               
         },
       });
 

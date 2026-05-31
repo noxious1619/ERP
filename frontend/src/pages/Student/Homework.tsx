@@ -1,14 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import HomeworkHeader from "../../components/Student/Homework/HomeworkHeader";
 import StatusCard from "../../components/Student/Homework/StatusCard";
 import HomeworkFilters from "../../components/Student/Homework/HomeworkFilters";
 import HomeworkTaskList from "../../components/Student/Homework/HomeworkTaskList";
 import WeeklyProgressCard from "../../components/Student/Homework/WeeklyProgressCard";
-import UpcomingDeadlinesCard from "../../components/Student/Homework/DeadlinesCard";
+import DeadlinesCard from "../../components/Student/Homework/DeadlinesCard";
 
 const Homework = () => {
   const [showDeadlines, setShowDeadlines] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHomeworkFeed = async () => {
+      try {
+        const token = localStorage.getItem("token"); 
+        const response = await axios.get("http://localhost:5000/api/assignments/my-feed", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (response.data.success) {
+          setTasks(response.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching student homework feed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeworkFeed();
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -21,7 +47,7 @@ const Homework = () => {
         {/* LEFT CONTENT AREA */}
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
           
-          {/* STICKY HEADER SECTION — never scrolls */}
+          {/* STICKY HEADER + FILTERS */}
           <div className="sticky top-0 z-10 bg-gray-50 px-10 pt-10 pb-4">
             <HomeworkHeader />
             <div className="mt-6">
@@ -33,7 +59,13 @@ const Homework = () => {
           <div className="flex-1 overflow-y-auto px-10 pb-10" style={{ scrollbarWidth: "none" }}>
             <style>{`.task-scroll::-webkit-scrollbar { display: none; }`}</style>
             <div className="task-scroll">
-              <HomeworkTaskList />
+              {loading ? (
+                <div className="flex items-center justify-center h-40 text-gray-500 font-medium">
+                  Loading assignments...
+                </div>
+              ) : (
+                <HomeworkTaskList tasks={tasks} />
+              )}
             </div>
           </div>
 
@@ -57,7 +89,7 @@ const Homework = () => {
               {!showDeadlines ? (
                 <StatusCard onOpenDeadlines={() => setShowDeadlines(true)} />
               ) : (
-                <UpcomingDeadlinesCard onBack={() => setShowDeadlines(false)} />
+                <DeadlinesCard onBack={() => setShowDeadlines(false)} />
               )}
             </div>
           </div>
@@ -66,5 +98,5 @@ const Homework = () => {
     </div>
   );
 };
-export default Homework;
 
+export default Homework;

@@ -40,7 +40,6 @@ model User {
   attendanceMarked  Attendance[]    @relation("MarkedBy")
   notices           Notice[]
   noticeViews       NoticeView[]
-  assignments       Assignment[]
   gradedSubmissions Submission[]    @relation("Grader")
   timetables        Timetable[]
   createdExams      ScheduledExam[]
@@ -123,8 +122,9 @@ model Teacher {
   sections       Section[]
   subjects       Subject[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assignments Assignment[]
 }
 
 model Staff {
@@ -178,18 +178,19 @@ model Class {
 }
 
 model Section {
-  id             String       @id @default(uuid())
-  name           String // "Section A"
+  id             String   @id @default(uuid())
+  name           String // e.g., "Alpha", "Omega"
   classId        String
-  academicClass  Class        @relation(fields: [classId], references: [id])
-  timetable      Timetable[]
-  students       Student[]
-  attendances    Attendance[]
-  assignments    Assignment[]
-  classTeacherId String?      @unique
-  classTeacher   Teacher?     @relation("ClassTeacher", fields: [classTeacherId], references: [id])
-  teacher        Teacher?     @relation(fields: [teacherId], references: [id])
-  teacherId      String?
+  academicClass  Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classTeacherId String?  @unique
+  classTeacher   Teacher? @relation("ClassTeacher", fields: [classTeacherId], references: [id])
+
+  timetable   Timetable[]
+  students    Student[]
+  attendances Attendance[]
+  assignments Assignment[]
+  teacher     Teacher?     @relation(fields: [teacherId], references: [id])
+  teacherId   String?
 }
 
 model Subject {
@@ -282,7 +283,7 @@ model Notice {
   targetType TargetType // GLOBAL, ROLE, CLASS, SECTION
   targetId   String? // ID of the Class or Section
   priority   NoticePriority @default(STANDARD)
-  category   NoticeCategory  @default(ANNOUNCEMENT)
+  category   NoticeCategory @default(ANNOUNCEMENT)
   author     User           @relation(fields: [authorId], references: [id])
   authorId   String
   createdAt  DateTime       @default(now())
@@ -332,7 +333,7 @@ model Assignment {
   section   Section? @relation(fields: [sectionId], references: [id])
 
   teacherId String
-  teacher   User   @relation(fields: [teacherId], references: [id])
+  teacher   Teacher @relation(fields: [teacherId], references: [id])
 
   submissions Submission[]
 

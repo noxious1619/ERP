@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
+import { normalizeAssignmentsForStudent } from '../utils/assignmentNormalizer.js';
 
 export const createAssignment = async (req: Request, res: Response) => {
   try {
@@ -14,7 +15,18 @@ export const createAssignment = async (req: Request, res: Response) => {
     } = req.body;
     console.log(req.body)
 
-    const teacherId = (req as any).user.id;
+    const userId = (req as any).user.id;
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId: userId }
+    });
+
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher profile record not found for this authenticated session."
+      });
+    }
+    const teacherId = teacher.id;
 
     // 1. Handle File Path (from Multer)
     const fileUrl = req.file ? req.file.path : null;
@@ -67,7 +79,6 @@ export const getStudentAssignments = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
-    // 1. Get student's class and section info
     const student = await prisma.student.findUnique({
       where: { userId },
       select: { id: true, sectionId: true, section: { select: { classId: true } } }
@@ -82,21 +93,22 @@ export const getStudentAssignments = async (req: Request, res: Response) => {
       where: {
         classId: student.section.classId,
         OR: [
-          { sectionId: null },             // Class-wide tasks
-          { sectionId: student.sectionId } // Section-specific tasks
+          { sectionId: null },             
+          { sectionId: student.sectionId }
         ]
       },
       include: {
         subject: { select: { name: true } },
-        teacher: { select: { name: true } },
+        teacher: { select: { firstName: true, lastName: true } },
         submissions: {
-          where: { studentId: student.id }, // Only fetch THIS student's submission
+          where: { studentId: student.id },
           select: { status: true, score: true }
         }
       },
-      orderBy: { dueDate: 'asc' } // Optional: Sort by due date
+      orderBy: { dueDate: 'asc' } 
     });
-    res.status(200).json({ success: true, data: assignments });
+    const normalizedFeed = normalizeAssignmentsForStudent(assignments as any);
+    res.status(200).json({ success: true, data: normalizedFeed });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -8,14 +8,17 @@ import Homework from "./pages/Student/Homework";
 import NoticeBoard from "./pages/Student/NoticeBoard";
 import Exam from "./pages/Student/Exam";
 import { AuthProvider } from "./context/AuthContext";
-
+import Academics from "./pages/Admin/Academics";
 
 const App = () => {
   return (
     <AuthProvider>
       <Routes>
         {/* Default Route */}
-        <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+        <Route
+          path="/"
+          element={<Navigate to="/student/dashboard" replace />}
+        />
 
         {/* Dashboard */}
         <Route path="/student/dashboard" element={<Dashboard />} />
@@ -33,6 +36,10 @@ const App = () => {
         <Route path="/student/notices" element={<NoticeBoard />} />
         {/* Exams */}
         <Route path="/student/exams" element={<Exam />} />
+
+        {/* Admin End Points */}
+        {/* Academics */}
+        <Route path="/admin/academics" element={<Academics />} />
       </Routes>
     </AuthProvider>
   );

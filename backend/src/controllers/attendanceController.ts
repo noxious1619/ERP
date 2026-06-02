@@ -138,6 +138,7 @@ export const updateStudentYearlyAttendance = async (req: Request, res: Response)
   }
 };
 
+//total number of days present, total number of days absent, and the overall attendance percentage for that student within the specified year.
 export const getStudentAttendancePercentage = async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params;
@@ -200,6 +201,7 @@ export const getStudentAttendancePercentage = async (req: Request, res: Response
   }
 };
 
+//gives a month wise breakdown of attendance of the student
 export const getStudentMonthlyTrends = async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params;

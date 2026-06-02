@@ -133,11 +133,11 @@ const AttendanceTracker = () => {
                   loading={showSkeleton}
                 />
                 
-                {/* Weekly breakdown dashboard card display component */}
+                {/* per-week percentage trend */}
                 <AttendanceWeekly />
                 
                 <div className="shrink-0">
-                  <Calendar />
+                  <Calendar heatmapData={heatmapData} />
                 </div>
               </div>
               

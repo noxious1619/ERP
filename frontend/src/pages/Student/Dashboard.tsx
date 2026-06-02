@@ -9,49 +9,66 @@ import StudentProfileCard from "../../components/Student/Dashboard/Studentprofil
 import TimetableSection from "../../components/Student/Dashboard/TimetableSection";
 import Homework from "../../components/Student/Dashboard/Homework";
 import NoticeBoard from "../../components/Student/Dashboard/NoticeBoard";
-// import CalendarMessageCard from "../../components/Student/Dashboard/CalendarMessageCard";
 import Calendar from "../../components/Student/Dashboard/Calendar";
-import YourSubjects from "../../components/Student/Dashboard/YourSubjects";
-import Attendance from "../../components/Student/Dashboard/Attendance";
+import CurrentStatusCard from "../../components/Student/Attendance/CurrentStatusCard";
+
+// Define the interface for the aggregates data
+interface AttendanceAggregates {
+  daysPresent: number;
+  daysAbsent: number;
+  totalTrackedDays: number;
+  attendancePercentage: number;
+}
 
 const Dashboard = () => {
   const currentYear = 2026;
   const { studentData, loading: authLoading } = useAuth();
   const studentId = studentData?.id;
 
-  // 1. Setup the state for our dynamic calendar
+  // 1. Setup states for BOTH the calendar and the status card
   const [heatmapData, setHeatmapData] = useState<Record<string, "P" | "A" | "H">>({});
+  const [aggregates, setAggregates] = useState<AttendanceAggregates | null>(null);
   const [loadingData, setLoadingData] = useState<boolean>(true);
 
-  // 2. Fetch the data when the dashboard loads
+  // 2. Fetch all required dashboard data concurrently
   useEffect(() => {
     if (authLoading || !studentId) return;
 
-    const fetchDashboardHeatmap = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoadingData(true);
         const token = localStorage.getItem("token"); 
-
-        const heatmapResponse = await axios.get(
-          `http://localhost:5000/api/attendance/attendanceData/student/${studentId}/heatmap`,
-          {
-            params: { year: currentYear },
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        
+        // Fire both API calls at the exact same time
+        const [heatmapResponse, aggResponse] = await Promise.all([
+          axios.get(
+            `http://localhost:5000/api/attendance/attendanceData/student/${studentId}/heatmap`,
+            { params: { year: currentYear }, headers: { Authorization: `Bearer ${token}` } }
+          ),
+          axios.get(
+            `http://localhost:5000/api/attendance/attendanceData/student/${studentId}/totalPercetage`,
+            { params: { year: currentYear }, headers: { Authorization: `Bearer ${token}` } }
+          )
+        ]);
 
         if (heatmapResponse.data.success) {
           setHeatmapData(heatmapResponse.data.heatmapMap);
         }
+        if (aggResponse.data.success) {
+          setAggregates(aggResponse.data.aggregates);
+        }
       } catch (err) {
-        console.error("Failed to load dashboard calendar data:", err);
+        console.error("Failed to load dashboard data:", err);
       } finally {
         setLoadingData(false);
       }
     };
 
-    fetchDashboardHeatmap();
+    fetchDashboardData();
   }, [studentId, authLoading]);
+
+  // Unified loading state
+  const showSkeleton = authLoading || loadingData;
 
   return (
     <div className="flex gap-4 bg-[#F8F9FE]">
@@ -71,6 +88,7 @@ const Dashboard = () => {
         
         {/* Bottom Content */}
         <div className="flex gap-5 items-start">
+          
           {/* Left Content */}
           <div className="flex-1 min-w-0 flex flex-col gap-5">
             <TimetableSection />
@@ -85,22 +103,25 @@ const Dashboard = () => {
               </div>
               
               <div className="flex-1 min-w-0">
-                <Attendance />
+                {/* 3. Status Card now has real data passed to it! */}
+                <CurrentStatusCard 
+                  daysPresent={aggregates?.daysPresent || 0}
+                  daysAbsent={aggregates?.daysAbsent || 0}
+                  attendancePercentage={aggregates?.attendancePercentage || 0}
+                  loading={showSkeleton}
+                />
               </div>
             </div>
-            
-            {/* <YourSubjects /> */}
           </div>
           
           {/* RIGHT COLUMN */}
           <div className="w-[290px] shrink-0 flex flex-col gap-5 mr-16 mt-8">
             
-            {/* 3. Pass the fetched data directly into the Calendar */}
+            {/* 4. Calendar gets its heatmap data */}
             <div className={`transition-opacity duration-300 ${loadingData ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
               <Calendar heatmapData={heatmapData} />
             </div>
             
-            {/* <CalendarMessageCard /> */}
           </div>
         </div>
       </div>

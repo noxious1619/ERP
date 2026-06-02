@@ -280,8 +280,8 @@ model Notice {
   id         String         @id @default(uuid())
   title      String
   content    String         @db.Text
-  targetType TargetType // GLOBAL, ROLE, CLASS, SECTION
-  targetId   String? // ID of the Class or Section
+  targetType TargetType     // GLOBAL, ROLE, CLASS, SECTION
+  targetId   String?         // ID of the Class or Section
   priority   NoticePriority @default(STANDARD)
   category   NoticeCategory @default(ANNOUNCEMENT)
   author     User           @relation(fields: [authorId], references: [id])

@@ -134,7 +134,7 @@ const AttendanceTracker = () => {
                 />
                 
                 {/* per-week percentage trend */}
-                <AttendanceWeekly />
+                <AttendanceWeekly heatmapData={heatmapData} loading={showSkeleton} />
                 
                 <div className="shrink-0">
                   <Calendar heatmapData={heatmapData} />

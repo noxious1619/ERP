@@ -269,6 +269,7 @@ export const getStudentMonthlyTrends = async (req: Request, res: Response) => {
   }
 };
 
+//
 export const getStudentWeeklyTrends = async (req: Request, res: Response) => {
   try {
     const { studentId } = req.params;

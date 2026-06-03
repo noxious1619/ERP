@@ -8,55 +8,82 @@ import StudentTable from "./StudentTable"
 import StudentPagination from "./StudentPagination"
 import { useStudents } from "../../../hooks/useStudents"
 
-
-
-const PAGE_SIZE = 10
+const PAGE_SIZE = 6
 
 export default function StudentsView() {
-  const [search,    setSearch]    = useState("")
-  const [sectionId, setSectionId] = useState("")
-  const [page,      setPage]      = useState(1)
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
 
-  const { students, loading, error, refetch } = useStudents({ search, sectionId })
+  const [selectedClass, setSelectedClass] = useState("")
+  const [selectedSection, setSelectedSection] = useState("")
+  const [selectedGender, setSelectedGender] = useState("")
+  const [selectedStatus, setSelectedStatus] = useState("")
+  const [selectedYear, setSelectedYear] = useState("")
 
-  // client-side pagination over the API result
-  const totalCount   = students.length
-  const totalPages   = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const paginated    = students.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const {
+    students,
+    pagination,
+    loading,
+    error,
+  } = useStudents({
+    search,
+    page,
+    limit: PAGE_SIZE,
 
-  // reset to page 1 whenever filters change
+    classId: selectedClass,
+    sectionId: selectedSection,
+    gender: selectedGender,
+    status: selectedStatus,
+  })
+
   const handleSearch = useCallback((val: string) => {
     setSearch(val)
-    setPage(1)
-  }, [])
-
-  const handleSectionChange = useCallback((val: string) => {
-    setSectionId(val)
     setPage(1)
   }, [])
 
   return (
     <div className="flex flex-col gap-5">
       <StudentsHeader
-        totalCount={totalCount}
+        totalCount={pagination?.total ?? 0}
         search={search}
         onSearchChange={handleSearch}
       />
 
-      <StudentFilters onSectionChange={handleSectionChange} />
+      <StudentFilters
+        onClassChange={(value) => {
+          setSelectedClass(value)
+          setPage(1)
+        }}
+        onSectionChange={(value) => {
+          setSelectedSection(value)
+          setPage(1)
+        }}
+        onGenderChange={(value) => {
+          setSelectedGender(value)
+          setPage(1)
+        }}
+        onStatusChange={(value) => {
+          setSelectedStatus(value)
+          setPage(1)
+        }}
+        onYearChange={(value) => {
+          setSelectedYear(value)
+          setPage(1)
+        }}
+      />
 
       <StudentStatsCards students={students} />
 
       <StudentTable
-        students={paginated}
+        students={students}
         loading={loading}
         error={error}
       />
 
       <StudentPagination
-        total={totalCount}
-        perPage={PAGE_SIZE}
-        currentPage={page}
+        total={pagination?.total ?? 0}
+        perPage={pagination?.limit ?? PAGE_SIZE}
+        currentPage={pagination?.page ?? 1}
         onPageChange={setPage}
       />
     </div>

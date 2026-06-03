@@ -73,39 +73,144 @@ profileImage: profileImage || null,
 };
 
 // 2. SEARCH & FILTER STUDENTS (For Admins)
+
 export const getAllStudents = async (req: Request, res: Response) => {
   try {
-    const { search, sectionId } = req.query;
+    const {
+      search,
+      sectionId,
+      classId,
+      gender,
+      status,
+      page = "1",
+      limit = "6",
+    } = req.query;
 
-    const students = await prisma.student.findMany({
-      where: {
-        AND: [
-          sectionId ? { sectionId: String(sectionId) } : {},
-          search ? {
-            OR: [
-              { firstName: { contains: String(search), mode: 'insensitive' } },
-              { admissionNumber: { contains: String(search), mode: 'insensitive' } }
-            ]
-          } : {}
-        ]
-      },
-      include: {
-  section: {
-    include: {
-      academicClass: true
+    const currentPage = Number(page);
+    const pageSize = Number(limit);
+    const skip = (currentPage - 1) * pageSize;
+
+    let resolvedSectionId: string | undefined = undefined;
+
+    // 🔥 FIX: if sectionId is not UUID, treat it as section name
+    if (sectionId) {
+      const isUUID =
+        /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/.test(
+          String(sectionId)
+        );
+
+      if (isUUID) {
+        resolvedSectionId = String(sectionId);
+      } else {
+        const section = await prisma.section.findFirst({
+          where: {
+            name: {
+              equals: String(sectionId),
+              mode: "insensitive",
+            },
+          },
+          select: { id: true },
+        });
+
+        resolvedSectionId = section?.id; // if not found → undefined (no filter)
+      }
     }
-  },
-  user: {
-    select: {
-      email: true
-    }
-  }
-}
+
+    const whereClause: any = {
+      AND: [
+        resolvedSectionId
+          ? {
+              sectionId: resolvedSectionId,
+            }
+          : {},
+
+        classId
+          ? {
+              section: {
+                classId: String(classId),
+              },
+            }
+          : {},
+
+        gender
+          ? {
+              gender: String(gender).toUpperCase(),
+            }
+          : {},
+
+        status
+          ? {
+              isActive: String(status).toUpperCase() === "ACTIVE",
+            }
+          : {},
+
+        search
+          ? {
+              OR: [
+                {
+                  firstName: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  lastName: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  admissionNumber: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {},
+      ],
+    };
+
+    const totalStudents = await prisma.student.count({
+      where: whereClause,
     });
 
-    res.status(200).json({ success: true, data: students });
+    const students = await prisma.student.findMany({
+      where: whereClause,
+      skip,
+      take: pageSize,
+      include: {
+        section: {
+          include: {
+            academicClass: true,
+          },
+        },
+        user: {
+          select: {
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: students,
+      pagination: {
+        page: currentPage,
+        limit: pageSize,
+        total: totalStudents,
+        totalPages: Math.ceil(totalStudents / pageSize),
+      },
+    });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

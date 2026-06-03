@@ -65,7 +65,7 @@ function SkeletonRow() {
   )
 }
 
-const HEADERS = ["Photo", "Admission No", "Name", "Class", "Section", "Attendance", "Contact", "Status", "Fee Status"]
+const HEADERS = ["Admission No", "Name", "Class", "Section", "Attendance", "Contact", "Status", "Fee Status"]
 
 export default function StudentTable({ students, loading, error }: StudentTableProps) {
   const [selected, setSelected] = useState<string[]>([])
@@ -143,13 +143,6 @@ export default function StudentTable({ students, loading, error }: StudentTableP
                     checked={selected.includes(student.id)}
                     onChange={() => toggleOne(student.id)}
                     className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
-                  />
-                </td>
-                <td className="px-4 py-4">
-                  <img
-                    src={photo}
-                    alt={fullName}
-                    className="h-10 w-10 rounded-full object-cover"
                   />
                 </td>
                 <td className="px-4 py-4 text-gray-700">{student.admissionNumber}</td>

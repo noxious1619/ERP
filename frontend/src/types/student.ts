@@ -1,12 +1,12 @@
 export interface AcademicClass {
   id: string
-  name: string     
+  name: string
   displayName?: string
 }
 
 export interface Section {
   id: string
-  name: string       
+  name: string
   academicClass: AcademicClass
 }
 
@@ -17,24 +17,39 @@ export interface StudentUser {
 export interface Student {
   id: string
   admissionNumber: string
+  rollNumber?: string
+
   firstName: string
   lastName: string
-  dateOfBirth: string
+
   gender: string
-  address: string | null
-  city: string | null
-  state: string | null
-  bloodGroup: string | null
-  profileImage: string | null
-  phoneNumber: string | null
-  rollNumber: string | null
-  sectionId: string
-  userId: string
-  section: Section
-  user: StudentUser
+
+  phoneNumber?: string
+  profileImage?: string
+
+  isActive: boolean
+  createdAt: string
+
+  section?: {
+    id: string
+    name: string
+
+    academicClass?: {
+      id: string
+      name: string
+    }
+  }
+}
+
+export interface Pagination {
+  page: number
+  limit: number
+  total: number
+  totalPages: number
 }
 
 export interface GetStudentsResponse {
   success: boolean
   data: Student[]
+  pagination: Pagination
 }

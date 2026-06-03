@@ -10,22 +10,33 @@ interface FilterSelectProps {
 }
 
 function FilterSelect({ label, options, onChange }: FilterSelectProps) {
-  const [open, setOpen]         = useState(false)
+  const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState("")
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
     }
+
     document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick)
+    }
   }, [])
 
   const choose = (opt: string) => {
     setSelected(opt)
     setOpen(false)
-    onChange?.(opt)
+
+    if (opt === "All") {
+      onChange?.("")
+    } else {
+      onChange?.(opt)
+    }
   }
 
   return (
@@ -36,7 +47,12 @@ function FilterSelect({ label, options, onChange }: FilterSelectProps) {
         className="flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white pl-3 pr-2.5 text-sm text-gray-600 transition-colors hover:border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <span>{selected || label}</span>
-        <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
+
+        <ChevronDown
+          className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-150 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
       </button>
 
       {open && (
@@ -64,17 +80,51 @@ function FilterSelect({ label, options, onChange }: FilterSelectProps) {
 }
 
 interface StudentFiltersProps {
+  onClassChange?: (val: string) => void
   onSectionChange?: (val: string) => void
+  onGenderChange?: (val: string) => void
+  onStatusChange?: (val: string) => void
+  onYearChange?: (val: string) => void
 }
 
-export default function StudentFilters({ onSectionChange }: StudentFiltersProps) {
+export default function StudentFilters({
+  onClassChange,
+  onSectionChange,
+  onGenderChange,
+  onStatusChange,
+  onYearChange,
+}: StudentFiltersProps) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <FilterSelect label="All Classes"         options={["Class 8", "Class 9", "Class 10", "Class 11"]} />
-      <FilterSelect label="All Section"         options={["Section A", "Section B", "Section C"]} onChange={onSectionChange} />
-      <FilterSelect label="All Gender"          options={["Male", "Female"]} />
-      <FilterSelect label="All Status"          options={["Active", "On Leave", "Inactive"]} />
-      <FilterSelect label="All Admission Years" options={["2024", "2023", "2022", "2021"]} />
+      <FilterSelect
+        label="All Classes"
+        options={["All", "10th Grade", "9th Grade", "8th Grade"]}
+        onChange={onClassChange}
+      />
+
+      <FilterSelect
+        label="All Section"
+        options={["All", "Section A", "Section B", "Section C"]}
+        onChange={onSectionChange}
+      />
+
+      <FilterSelect
+        label="All Gender"
+        options={["All", "Male", "Female"]}
+        onChange={onGenderChange}
+      />
+
+      <FilterSelect
+        label="All Status"
+        options={["All", "Active"]}
+        onChange={onStatusChange}
+      />
+
+      <FilterSelect
+        label="All Admission Years"
+        options={["All", "2026", "2025", "2024", "2023"]}
+        onChange={onYearChange}
+      />
     </div>
   )
 }

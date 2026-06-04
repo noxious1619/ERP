@@ -2,19 +2,15 @@ import { useState } from "react";
 import SearchBar from "../../../components/Student/Dashboard/SearchBar";
 import filterIcon from "../../../assets/Student/Homework/filter.svg";
 import sortIcon from "../../../assets/Student/Homework/sort.svg";
-
 const tabs = ["All", "Pending", "Completed", "Overdue"];
-
 const HomeworkFilters = () => {
   const [activeTab, setActiveTab] = useState("Pending");
-
   return (
     <div className="mt-14">
       {/* Search Bar Only */}
       <div className="w-full">
         <SearchBar />
       </div>
-
       {/* Tabs + Actions Row */}
       <div className="mt-8 flex items-center justify-between border-b border-[#E8E8E8] ">
         {/* Tabs */}
@@ -53,7 +49,6 @@ const HomeworkFilters = () => {
             </button>
           ))}
         </div>
-
         {/* Right Actions */}
         <div className="flex items-center gap-5">
           {/* Filter */}
@@ -70,6 +65,7 @@ const HomeworkFilters = () => {
               px-5
               mb-2
               shadow-[0px_4px_10px_rgba(0,0,0,0.08)]
+             
             "
           >
             <img src={filterIcon} alt="Filter" className="h-[18px] w-[18px]" />

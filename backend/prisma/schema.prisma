@@ -115,6 +115,9 @@ model Teacher {
   email          String?   @unique
   phone          String?
   address        String?
+  bloodGroup     String?
+  state          String?
+  city           String?
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
@@ -273,6 +276,7 @@ enum NoticeCategory {
   HOLIDAY
   EXAM
   SCHOOL_EVENT
+  STAFF_CIRCULAR
 }
 
 model Notice {

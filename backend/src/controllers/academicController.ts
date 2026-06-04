@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { logActivity } from '../lib/auditService.js';
 import { normalizeTimetable } from '../helper/timetableHelper.js';
+import { isCurrentPeriodActive , getDuration } from '../helper/activePeriod.helper.js'; 
 
 export const createAcademicYear = async (req: any, res: Response) => {
   try {
@@ -424,3 +425,175 @@ export const getStudentTimetable = async (
   }
 };
 
+export const getTeacherMySubjectTimetable = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userId = (req as any).user.id;
+    const { day } = req.query;
+ 
+    if (!day || typeof day !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Valid day parameter is required.",
+      });
+    }
+ 
+    const formattedDay = day.toUpperCase() as any;
+ 
+    // 1. Fetch teacher's own periods for the day
+    const teacherPeriods = await prisma.timetable.findMany({
+      where: {
+        teacherId: userId,
+        day: formattedDay,
+        isBreak: false,
+      },
+      include: {
+        subject: { select: { name: true, code: true } },
+        section: {
+          select: {
+            name: true,
+            academicClass: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { period: "asc" },
+    });
+ 
+    if (teacherPeriods.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+ 
+    // 2. Get the sectionId from the first result to fetch breaks
+    // All periods for one teacher are likely in the same section
+    // Use distinct startTimes to avoid duplicate breaks if multi-section
+   if (teacherPeriods.length === 0) {
+  return res.status(200).json({ success: true, data: [] });
+}
+
+const sectionId = teacherPeriods[0].sectionId; // safe — length checked above
+
+const breakRows = await prisma.timetable.findMany({
+  where: {
+    sectionId: sectionId, // now TypeScript knows it's a string
+    day: formattedDay,
+    isBreak: true,
+  },
+  orderBy: { period: "asc" },
+});
+    // 3. Normalize teacher periods
+    const normalizedPeriods = teacherPeriods.map((row) => ({
+      id: row.id,
+      time: row.startTime,
+      isActive: isCurrentPeriodActive(row.startTime, row.endTime, day),
+      isBreak: false,
+      breakLabel: null,
+      room: row.room || "Campus Hall",
+      color: row.color || null,
+      subject: `${row.section.academicClass.name} - ${row.section.name}`,
+      professor: row.subject?.name || "No Subject",
+      duration: getDuration(row.startTime, row.endTime),
+      _sortTime: row.startTime, // internal sort key
+    }));
+ 
+    // 4. Normalize break rows
+    const normalizedBreaks = breakRows.map((row) => ({
+      id: row.id,
+      time: row.startTime,
+      isActive: false,
+      isBreak: true,
+      breakLabel: row.breakLabel || "Institutional Break",
+      room: null,
+      color: null,
+      subject: null,
+      professor: null,
+      duration: undefined,
+      _sortTime: row.startTime,
+    }));
+ 
+    // 5. Merge and sort chronologically by startTime
+    const merged = [...normalizedPeriods, ...normalizedBreaks].sort((a, b) =>
+      a._sortTime.localeCompare(b._sortTime)
+    );
+ 
+    // 6. Strip internal sort key before sending
+    const response = merged.map(({ _sortTime, ...rest }) => rest);
+ 
+    return res.status(200).json({ success: true, data: response });
+ 
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch teacher timetable.",
+      error: error.message,
+    });
+  }
+};
+ 
+
+export const getTeacherMySubjectWeekly = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userId = (req as any).user.id;
+
+    // Fetch ALL days at once for the weekly grid — no day filter
+    const timetableRows = await prisma.timetable.findMany({
+      where: {
+        teacherId: userId,
+        isBreak: false,
+      },
+      include: {
+        subject: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
+        section: {
+          select: {
+            name: true,
+            academicClass: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [
+        { day: "asc" },
+        { period: "asc" },
+      ],
+    });
+
+    if (timetableRows.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const normalized = timetableRows.map((row) => ({
+      id: row.id,
+      day: row.day,                          // "MONDAY", "TUESDAY" etc.
+      startTime: row.startTime,              // "10:00"
+      isBreak: false,
+      // code = subject name (e.g. "ENGLISH") — shown as label on weekly card
+      code: row.subject?.name?.toUpperCase() || "N/A",
+      // subject = class + section name (e.g. "Class 10 - Section A")
+      subject: `${row.section.academicClass.name} - ${row.section.name}`,
+      teacher: "",                           // own schedule — not needed
+      room: row.room || "TBD",
+      color: row.color || "BLUE",
+    }));
+
+    return res.status(200).json({ success: true, data: normalized });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch weekly teacher timetable.",
+      error: error.message,
+    });
+  }
+};

@@ -1,14 +1,12 @@
-import type { Notice } from "../../../pages/Student/NoticeBoard";
+import type { Notice } from "../../../types/notice";
 import noticeIconBlue from "../../../assets/Student/NoticeBoard/blue.svg";
 import noticeIconPink from "../../../assets/Student/NoticeBoard/pink.svg";
 import noticeIconPurple from "../../../assets/Student/NoticeBoard/purple.svg";
-
 const CARD_STYLES = [
   { bg: "bg-indigo-50/50", iconBg: "bg-indigo-200/50", icon: noticeIconBlue },
   { bg: "bg-pink-100/50",  iconBg: "bg-rose-300/20",   icon: noticeIconPink },
   { bg: "bg-violet-50",    iconBg: "bg-violet-400/20",  icon: noticeIconPurple },
 ];
-
 const isToday = (dateStr: string) => {
   const d = new Date(dateStr), now = new Date();
   return (

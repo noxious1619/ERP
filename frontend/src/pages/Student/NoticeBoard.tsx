@@ -7,18 +7,7 @@ import NoticeCards from "../../components/Student/NoticeBoard/NoticeCards";
 import Calendar from "../../components/Student/Dashboard/Calendar";
 import CalendarMessageCard from "../../components/Student/Dashboard/CalendarMessageCard";
 import RightSidebarHeader from "../../components/Student/NoticeBoard/RightSidebarHeader";
-
-export interface Notice {
-  id: string;
-  title: string;
-  content: string;
-  targetType: "GLOBAL" | "ROLE" | "CLASS" | "SECTION";
-  targetId: string | null;
-  priority: "STANDARD" | "HIGH" | "URGENT";
-  category: string;
-  createdAt: string;
-  author: { name: string; role: string };
-}
+import type { Notice } from "../../types/notice";
 
 const NoticeBoard = () => {
   const [activeFilter, setActiveFilter] = useState("ALL");

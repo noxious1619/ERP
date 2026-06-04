@@ -25,3 +25,16 @@ export const isCurrentPeriodActive = (
     currentTime <= endTime
   );
 };
+
+export function getDuration(startTime: string, endTime: string): string {
+  const parts1 = startTime.split(":");
+  const parts2 = endTime.split(":");
+  
+  const startH = Number(parts1[0]);
+  const startM = Number(parts1[1]);
+  const endH = Number(parts2[0]);
+  const endM = Number(parts2[1]);
+
+  const totalMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+  return `${totalMinutes} MINUTES`;
+}

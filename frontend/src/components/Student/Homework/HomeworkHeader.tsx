@@ -4,7 +4,17 @@ import notification from "../../../assets/Student/Dashboard/TopBar/notification.
 import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
 import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import NotificationDropdown from "../../Student/Dashboard/NotificationDropdown";
-const HomeworkHeader = () => {
+import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
+interface HomeworkHeaderProps {
+  title?: string;
+  subtitle?: string;
+  profileRoute?: string;
+}
+const HomeworkHeader = ({
+  title = "Homework & Tasks",
+  subtitle,
+  profileRoute = "/student/profile",
+}: HomeworkHeaderProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -23,16 +33,16 @@ const HomeworkHeader = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
   return (
     <div className="flex w-full items-start">
       {/* Left Section */}
       <div>
         <h1 className="text-[44px] font-bold leading-[64px] tracking-[-2px] text-[#2D3335]">
-          Homework & Tasks
+          {title}
         </h1>
-
-        <p className="mt-3 text-[18px] font-medium text-[#6F6F6F]">
-          Manage and track all your assignments
+        <p className="text-sm font-semibold text-gray-400 mt-1">
+          {subtitle ?? getDynamicHeaderDate()}
         </p>
       </div>
 
@@ -55,23 +65,20 @@ const HomeworkHeader = () => {
               className="h-[26px] w-[26px]"
             />
           </button>
-          {/* Dropdown */}
           {showNotifications && (
             <NotificationDropdown onClose={() => setShowNotifications(false)} />
           )}
-
-          {/* Red Dot */}
           <div className="absolute right-[1px] top-[2px] h-[9px] w-[9px] rounded-full bg-[#E54866]" />
         </div>
 
         {/* Profile */}
         <div
-          onClick={() => navigate("/student/profile")}
-          className="h-[58px] w-[58px] overflow-hidden rounded-full border-[3px] border-white shadow-[0px_4px_14px_rgba(0,0,0,0.12)] cursor-pointer "
+          onClick={() => navigate(profileRoute)}
+          className="h-[58px] w-[58px] overflow-hidden rounded-full border-[3px] border-white shadow-[0px_4px_14px_rgba(0,0,0,0.12)] cursor-pointer"
         >
           <img
             src={profileImage}
-            alt="Student"
+            alt="Profile"
             className="h-full w-full object-cover"
           />
         </div>

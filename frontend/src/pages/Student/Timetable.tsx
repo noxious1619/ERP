@@ -22,7 +22,7 @@ const Timetable = () => {
           {/* RIGHT - completely static, never moves */}
           <div className="w-90 shrink-0 bg-gray-100 px-3 py-6 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Calendar variant="timetable" />
-            <DateScheduleCard />
+            <DateScheduleCard  />
           </div>
         </div>
       </div>

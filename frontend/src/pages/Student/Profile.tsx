@@ -3,9 +3,10 @@ import "../../style/Student/Profile/profilepage.css";
 import Sidebar from "../../components/Student/Dashboard/Navbar";
 import ProfileHeader from "../../components/Student/Profile/Header";
 import StudentProfile from "../../components/Student/Profile/StudentProfile";
-import GuardianCard, { type ParentData } from "../../components/Student/Profile/GuardianCard";
+import GuardianCard, {
+  type ParentData,
+} from "../../components/Student/Profile/GuardianCard";
 import AcademicPerformance from "../../components/Student/Profile/AcademicPerformance";
-import DateCard from "../../components/Student/Profile/DateCard";
 import AttendanceCard from "../../components/Student/Profile/AttendanceCard";
 import axios from "axios";
 const Profile = () => {
@@ -15,7 +16,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-       const res = await axios.get("http://localhost:5000/api/students/me", {
+        const res = await axios.get("http://localhost:5000/api/students/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.data;
@@ -39,7 +40,7 @@ const Profile = () => {
           <div className="mt-10 flex items-start gap-6">
             {/* Left */}
             <div className="shrink-0">
-              <StudentProfile  />
+              <StudentProfile />
             </div>
 
             {/* Center */}
@@ -47,11 +48,6 @@ const Profile = () => {
               <GuardianCard parent={parent} isLoading={isLoading} />
               <AcademicPerformance />
               <AttendanceCard />
-            </div>
-
-            {/* Right */}
-            <div className="shrink-0">
-              <DateCard />
             </div>
           </div>
         </div>

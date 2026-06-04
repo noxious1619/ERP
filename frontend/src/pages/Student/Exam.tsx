@@ -3,6 +3,7 @@ import RightExamHeader from "../../components/Student/Exam/RightExamHeader";
 import Calendar from "../.../../../components/Student/Dashboard/Calendar";
 import CalendarMessageCard from "../.../../../components/Student/Dashboard/CalendarMessageCard";
 import UpcomingExams from "../../components/Student/Exam/UpcomingExams";
+import { getDynamicHeaderDate } from "../../utils/dateHelpers";
 
 const Exam = () => {
   return (
@@ -16,7 +17,10 @@ const Exam = () => {
             <h1 className="text-[44px] font-[700] leading-[54px] tracking-[-1.8px] text-[#2D3335]">
               Exam & Result
             </h1>
-            <p className="mt-10 text-[14px] font-[600] text-[#484747]">
+            <p className=" text-sm font-semibold text-gray-400 mt-1">
+              {getDynamicHeaderDate()}
+            </p>
+            <p className="mt-10 text-[18px] font-[600] text-[#484747]">
               Upcoming Exams
             </p>
           </div>

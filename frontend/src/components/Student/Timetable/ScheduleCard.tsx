@@ -55,7 +55,7 @@ const TimetableScheduleCard: React.FC<TimetableScheduleCardProps> = ({
         ) : isActive ? (
           /* ACTIVE CARD — white bg, blue-purple left border, shadow, LIVE badge */
           <div
-            className={`bg-white border border-gray-200 border-l-4 rounded-2xl shadow-md px-5 py-4 ${color ? `border-l-${color}` : ""}`}
+            className={`bg-white border border-[#3A72FF] border-l-4 rounded-2xl shadow-md px-5 py-4 ${color ? `border-l-${color}` : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
               {/* LIVE badge */}

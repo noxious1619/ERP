@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
 import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
 import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import NotificationDropdown from "../../Student/Dashboard/NotificationDropdown";
+import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 const ProfileHeader = () => {
-  const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -29,6 +28,9 @@ const ProfileHeader = () => {
         <h1 className="text-[50px] font-bold leading-[60px] tracking-[-2px] text-[#2D3335] px-4">
           Profile
         </h1>
+        <p className=" text-sm font-semibold text-gray-400 mt-1 px-4">
+          {getDynamicHeaderDate()}
+        </p>
       </div>
 
       {/* Right Actions */}
@@ -51,7 +53,9 @@ const ProfileHeader = () => {
             />
           </button>
           {/* Dropdown */}
-          {showNotifications && <NotificationDropdown />}
+          {showNotifications && (
+            <NotificationDropdown onClose={() => setShowNotifications(false)} />
+          )}
 
           {/* Red Dot */}
           <div className="absolute right-[1px] top-[2px] h-[9px] w-[9px] rounded-full bg-[#E54866]" />

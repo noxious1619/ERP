@@ -1,14 +1,12 @@
 import express from 'express';
-import { createNotice, getMyNotices } from '../controllers/noticeController.js';
+import { createNotice, getMyNotices, getTeacherNotices } from '../controllers/noticeController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { restrictTo } from '../middleware/roleMiddleware.js'; // Import the new middleware
-
+import { restrictTo } from '../middleware/roleMiddleware.js';
 const router = express.Router();
-
-// 📢 ADMINS ONLY: Create a new notice
-router.post('/', protect, restrictTo('ADMIN', 'SUPER_ADMIN',"TEACHER"), createNotice);
-
-// 👤 ALL USERS: Get notices specifically targeted to them
-router.get('/my', protect, getMyNotices);
-
+// ADMINS Create a notice
+router.post('/', protect, restrictTo('ADMIN', 'SUPER_ADMIN'), createNotice);
+// STUDENTS: Get notices for student
+router.get('/my', protect, restrictTo('STUDENT', 'SUPER_ADMIN', 'TEACHER', 'ADMIN'), getMyNotices);
+// TEACHERS: Get notices for teacher
+router.get('/teacher', protect, restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN'), getTeacherNotices);
 export default router;

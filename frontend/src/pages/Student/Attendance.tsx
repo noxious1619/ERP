@@ -17,7 +17,7 @@ const AttendanceTracker = () => {
         <div className="flex-1 flex flex-col px-5">
           {/* Static Header — never scrolls */}
           <div className="flex-shrink-0 pt-8 bg-white z-10">
-            <AttendanceHeader />
+          <AttendanceHeader title="Attendance Tracker" />
           </div>
 
           {/* Scrollable content below header */}

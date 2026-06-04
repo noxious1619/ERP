@@ -16,10 +16,8 @@ const App = () => {
       <Routes>
         {/* Default Route */}
         <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
-
         {/* Dashboard */}
         <Route path="/student/dashboard" element={<Dashboard />} />
-
         {/* Timetable */}
         <Route path="/student/timetable" element={<Timetable />} />
         <Route path="/student/timetable/weekly" element={<WeeklyTimetable />} />

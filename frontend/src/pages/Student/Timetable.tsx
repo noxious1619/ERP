@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import useAuth from "../../hooks/useAuth"; // 1. Scan your global user details out of memory
+import useAuth from "../../hooks/useAuth"; 
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import TimetableHeader from "../../components/Student/Timetable/Header";
 import TimetableSchedule from "../../components/Student/Timetable/ScheduleSection";
@@ -22,7 +22,6 @@ interface TimetableEntry {
 }
 
 const Timetable = () => {
-  // 2. Consume live profile data from the hydrated context layer
   const { studentData, loading: authLoading } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());

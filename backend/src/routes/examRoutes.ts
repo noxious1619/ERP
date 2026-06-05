@@ -14,7 +14,8 @@ router.post(
 );
 router.get(
   '/upcoming',
-  restrictTo('STUDENT'),
+  restrictTo('ADMIN', 'SUPER_ADMIN', 'TEACHER', 'STUDENT'),
   getStudentUpcomingExams
 );
+
 export default router;

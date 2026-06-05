@@ -70,14 +70,14 @@ export const registerTeacher = async (req: Request, res: Response) => {
       const existingUser = await tx.user.findUnique({ where: { email } });
       if (existingUser) throw new Error("Email already registered");
 
-      const passwordHash = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await tx.user.create({
         data: {
           name: name ?? `${firstName ?? ""} ${lastName ?? ""}`.trim(),
           email,
-          passwordHash,
-          role: "TEACHER",
+          passwordHash: hashedPassword,
+          role: "TEACHER", 
         },
       });
 

@@ -28,6 +28,11 @@ export const getDynamicHeaderDate = (): string => {
   return `${dayName}, ${monthName} ${dayNum}${suffix}`;
 };
 
+export const getCurrentAPIDay = (): string => {
+  const now = new Date();
+  return now.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+};
+
 export const getCurrentSystemDay = (): string => {
   return new Date()
     .toLocaleDateString("en-US", { weekday: "long" })

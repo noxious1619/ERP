@@ -18,6 +18,8 @@ export interface HomeworkTask {
   givenBy: string;
   description: string;
   teacherImages?: string[];
+  attachments: string;   // e.g., "1 attachment"
+  statusClass: string;
 }
 
 interface UploadedFile {

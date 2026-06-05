@@ -10,7 +10,7 @@ import assignmentRoutes from './routes/assignmentRoutes.js';
 import gradeRoutes from './routes/gradeRoutes.js';
 import financeRoutes from './routes/financeRoutes.js';
 import calendarRoutes from './routes/calendarRoutes.js';
-import teacherRoutes from './routes/teacherRotutes.js';
+import teacherRoutes from './routes/teacherRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import parentRoutes from './routes/parentRoutes.js';
 import examRoutes from './routes/examRoutes.js';
@@ -38,6 +38,7 @@ app.use('/api/grades', gradeRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/exams', examRoutes);
+
 
 // Health Check
 app.get('/', (req, res) => {

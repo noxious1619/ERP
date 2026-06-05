@@ -25,7 +25,6 @@ router.post(
 // GET feed for the logged-in student
 router.get(
   '/my-feed', 
-  restrictTo('STUDENT'), 
   getStudentAssignments
 );
 

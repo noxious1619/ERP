@@ -356,6 +356,14 @@ export const getStudentTimetable = async (
           'Valid day parameter is required.'
       });
     }
+
+    if (day.trim().toLowerCase() === 'sunday') {
+      return res.status(200).json({
+        success: true,
+        message: 'Today is Sunday',
+        data: [] 
+      });
+    }
     const studentProfile =
       await prisma.student.findUnique({
         where: {

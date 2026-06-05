@@ -1,98 +1,104 @@
-import { MoveUpRight } from "lucide-react";
-import arrow from "../../../assets/Student/Attendance/arrow.svg";
-const attendanceData = [
-  { month: "Jan", present: 25, total: 30 },
-  { month: "Feb", present: 21, total: 28 },
-  { month: "Mar", present: 26, total: 30 },
-  { month: "Apr", present: 16, total: 30 },
-  { month: "May", present: 20, total: 30 },
-  { month: "Jun", present: 29, total: 30 },
-  { month: "Jul", present: 22, total: 30 },
-  { month: "Aug", present: 18, total: 30 },
-  { month: "Sep", present: 26, total: 30 },
-  { month: "Oct", present: 22, total: 30 },
-  { month: "Nov", present: 27, total: 30 },
-  { month: "Dec", present: 21, total: 30 },
-];
+import React from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-const BAR_WIDTH = 46;
-const GAP = 20;
+interface MonthlyDataPoint {
+  month: string;
+  present: number;
+  totalDays: number;
+  percentage: number;
+}
 
-const AttendanceYearlyChart = () => {
+interface AttendanceYearlyGraphProps {
+  data: MonthlyDataPoint[];
+  loading?: boolean;
+}
+
+const AttendanceYearlyGraph: React.FC<AttendanceYearlyGraphProps> = ({
+  data = [],
+  loading = false,
+}) => {
+  if (loading || data.length === 0) {
+    return (
+      <div className="w-full rounded-[30px] bg-white p-6 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.04)] animate-pulse">
+        <div className="h-6 w-48 bg-gray-200 rounded mb-6" />
+        <div className="w-full h-[260px] bg-gray-100 rounded-xl" />
+      </div>
+    );
+  }
+
+  // Format the raw backend metrics into a clean percentage track for the bars
+  const structuredChartData = data.map((item) => ({
+    name: item.month,
+    "Attendance Rate": item.totalDays > 0 ? Math.round(item.percentage) : 0,
+    rawRatio: `${item.present}/${item.totalDays}`,
+  }));
+
   return (
-    <div className="w-full rounded-[30px] bg-white px-[20px] pt-[34px] pb-[28px] shadow-[0px_15px_25px_10px_rgba(0,0,0,0.04)]">
-      {/* Header */}
-      <div className="mb-[34px] flex items-start justify-between">
-        <h2 className="text-[18px] font-semibold tracking-[-0.3px] text-[#222222]">
-          Attendance throughout the year
-        </h2>
-        <img src={arrow} alt="arrow" className="h-[20px] w-[20px]" />
+    <div className="w-full rounded-[30px] bg-white p-6 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.04)]">
+      <div className="mb-4">
+        <h3 className="text-[18px] font-semibold text-[#222222]">
+          Detailed Academic Term Performance
+        </h3>
       </div>
 
-      {/* Chart Area */}
-      <div className="flex flex-col items-center">
-        {/* Bars */}
-        <div className="flex items-end" style={{ gap: `${GAP}px` }}>
-          {attendanceData.map((item, index) => {
-            const percentage = (item.present / item.total) * 100;
-            return (
-              <div
-                key={index}
-                className="group flex flex-col items-center"
-                style={{ width: `${BAR_WIDTH}px` }}
-              >
-                {/* Tooltip */}
-                <div className="mb-3 scale-95 rounded-md bg-[#1F1F1F] px-3 py-[5px] text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 whitespace-nowrap">
-                  {item.present}/{item.total}
-                </div>
-                {/* Bar */}
-                <div className="relative flex h-[128px] w-full items-end overflow-hidden rounded-t-[14px] bg-[#F2F2F2]">
-                  <div
-                    className="w-full rounded-t-[14px] bg-[#5E8AFC] transition-all duration-300"
-                    style={{ height: `${percentage}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Border line — exactly as wide as the bars+gaps */}
-        <div
-          className="border-t border-[#6D6D6D]"
-          style={{
-            width: `${attendanceData.length * BAR_WIDTH + (attendanceData.length - 1) * GAP}px`,
-          }}
-        />
-
-        {/* Month Labels — each centered under its bar */}
-        <div className="flex mt-[10px]" style={{ gap: `${GAP}px` }}>
-          {attendanceData.map((item, index) => (
-            <div
-              key={index}
-              className="flex justify-center"
-              style={{ width: `${BAR_WIDTH}px` }}
-            >
-              <span className="text-[13px] font-medium text-[#808080]">
-                {item.month}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-[34px] text-center ">
-        <p className="text-[16px] font-medium text-[#8B8B8B]">
-          Your attendance has increased by
-        </p>
-        <p className="text-[16px] font-medium text-[#8B8B8B]">
-          <span className="font-semibold text-[#5E82ED]">4.2%</span> compared to
-          last month.
-        </p>
+      {/* CRITICAL FIX: Giving this outer container an explicit height profile 
+        so Recharts' ResponsiveContainer can calculate its boundary matrix cleanly!
+      */}
+      <div className="w-full h-[260px] min-w-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={structuredChartData}
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+            <XAxis
+              dataKey="name"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#808080", fontSize: 12, fontWeight: 500 }}
+            />
+            <YAxis
+              domain={[0, 100]}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "#808080", fontSize: 12 }}
+              tickFormatter={(value) => `${value}%`}
+            />
+            <Tooltip
+              cursor={{ fill: "#F8F9FE" }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="rounded-lg bg-[#1F1F1F] px-3 py-2 text-xs font-medium text-white shadow-md">
+                      <p className="font-semibold mb-0.5">{payload[0].payload.name}</p>
+                      <p className="text-blue-300">
+                        Rate: {payload[0].value}% ({payload[0].payload.rawRatio})
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Bar
+              dataKey="Attendance Rate"
+              fill="#5E8AFC"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={40}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
 };
 
-export default AttendanceYearlyChart;
+export default AttendanceYearlyGraph;

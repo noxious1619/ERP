@@ -2,15 +2,20 @@ import { MONTHS, DOW_LABELS } from "./Attendancetypes ";
 import MonthRow from "./Monthrow";
 import Legend from "./Legend";
 
-// ─── Component ────────────────────────────────────────────────────────────────
-// Chart content total width:
-// month label (28px) + gap (8px) + 7 cols × 18px + 6 gaps × 3px = 180px
+interface AttendanceYearlyChartProps {
+  heatmapData: Record<string, 'P' | 'A'>; // Maps directly to your optimized backend response
+  loading?: boolean;
+}
 
-export default function AttendanceYearlyChart() {
+export default function AttendanceYearlyChart({ 
+  heatmapData = {}, 
+  loading = false 
+}: AttendanceYearlyChartProps) {
+  
   return (
     <div className="flex flex-col items-center w-full py-2">
       {/* Fixed-width content block — always 180px wide, perfectly centered */}
-      <div style={{ width: "180px" }}>
+      <div style={{ width: "180px" }} className={loading ? "animate-pulse opacity-60" : ""}>
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-[10px]">
           <span className="text-[14px] font-bold text-[#1A1A2E] tracking-tight">
@@ -40,8 +45,14 @@ export default function AttendanceYearlyChart() {
 
         {/* ── Month rows ── */}
         <div>
-          {MONTHS.map((m) => (
-            <MonthRow key={m} month={m} />
+          {MONTHS.map((m, index) => (
+            /* Pass the shared heatmap dictionary and the specific month numerical index (0-11) */
+            <MonthRow 
+              key={m} 
+              month={m} 
+              monthIndex={index} 
+              heatmapData={heatmapData} 
+            />
           ))}
         </div>
 

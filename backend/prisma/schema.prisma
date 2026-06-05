@@ -313,10 +313,11 @@ enum TargetType {
   SECTION
 }
 
-enum NoticePriority {
-  STANDARD
-  HIGH
-  URGENT
+enum TargetType {
+  GLOBAL
+  ROLE
+  CLASS
+  SECTION
 }
 
 model Assignment {

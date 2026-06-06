@@ -31,7 +31,7 @@ export const createNotice = async (req: Request, res: Response) => {
 export const getMyNotices = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
-    const { category } = req.query; // e.g. ?category=ACADEMIC
+    const { category } = req.query; 
 
     const student = await prisma.student.findUnique({
       where: { userId },
@@ -52,7 +52,7 @@ export const getMyNotices = async (req: Request, res: Response) => {
             OR: [
               { targetType: 'GLOBAL' },
               { targetType: 'ROLE', targetId: 'STUDENT' },
-              { targetType: 'CLASS', targetId: student.section.classId },
+              { targetType: 'CLASS', targetId: student.section?.classId },
               { targetType: 'SECTION', targetId: student.sectionId },
               { category: { not: 'STAFF_CIRCULAR' } }
             ]

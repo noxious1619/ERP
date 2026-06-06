@@ -295,6 +295,12 @@ model Notice {
   views      NoticeView[]
 }
 
+enum NoticePriority {
+  STANDARD
+  HIGH
+  URGENT
+}
+
 model NoticeView {
   id       String   @id @default(uuid())
   notice   Notice   @relation(fields: [noticeId], references: [id], onDelete: Cascade)
@@ -304,13 +310,6 @@ model NoticeView {
   viewedAt DateTime @default(now())
 
   @@unique([noticeId, userId])
-}
-
-enum TargetType {
-  GLOBAL
-  ROLE
-  CLASS
-  SECTION
 }
 
 enum TargetType {

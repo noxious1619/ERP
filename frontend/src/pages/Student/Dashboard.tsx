@@ -74,6 +74,11 @@ const Dashboard = () => {
           )
         ]);
         
+        console.log("Heatmap API response:", heatmapResponse?.data || "No data");
+        console.log("Aggregates API response:", aggResponse?.data || "No data");
+        console.log("Timetable API response:", timetableResponse?.data || "No data");
+        console.log("Homework API response:", homeworkResponse?.data || "No data");
+        console.log("Notice API response:", noticeResponse?.data || "No data");
 
         if (heatmapResponse?.data?.success) {
           setHeatmapData(heatmapResponse.data.heatmapMap);
@@ -82,7 +87,7 @@ const Dashboard = () => {
           setAggregates(aggResponse.data.aggregates);
         }
 
-        // console.log("Raw timetable data for the week:", timetableResponse?.data?.data || "No timetable data fetched.");
+        console.log("Raw timetable data for the week:", timetableResponse?.data?.data || "No timetable data fetched.");
         if (timetableResponse?.data?.success) {
           // 1. Change to ALL CAPS to match your database exactly
           const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
@@ -101,7 +106,7 @@ const Dashboard = () => {
           setTodaySchedule(sortedSchedule);
         }
         if (homeworkResponse?.data?.success) {
-          console.log("Homework data fetched:", homeworkResponse.data.data || "No homework data found.");
+          // console.log("Homework data fetched:", homeworkResponse.data.data || "No homework data found.");
           setHomeworkData(homeworkResponse.data.data || homeworkResponse.data.assignments || []);
         }
         

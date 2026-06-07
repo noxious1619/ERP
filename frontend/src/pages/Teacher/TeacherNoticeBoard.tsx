@@ -30,6 +30,7 @@ const TeacherNoticeBoard = () => {
           },
         );
         if (res.data.success) {
+          console.log("Fetched Notices:", res.data.data); 
           setNotices(res.data.data);
           if (activeFilter === "ALL") {
             setAllNotices(res.data.data);

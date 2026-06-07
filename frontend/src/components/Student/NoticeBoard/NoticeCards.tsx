@@ -2,11 +2,13 @@ import type { Notice } from "../../../types/notice";
 import noticeIconBlue from "../../../assets/Student/NoticeBoard/blue.svg";
 import noticeIconPink from "../../../assets/Student/NoticeBoard/pink.svg";
 import noticeIconPurple from "../../../assets/Student/NoticeBoard/purple.svg";
+
 const CARD_STYLES = [
   { bg: "bg-indigo-50/50", iconBg: "bg-indigo-200/50", icon: noticeIconBlue },
   { bg: "bg-pink-100/50",  iconBg: "bg-rose-300/20",   icon: noticeIconPink },
   { bg: "bg-violet-50",    iconBg: "bg-violet-400/20",  icon: noticeIconPurple },
 ];
+
 const isToday = (dateStr: string) => {
   const d = new Date(dateStr), now = new Date();
   return (
@@ -24,6 +26,15 @@ const isYesterday = (dateStr: string) => {
     d.getMonth() === y.getMonth() &&
     d.getFullYear() === y.getFullYear()
   );
+};
+
+// Formats a date string into "Month Day, Year" (e.g., "June 4, 2026")
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 };
 
 const NoticeGroup = ({
@@ -108,13 +119,37 @@ const NoticeCards = ({ notices, allNotices, isLoading, error }: NoticeCardsProps
     );
   }
 
+  // 1. Isolate Today and Yesterday
   const todayNotices = notices.filter((n) => isToday(n.createdAt));
   const yesterdayNotices = notices.filter((n) => isYesterday(n.createdAt));
 
+  // 2. Catch everything else and group them by their formatted date!
+  const olderNotices = notices.filter((n) => !isToday(n.createdAt) && !isYesterday(n.createdAt));
+  
+  const groupedOlderNotices = olderNotices.reduce((acc, notice) => {
+    const dateLabel = formatDate(notice.createdAt);
+    if (!acc[dateLabel]) {
+      acc[dateLabel] = [];
+    }
+    acc[dateLabel].push(notice);
+    return acc;
+  }, {} as Record<string, Notice[]>);
+
   return (
     <div className="mt-8">
+      {/* Static Groups for Today and Yesterday */}
       <NoticeGroup label="Today" notices={todayNotices} allNotices={allNotices} />
       <NoticeGroup label="Yesterday" notices={yesterdayNotices} allNotices={allNotices} />
+
+      {/* Dynamically render a new group for every unique older date */}
+      {Object.entries(groupedOlderNotices).map(([dateLabel, noticesForDate]) => (
+        <NoticeGroup 
+          key={dateLabel} 
+          label={dateLabel} 
+          notices={noticesForDate} 
+          allNotices={allNotices} 
+        />
+      ))}
     </div>
   );
 };

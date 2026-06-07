@@ -96,6 +96,160 @@ export const getSectionAttendance = async (req: Request, res: Response) => {
   }
 };
 
+export const getDailyAttendance = async (req: Request, res: Response) => {
+  try {
+    const { sectionId, date } = req.query;
+
+    if (!sectionId || !date) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Missing sectionId or date parameters" 
+      });
+    }
+
+    // Safely parse the date string (e.g., "2026-06-07") into a full-day search window
+    const targetDate = String(date);
+    const startOfDay = new Date(`${targetDate}T00:00:00.000Z`);
+    const endOfDay = new Date(`${targetDate}T23:59:59.999Z`);
+
+    const existingAttendance = await prisma.attendance.findMany({
+      where: {
+        sectionId: String(sectionId),
+        date: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      include: {
+        student: {
+          select: { 
+            id: true, 
+            firstName: true, 
+            lastName: true, 
+            rollNumber: true,
+            admissionNumber: true 
+          }
+        }
+      },
+      orderBy: {
+        student: { rollNumber: 'asc' }
+      }
+    });
+
+    // If records exist, return them and tell the frontend it's saved DB data
+    if (existingAttendance.length > 0) {
+      return res.status(200).json({
+        success: true,
+        isSaved: true, 
+        data: existingAttendance,
+      });
+    }
+
+    // 2. PATH B: No records found. Fetch the roster and build the "Ghost" state
+    const students = await prisma.student.findMany({
+      where: { 
+        sectionId: String(sectionId),
+        isActive: true // Optimization: Only fetch active students!
+      },
+      orderBy: { rollNumber: 'asc' }
+    });
+
+    // Map the students into a fake "Attendance" object format for the frontend UI
+    const ghostAttendance = students.map((student) => ({
+      // We generate a temporary ID for React keys, but the DB won't use this
+      id: `ghost-${student.id}`, 
+      date: startOfDay,
+      status: "PRESENT", // Defaulting to PRESENT to save the teacher time
+      studentId: student.id,
+      sectionId: String(sectionId),
+      student: {
+        id: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        rollNumber: student.rollNumber,
+        admissionNumber: student.admissionNumber
+      }
+    }));
+
+    return res.status(200).json({
+      success: true,
+      isSaved: false, // Tells the frontend UI to allow editing/saving
+      data: ghostAttendance,
+    });
+
+  } catch (error: any) {
+    console.error("[getDailyAttendance] Error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Internal Server Error",
+      error: error.message 
+    });
+  }
+};
+
+export const saveDailyAttendance = async (req: Request, res: Response) => {
+  try {
+    // The payload sent from the React frontend
+    const { sectionId, date, attendanceData } = req.body;
+
+    // We assume your auth middleware attaches the user ID
+    const markedById = (req as any).user.id; 
+
+    if (!sectionId || !date || !attendanceData || !Array.isArray(attendanceData)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid payload. Required: sectionId, date, and attendanceData array." 
+      });
+    }
+
+    const targetDate = new Date(String(date));
+
+    // 🚀 THE PRISMA TRANSACTION
+    // This executes all database commands together. If one fails, they all roll back.
+    await prisma.$transaction(async (tx) => {
+      
+      // Step 1: Wipe any existing records for this specific section and date.
+      // This allows teachers to "Update" or "Overwrite" attendance if they made a mistake earlier in the day.
+      await tx.attendance.deleteMany({
+        where: {
+          sectionId: String(sectionId),
+          date: {
+            gte: new Date(`${String(date)}T00:00:00.000Z`),
+            lte: new Date(`${String(date)}T23:59:59.999Z`),
+          }
+        }
+      });
+
+      // Step 2: Map the frontend array into a clean Prisma creation format
+      const newRecords = attendanceData.map((record: any) => ({
+        date: targetDate,
+        status: record.status, // "PRESENT", "ABSENT", or "LATE"
+        studentId: record.studentId,
+        sectionId: String(sectionId),
+        markedById: markedById
+      }));
+
+      // Step 3: Bulk insert the fresh records!
+      await tx.attendance.createMany({
+        data: newRecords
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance successfully saved."
+    });
+
+  } catch (error: any) {
+    console.error("🔥 saveDailyAttendance Error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Internal Server Error",
+      error: error.message 
+    });
+  }
+};
+
 export const updateStudentYearlyAttendance = async (req: Request, res: Response) => {
   try {
     const { studentId, sectionId, attendanceRecords } = req.body; 

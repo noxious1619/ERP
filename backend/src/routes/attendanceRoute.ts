@@ -6,6 +6,8 @@ import { markBulkAttendance,
     getStudentMonthlyTrends,
     getStudentWeeklyTrends,
     getStudentHeatmapGrid,
+    getDailyAttendance,
+    saveDailyAttendance,
 
 } from '../controllers/attendanceController.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -27,6 +29,16 @@ router.get('/section',
 router.put('/student/yearly', 
     restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
     updateStudentYearlyAttendance
+);
+
+router.get('/daily',
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    getDailyAttendance
+);
+
+router.post('/daily',
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    saveDailyAttendance
 );
 
 router.get('/attendanceData/student/:studentId/totalPercetage', 

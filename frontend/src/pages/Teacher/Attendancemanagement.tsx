@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Teacher/Dashboard/Navbar";
@@ -13,6 +13,7 @@ import AttendanceStatusTable from "../../components/Teacher/Attendance/Attendanc
 import AttendanceStats from "../../components/Teacher/Attendance/Attendancestats";
 import AttendanceFilter from "../../components/Teacher/Attendance/Attendancefilter";
 import WeeklyAttendanceChart from "../../components/Teacher/Attendance/Weeklyattendancechart";
+import { AuthContext } from "../../context/AuthContext";
 
 const STATIC_STUDENTS: Student[] = [
   { rollNo: "001", name: "Alice Johnson", status: "present" },
@@ -42,12 +43,26 @@ const WEEKLY_DATA = [
 ];
 
 const AttendanceManagement = () => {
+  const auth = useContext(AuthContext);
+
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [studentsLoaded, setStudentsLoaded] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (auth && !auth.loading) {
+      console.log("🏫 [Attendance Page] Global Teacher Profile:", auth.teacherData);
+      
+      if (auth.teacherData?.classTeacherOf) {
+        console.log("✅ SUCCESS: They are a class teacher for Section:", auth.teacherData.classTeacherOf.id);
+      } else {
+        console.log("🚫 NOPE: This teacher does not own a specific class.");
+      }
+    }
+  }, [auth]);
 
   const handleLoadStudents = () => {
     if (selectedClass && selectedSection && selectedDate) {

@@ -8,7 +8,7 @@ import Homework from "./pages/Student/Homework";
 import NoticeBoard from "./pages/Student/NoticeBoard";
 import Exam from "./pages/Student/Exam";
 import { AuthProvider } from "./context/AuthContext";
-import TeacherNoticeBoard from "./pages/Teacher/TeacherNoticeBoard";
+import Academics from "./pages/Admin/Academics";import TeacherNoticeBoard from "./pages/Teacher/TeacherNoticeBoard";
 import TeacherTimetablePage from "./pages/Teacher/TeacherTimetable";
 import TeacherProfile from "./pages/Teacher/TeacherProfile";
 import TeacherWeeklytimetable from "./pages/Teacher/Teacherweeklytimetable";
@@ -55,6 +55,10 @@ const App = () => {
         element={<TeacherSubmissionView />}
       />
       <Route path="/teacher/attendance" element={<AttendanceManagement />} />
+
+        {/* Admin End Points */}
+        {/* Academics */}
+        <Route path="/admin/academics" element={<Academics />} />
       </Routes>
     </AuthProvider>
   );

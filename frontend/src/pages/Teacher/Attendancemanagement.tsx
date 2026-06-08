@@ -33,7 +33,7 @@ const AttendanceManagement = () => {
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }));
   const [students, setStudents] = useState<DynamicStudent[]>([]);
   
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -50,6 +50,8 @@ const AttendanceManagement = () => {
       if (!sectionId || auth?.loading) return;
 
       try {
+        setStudents([]); 
+        setIsSaved(false);
         setIsLoading(true);
         setError(null);
         const headers = { Authorization: `Bearer ${auth.token}` };

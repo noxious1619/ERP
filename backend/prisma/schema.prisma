@@ -40,7 +40,6 @@ model User {
   attendanceMarked  Attendance[]    @relation("MarkedBy")
   notices           Notice[]
   noticeViews       NoticeView[]
-  gradedSubmissions Submission[]    @relation("Grader")
   timetables        Timetable[]
   createdExams      ScheduledExam[]
 }
@@ -76,7 +75,7 @@ model Student {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   // Academic Relations
-  submissions       Submission[]
+  gradedSubmissions Submission[]    @relation("Grader")
   marks             Mark[]
   calculatedResults CalculatedResult[]
   feeRecords        MonthlyFeeRecord[]
@@ -346,24 +345,23 @@ model Assignment {
 }
 
 model Submission {
-  id           String     @id @default(uuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  id              String     @id @default(uuid())
+  assignmentId    String
+  assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
-  studentId String
-  student   Student @relation(fields: [studentId], references: [id])
+  studentId       String
+  student         Student @relation(fields: [studentId], references: [id])
 
-  fileUrl String?
-  content String? @db.Text
+  fileUrl         String?
+  content         String? @db.Text
 
-  submittedAt DateTime         @default(now())
-  status      SubmissionStatus @default(SUBMITTED)
+  submittedAt     DateTime         @default(now())
+  status          SubmissionStatus @default(SUBMITTED)
+  marksObtained   Float?
+  remarks         String?
 
-  score   Float?
-  remarks String?
-
-  gradedById String?
-  gradedBy   User?   @relation("Grader", fields: [gradedById], references: [id])
+  gradedById      String?
+  gradedBy        Teacher?       @relation("Grader", fields: [gradedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

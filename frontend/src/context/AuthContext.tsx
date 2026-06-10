@@ -89,7 +89,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     hydrateSession();
   }, [token, role]);
 
-  // 🚀 Derived Global Variables based on the new Prisma schema
   const globalClassName = teacherData?.classTeacherOf?.academicClass?.name || null;
   const globalSectionName = teacherData?.classTeacherOf?.name || null;
   const globalSectionId = teacherData?.classTeacherOf?.id || null;

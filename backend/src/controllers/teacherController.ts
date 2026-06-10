@@ -260,7 +260,7 @@ export const getMyProfile = async (req: Request, res: Response) => {
       select: {
         ...teacherSelect, 
         
-        classTeacherOf: { 
+      classTeacherOf: { 
       select: {
         id: true,
         name: true,
@@ -272,6 +272,18 @@ export const getMyProfile = async (req: Request, res: Response) => {
       }
     }
       },
+    sections: {
+          select: {
+            id: true,
+            name: true, // e.g., "A", "B"
+            academicClass: {
+              select: {
+                name: true // e.g., "Class 10"
+              }
+            }
+          }
+      }
+
     });
 
     if (!teacher) {

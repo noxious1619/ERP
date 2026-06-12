@@ -29,6 +29,13 @@ import AttendanceManagement from "./pages/Teacher/Attendancemanagement";
 // ADMIN IMPORTS
 // ==========================================
 import Academics from "./pages/Admin/Academics";
+import Staff from "./pages/Admin/Staff";
+import StaffProfile from "./pages/Admin/Staff/StaffProfile";
+import Classes from "./pages/Admin/Academics/Classes";
+import Subjects from "./pages/Admin/Academics/Subjects";
+import AdminTimetable from "./pages/Admin/Academics/Timetable";
+
+
 
 const App = () => {
   return (
@@ -65,15 +72,24 @@ const App = () => {
         {/* ADMIN ROUTES                               */}
         {/* ========================================== */}
         <Route path="/admin/academics" element={<Academics />} />
+        <Route path="/admin/academics/staff" element={<Staff />} />
+        <Route path="/admin/academics/staff/profile" element={<StaffProfile />} />
+        <Route path="/admin/academics/classes" element={<Classes />} />
+        <Route path="/admin/academics/subjects" element={<Subjects />} />
+        <Route path="/admin/academics/timetable" element={<AdminTimetable />} />
+
+
+
+
 
         {/* Catch-all 404 Route */}
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
             <div className="flex items-center justify-center h-screen text-xl font-bold text-gray-500">
               404 | Page Not Found
             </div>
-          } 
+          }
         />
       </Routes>
     </AuthProvider>

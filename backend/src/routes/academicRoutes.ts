@@ -10,7 +10,8 @@ import {
   createWeeklyTimetable,
   getWeeklyTimetableBySection,
   getTeacherMySubjectTimetable,
-  getTeacherMySubjectWeekly
+  getTeacherMySubjectWeekly,
+  getDailyTimetableBySection
 } from '../controllers/academicController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
@@ -32,5 +33,6 @@ router.post('/timetable/bulk', restrictTo('SUPER_ADMIN', 'ADMIN'), createWeeklyT
 router.get('/timetable/section/:sectionId', getWeeklyTimetableBySection);
 router.get('/timetable/teacher/my-subject', restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN'), getTeacherMySubjectTimetable);
 router.get('/timetable/teacher/my-subject/weekly', restrictTo('TEACHER'), getTeacherMySubjectWeekly);
+router.get('/timetable/section/:sectionId/daily', getDailyTimetableBySection);
 
 export default router;

@@ -1,10 +1,13 @@
-/* Main Calendar */
+/* =========================
+   Main Calendar
+========================= */
 .react-calendar {
   width: 100%;
   border: none;
   background: transparent;
   font-family: inherit;
 }
+
 /* =========================
    Navigation
 ========================= */
@@ -17,7 +20,6 @@
   min-width: 24px;
   border: none;
   background: none;
-
   font-size: 18px;
   font-weight: 600;
   color: #3d3d3d;
@@ -28,24 +30,28 @@
   font-weight: 700;
   color: #2f2f2f;
 }
+
 /* =========================
    Weekday Labels
 ========================= */
 .react-calendar__month-view__weekdays {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr);
   margin-bottom: 8px;
 }
+
 .react-calendar__month-view__weekdays__weekday {
   text-align: center;
-
   font-size: 10px;
   font-weight: 700;
   color: #7b7b7b;
-
   text-decoration: none;
 }
+
 .react-calendar__month-view__weekdays__weekday abbr {
   text-decoration: none;
 }
+
 /* =========================
    Days Grid
 ========================= */
@@ -53,20 +59,21 @@
   display: grid !important;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
+  align-items: center;
 }
+
 /* =========================
    Date Tiles
 ========================= */
 .react-calendar__tile {
-  width: 36px !important;
-  height: 36px !important;
-  max-width: 36px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1;
 
   border: none;
   border-radius: 10px;
-
   background: #f3f4f6;
-
   padding: 0;
 
   display: flex;
@@ -77,11 +84,13 @@
   font-weight: 500;
   color: #4b4b4b;
 }
+
 /* Hide Neighbor Month Dates */
 .react-calendar__month-view__days__day--neighboringMonth {
   opacity: 0;
   pointer-events: none;
 }
+
 /* =========================
    Dashboard Attendance States
 ========================= */
@@ -89,18 +98,22 @@
   background: #6cd63c;
   color: white;
 }
+
 .react-calendar__tile.absent {
   background: #ff4d6d;
   color: white;
 }
+
 .react-calendar__tile.holiday {
   background: #f5b333;
   color: white;
 }
+
 .react-calendar__tile.selected {
   background: #1518a3;
   color: white;
 }
+
 /* =========================
    Timetable Calendar States
 ========================= */
@@ -109,41 +122,46 @@
   color: white !important;
   border-radius: 999px;
 }
+
 .react-calendar__tile.outlined-date {
   border: 2px solid #1f1f1f !important;
   border-radius: 999px;
   background: white !important;
   color: #1f1f1f !important;
 }
+
 /* =========================
-   Default State Fixes
+   Today — Default & Active Fixes
 ========================= */
 .react-calendar__tile--now {
-  background: #f3f4f6 !important;
-  color: #4b4b4b !important;
+  background-color: #3b82f6 !important;
+  color: white !important;
+  font-weight: 800 !important;
+  box-shadow: 0px 4px 12px rgba(59, 130, 246, 0.4) !important;
 }
+
 .react-calendar__tile--active {
   background: transparent !important;
   color: inherit !important;
 }
+
 /* =========================
    Hover
 ========================= */
 .react-calendar__tile:enabled:hover {
   background: #ebebeb;
 }
+
 /* =========================
    Year View / Month Selection
 ========================= */
 .react-calendar__year-view__months {
   display: grid !important;
   grid-template-columns: repeat(3, 1fr);
-
   gap: 12px;
-
   margin-top: 14px;
 }
-/* Month Tiles */
+
 .react-calendar__year-view__months__month {
   width: 100% !important;
   max-width: 100% !important;
@@ -151,9 +169,7 @@
 
   border: none;
   border-radius: 18px;
-
-  background: #3B82F6;
-
+  background: #3b82f6;
   padding: 0;
 
   display: flex;
@@ -164,20 +180,7 @@
   font-weight: 500;
   color: #3b3b3b;
 }
-/* Hover */
+
 .react-calendar__year-view__months__month:hover {
   background: #ebebeb;
-}
-
-/* =========================
-   Current Date (Today)
-========================= */
-.react-calendar__tile--now {
-  background-color: #3B82F6 !important; /* Bright solid blue */
-  color: white !important;
-  font-weight: 800 !important;
-}
-
-.react-calendar__tile--now {
-  box-shadow: 0px 4px 12px rgba(59, 130, 246, 0.4) !important;
 }

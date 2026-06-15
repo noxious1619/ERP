@@ -7,30 +7,31 @@ import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 
-// Filter mode type — consumed by parent to switch schedule data
 export type TeacherFilterMode = "class" | "mySubject";
+
+export interface TeacherSection {
+  id: string;
+  name: string;
+  academicClass: { id: string; name: string };
+}
 
 interface TeacherTimetableHeaderProps {
   filterMode: TeacherFilterMode;
   onFilterChange: (mode: TeacherFilterMode) => void;
+  sections: TeacherSection[];
+  selectedSection: TeacherSection | null;
+  onSectionChange: (section: TeacherSection) => void;
 }
-
-// Static class list — replace with API data when backend is ready
-const CLASS_OPTIONS = [
-  "Class X(A)",
-  "Class X(B)",
-  "Class XI(A)",
-  "Class XI(B)",
-  "Class XII(E)",
-];
 
 const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
   filterMode,
   onFilterChange,
+  sections,
+  selectedSection,
+  onSectionChange,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
-  const [selectedClass, setSelectedClass] = useState("Class X(A)");
 
   const notificationRef = useRef<HTMLDivElement>(null);
   const classDropdownRef = useRef<HTMLDivElement>(null);
@@ -39,19 +40,12 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
   const location = useLocation();
   const isWeekly = location.pathname.includes("weekly");
 
-  // Close notification dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
       }
-      if (
-        classDropdownRef.current &&
-        !classDropdownRef.current.contains(event.target as Node)
-      ) {
+      if (classDropdownRef.current && !classDropdownRef.current.contains(event.target as Node)) {
         setShowClassDropdown(false);
       }
     };
@@ -59,9 +53,17 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Format section label: "Class 10 - Section A"
+  const getSectionLabel = (section: TeacherSection) =>
+    `${section.academicClass.name} - ${section.name}`;
+
+  const selectedLabel = selectedSection
+    ? getSectionLabel(selectedSection)
+    : "Select Class";
+
   return (
     <div className="flex items-start justify-between">
-      {/* Left Content */}
+      {/* Left */}
       <div>
         <h1 className="text-[44px] font-bold leading-[52px] text-[#2D3335]">
           My Timetable
@@ -73,8 +75,10 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
 
       {/* Right Controls */}
       <div className="flex items-center gap-4 pt-2">
-        {/* ── Filter Pill: Class Selector OR My Subject ── */}
+
+        {/* ── Filter Pills ── */}
         <div className="flex items-center gap-2">
+
           {/* Class dropdown pill */}
           <div className="relative" ref={classDropdownRef}>
             <button
@@ -83,35 +87,31 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
                 setShowClassDropdown((prev) => !prev);
               }}
               className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-[14px] font-semibold transition-all duration-200
-                ${
-                  filterMode === "class"
-                    ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
-                    : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
+                ${filterMode === "class"
+                  ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
+                  : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
                 }`}
             >
-              {selectedClass}
+              {selectedLabel}
               <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                  showClassDropdown ? "rotate-180" : ""
-                }`}
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${showClassDropdown ? "rotate-180" : ""}`}
               />
             </button>
 
-            {/* Dropdown list */}
-            {showClassDropdown && (
-              <div className="absolute left-0 top-full mt-2 z-50 min-w-[160px] rounded-2xl border border-gray-100 bg-white shadow-lg py-1.5">
-                {CLASS_OPTIONS.map((cls) => (
+            {showClassDropdown && sections.length > 0 && (
+              <div className="absolute left-0 top-full mt-2 z-50 min-w-[200px] rounded-2xl border border-gray-100 bg-white shadow-lg py-1.5">
+                {sections.map((section) => (
                   <button
-                    key={cls}
+                    key={section.id}
                     onClick={() => {
-                      setSelectedClass(cls);
+                      onSectionChange(section);
                       setShowClassDropdown(false);
                       onFilterChange("class");
                     }}
                     className={`w-full text-left px-4 py-2 text-sm font-medium transition-colors hover:bg-[#EEF0FF] hover:text-[#3F5BF6]
-                      ${selectedClass === cls ? "text-[#3F5BF6] bg-[#EEF0FF]" : "text-gray-700"}`}
+                      ${selectedSection?.id === section.id ? "text-[#3F5BF6] bg-[#EEF0FF]" : "text-gray-700"}`}
                   >
-                    {cls}
+                    {getSectionLabel(section)}
                   </button>
                 ))}
               </div>
@@ -122,10 +122,9 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
           <button
             onClick={() => onFilterChange("mySubject")}
             className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-[14px] font-semibold transition-all duration-200
-              ${
-                filterMode === "mySubject"
-                  ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
-                  : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
+              ${filterMode === "mySubject"
+                ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
+                : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
               }`}
           >
             My Subject
@@ -174,11 +173,7 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
           onClick={() => navigate("/teacher/profile")}
           className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer"
         >
-          <img
-            src={profileImage}
-            alt="Teacher"
-            className="h-full w-full object-cover"
-          />
+          <img src={profileImage} alt="Teacher" className="h-full w-full object-cover" />
         </div>
       </div>
     </div>

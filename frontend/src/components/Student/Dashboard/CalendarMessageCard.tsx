@@ -1,6 +1,14 @@
-const CalendarMessageCard = () => {
+interface CalendarMessageCardProps {
+className?: string;
+}
+
+const CalendarMessageCard = ({ className }: CalendarMessageCardProps) => {
+  const containerWidth = className ?? "w-[330px]";
+
   return (
-    <div className="w-[330px] rounded-3xl bg-white px-2 py-2 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.05)]">
+    <div
+      className={`${containerWidth} rounded-3xl bg-white px-2 py-2 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.05)]`}
+    >
       {/* Date */}
       <div className="flex justify-center">
         <h2 className="text-[18px] font-bold text-black">24th August 2026</h2>
@@ -19,4 +27,5 @@ const CalendarMessageCard = () => {
     </div>
   );
 };
+
 export default CalendarMessageCard;

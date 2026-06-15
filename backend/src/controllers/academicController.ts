@@ -484,11 +484,11 @@ const sectionId = teacherPeriods[0].sectionId; // safe — length checked above
 
 const breakRows = await prisma.timetable.findMany({
   where: {
-    sectionId: sectionId, // now TypeScript knows it's a string
     day: formattedDay,
     isBreak: true,
   },
-  orderBy: { period: "asc" },
+  distinct: ['startTime'],  // one break per unique time
+  orderBy: { period: 'asc' },
 });
     // 3. Normalize teacher periods
     const normalizedPeriods = teacherPeriods.map((row) => ({
@@ -540,62 +540,70 @@ const breakRows = await prisma.timetable.findMany({
 };
  
 
-export const getTeacherMySubjectWeekly = async (
-  req: Request,
-  res: Response
-) => {
+export const getTeacherMySubjectWeekly = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
-    // Fetch ALL days at once for the weekly grid — no day filter
+    // 1. Fetch teacher's own periods for the full week
     const timetableRows = await prisma.timetable.findMany({
       where: {
         teacherId: userId,
         isBreak: false,
       },
       include: {
-        subject: {
-          select: {
-            name: true,
-            code: true,
-          },
-        },
+        subject: { select: { name: true, code: true } },
         section: {
           select: {
             name: true,
-            academicClass: {
-              select: {
-                name: true,
-              },
-            },
+            academicClass: { select: { name: true } },
           },
         },
       },
-      orderBy: [
-        { day: "asc" },
-        { period: "asc" },
-      ],
+      orderBy: [{ day: "asc" }, { period: "asc" }],
     });
 
     if (timetableRows.length === 0) {
       return res.status(200).json({ success: true, data: [] });
     }
 
-    const normalized = timetableRows.map((row) => ({
+    // 2. Fetch school-wide breaks (distinct startTime per day)
+    const breakRows = await prisma.timetable.findMany({
+      where: { isBreak: true },
+      distinct: ["startTime", "day"],  // one break per time slot per day
+      orderBy: [{ day: "asc" }, { period: "asc" }],
+    });
+
+    // 3. Normalize teaching periods
+    const normalizedPeriods = timetableRows.map((row) => ({
       id: row.id,
-      day: row.day,                          // "MONDAY", "TUESDAY" etc.
-      startTime: row.startTime,              // "10:00"
+      day: row.day,
+      startTime: row.startTime,
       isBreak: false,
-      // code = subject name (e.g. "ENGLISH") — shown as label on weekly card
       code: row.subject?.name?.toUpperCase() || "N/A",
-      // subject = class + section name (e.g. "Class 10 - Section A")
       subject: `${row.section.academicClass.name} - ${row.section.name}`,
-      teacher: "",                           // own schedule — not needed
+      teacher: "",
       room: row.room || "TBD",
       color: row.color || "BLUE",
     }));
 
-    return res.status(200).json({ success: true, data: normalized });
+    // 4. Normalize break rows
+    const normalizedBreaks = breakRows.map((row) => ({
+      id: row.id,
+      day: row.day,
+      startTime: row.startTime,
+      isBreak: true,
+      breakLabel: row.breakLabel || "Break",
+      code: "",
+      subject: row.breakLabel || "Break",
+      teacher: "",
+      room: "",
+      color: "",
+    }));
+
+    // 5. Merge all
+    const merged = [...normalizedPeriods, ...normalizedBreaks];
+
+    return res.status(200).json({ success: true, data: merged });
 
   } catch (error: any) {
     return res.status(500).json({
@@ -605,3 +613,61 @@ export const getTeacherMySubjectWeekly = async (
     });
   }
 };
+
+export const getDailyTimetableBySection = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { sectionId } = req.params;
+    const { day } = req.query;
+ 
+    if (!sectionId) {
+      return res.status(400).json({
+        success: false,
+        message: "sectionId is required.",
+      });
+    }
+ 
+    if (!day || typeof day !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Valid day parameter is required.",
+      });
+    }
+ 
+    if (day.trim().toLowerCase() === "sunday") {
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+ 
+    const timetableRows = await prisma.timetable.findMany({
+      where: {
+        sectionId,
+        day: day.toUpperCase() as any,
+      },
+      include: {
+        subject: { select: { name: true, code: true } },
+        teacher: { select: { id: true, name: true } },
+      },
+      orderBy: { period: "asc" },
+    });
+ 
+    // Reuse same normalizeTimetable helper used for student
+    const normalizedSchedule = normalizeTimetable(timetableRows, day);
+ 
+    return res.status(200).json({
+      success: true,
+      data: normalizedSchedule,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch section timetable.",
+      error: error.message,
+    });
+  }
+};
+ 

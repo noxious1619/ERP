@@ -1,7 +1,10 @@
 import React, { useMemo, useEffect, useState } from "react";
 import axios from "axios";
 import WeeklyClassCard from "../../../components/Student/Timetable/WeeklyCard";
-import type { TeacherFilterMode } from "./TeacherTimetableHeader";
+import type {
+  TeacherFilterMode,
+  TeacherSection,
+} from "./TeacherTimetableHeader";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface TeacherWeeklyEntry {
@@ -37,322 +40,7 @@ const DAYS_HEADER = [
   { day: "Saturday", date: "21" },
 ];
 
-// ─── Static class-wise data (backend pending) ─────────────────────────────────
-const CLASS_WEEKLY_ENTRIES: TeacherWeeklyEntry[] = [
-  // 08:00
-  {
-    id: "c1",
-    day: "MONDAY",
-    startTime: "08:00",
-    code: "CSC-202",
-    subject: "Data Structures",
-    teacher: "James Wilson",
-    room: "Comp Lab 3",
-    color: "BLUE",
-  },
-  {
-    id: "c2",
-    day: "TUESDAY",
-    startTime: "08:00",
-    code: "CSC-202",
-    subject: "Data Structures",
-    teacher: "James Wilson",
-    room: "Comp Lab 3",
-    color: "BLUE",
-  },
-  {
-    id: "c3",
-    day: "WEDNESDAY",
-    startTime: "08:00",
-    code: "CSC-202",
-    subject: "Data Structures",
-    teacher: "James Wilson",
-    room: "Comp Lab 3",
-    color: "BLUE",
-  },
-  {
-    id: "c4",
-    day: "THURSDAY",
-    startTime: "08:00",
-    code: "PHY-301",
-    subject: "Quantum Physics",
-    teacher: "Prof. Robert Chen",
-    room: "Lab 12, Science Wing",
-    color: "PURPLE",
-  },
-  {
-    id: "c5",
-    day: "FRIDAY",
-    startTime: "08:00",
-    code: "PHY-301",
-    subject: "Quantum Physics",
-    teacher: "Prof. Robert Chen",
-    room: "Lab 12, Science Wing",
-    color: "PURPLE",
-  },
-  {
-    id: "c5s",
-    day: "SATURDAY",
-    startTime: "08:00",
-    code: "MTH-201",
-    subject: "Discrete Math",
-    teacher: "Dr. Peter Parker",
-    room: "Seminar Room 2",
-    color: "BLUE",
-  },
-  // 10:00
-  {
-    id: "c6",
-    day: "MONDAY",
-    startTime: "10:00",
-    code: "CSC-202",
-    subject: "Data Structures",
-    teacher: "James Wilson",
-    room: "Comp Lab 3",
-    color: "BLUE",
-  },
-  {
-    id: "c7",
-    day: "TUESDAY",
-    startTime: "10:00",
-    code: "CSC-202",
-    subject: "Data Structures",
-    teacher: "James Wilson",
-    room: "Comp Lab 3",
-    color: "BLUE",
-  },
-  {
-    id: "c8",
-    day: "WEDNESDAY",
-    startTime: "10:00",
-    code: "PHL-101",
-    subject: "Modern Ethics",
-    teacher: "Dr. Alan Moore",
-    room: "Main Hall",
-    color: "PINK",
-  },
-  {
-    id: "c9",
-    day: "THURSDAY",
-    startTime: "10:00",
-    code: "PHL-101",
-    subject: "Modern Ethics",
-    teacher: "Dr. Alan Moore",
-    room: "Main Hall",
-    color: "PINK",
-  },
-  {
-    id: "c10",
-    day: "FRIDAY",
-    startTime: "10:00",
-    code: "CSC-305",
-    subject: "Computer Networks",
-    teacher: "Prof. Lisa Wang",
-    room: "Lab 08",
-    color: "PURPLE",
-  },
-  {
-    id: "c10s",
-    day: "SATURDAY",
-    startTime: "10:00",
-    code: "AI-400",
-    subject: "Intro to AI & ML",
-    teacher: "Dr. Michael Grey",
-    room: "Auditorium 1",
-    color: "BLUE",
-  },
-  // 12:00 breaks
-  {
-    id: "b1",
-    day: "MONDAY",
-    startTime: "12:00",
-    isBreak: true,
-    code: "",
-    subject: "",
-    teacher: "",
-    room: "",
-    color: "",
-  },
-  {
-    id: "b2",
-    day: "TUESDAY",
-    startTime: "12:00",
-    isBreak: true,
-    code: "",
-    subject: "",
-    teacher: "",
-    room: "",
-    color: "",
-  },
-  {
-    id: "b3",
-    day: "WEDNESDAY",
-    startTime: "12:00",
-    isBreak: true,
-    code: "",
-    subject: "",
-    teacher: "",
-    room: "",
-    color: "",
-  },
-  {
-    id: "b4",
-    day: "THURSDAY",
-    startTime: "12:00",
-    isBreak: true,
-    code: "",
-    subject: "",
-    teacher: "",
-    room: "",
-    color: "",
-  },
-  {
-    id: "b5",
-    day: "FRIDAY",
-    startTime: "12:00",
-    isBreak: true,
-    code: "",
-    subject: "",
-    teacher: "",
-    room: "",
-    color: "",
-  },
-  {
-    id: "b6",
-    day: "SATURDAY",
-    startTime: "12:00",
-    isBreak: true,
-    code: "",
-    subject: "",
-    teacher: "",
-    room: "",
-    color: "",
-  },
-  // 13:00
-  {
-    id: "c11",
-    day: "MONDAY",
-    startTime: "13:00",
-    code: "MTH-201",
-    subject: "Discrete Math",
-    teacher: "Dr. Peter Parker",
-    room: "Seminar Room 2",
-    color: "BLUE",
-  },
-  {
-    id: "c12",
-    day: "TUESDAY",
-    startTime: "13:00",
-    code: "MTH-201",
-    subject: "Discrete Math",
-    teacher: "Dr. Peter Parker",
-    room: "Seminar Room 2",
-    color: "BLUE",
-  },
-  {
-    id: "c13",
-    day: "WEDNESDAY",
-    startTime: "13:00",
-    code: "AI-400",
-    subject: "Intro to AI & ML",
-    teacher: "Dr. Michael Grey",
-    room: "Auditorium 1",
-    color: "BLUE",
-  },
-  {
-    id: "c14",
-    day: "THURSDAY",
-    startTime: "13:00",
-    code: "AI-400",
-    subject: "Intro to AI & ML",
-    teacher: "Dr. Michael Grey",
-    room: "Auditorium 1",
-    color: "BLUE",
-  },
-  {
-    id: "c15",
-    day: "FRIDAY",
-    startTime: "13:00",
-    code: "MTH-402",
-    subject: "Advanced Calculus",
-    teacher: "Dr. Sarah Jenkins",
-    room: "Room 402, Block B",
-    color: "PURPLE",
-  },
-  {
-    id: "c15s",
-    day: "SATURDAY",
-    startTime: "13:00",
-    code: "CSC-305",
-    subject: "Computer Networks",
-    teacher: "Prof. Lisa Wang",
-    room: "Lab 08",
-    color: "PURPLE",
-  },
-  // 15:00
-  {
-    id: "c16",
-    day: "MONDAY",
-    startTime: "15:00",
-    code: "MTH-201",
-    subject: "Discrete Math",
-    teacher: "Dr. Peter Parker",
-    room: "Seminar Room 2",
-    color: "BLUE",
-  },
-  {
-    id: "c17",
-    day: "TUESDAY",
-    startTime: "15:00",
-    code: "MTH-201",
-    subject: "Discrete Math",
-    teacher: "Dr. Peter Parker",
-    room: "Seminar Room 2",
-    color: "BLUE",
-  },
-  {
-    id: "c18",
-    day: "WEDNESDAY",
-    startTime: "15:00",
-    code: "MTH-201",
-    subject: "Discrete Math",
-    teacher: "Dr. Peter Parker",
-    room: "Seminar Room 2",
-    color: "BLUE",
-  },
-  {
-    id: "c19",
-    day: "THURSDAY",
-    startTime: "15:00",
-    code: "MTH-201",
-    subject: "Discrete Math",
-    teacher: "Dr. Peter Parker",
-    room: "Seminar Room 2",
-    color: "BLUE",
-  },
-  {
-    id: "c20",
-    day: "FRIDAY",
-    startTime: "15:00",
-    code: "MTH-402",
-    subject: "Advanced Calculus",
-    teacher: "Dr. Sarah Jenkins",
-    room: "Room 402, Block B",
-    color: "PURPLE",
-  },
-  {
-    id: "c20s",
-    day: "SATURDAY",
-    startTime: "15:00",
-    code: "PHL-101",
-    subject: "Modern Ethics",
-    teacher: "Dr. Alan Moore",
-    room: "Main Hall",
-    color: "PINK",
-  },
-];
-
-// ─── Break row IDs for the lunch slot in My Subject mode ─────────────────────
+// ─── Break injection helpers ──────────────────────────────────────────────────
 const BREAK_IDS = ["wb1", "wb2", "wb3", "wb4", "wb5", "wb6"];
 const BREAK_DAYS = [
   "MONDAY",
@@ -366,24 +54,81 @@ const BREAK_DAYS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 interface TeacherWeeklyTimetableGridProps {
   filterMode: TeacherFilterMode;
+  selectedSection: TeacherSection | null;
 }
 
 const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
   filterMode,
+  selectedSection,
 }) => {
+  // ─── Class-wise weekly state ───────────────────────────────────────────────
+  const [classEntries, setClassEntries] = useState<TeacherWeeklyEntry[]>([]);
+  const [classLoading, setClassLoading] = useState(false);
+  const [classError, setClassError] = useState<string | null>(null);
+
+  // ─── My Subject weekly state ───────────────────────────────────────────────
   const [mySubjectEntries, setMySubjectEntries] = useState<
     TeacherWeeklyEntry[]
   >([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [mySubjectLoading, setMySubjectLoading] = useState(false);
+  const [mySubjectError, setMySubjectError] = useState<string | null>(null);
 
+  // ─── Fetch class-wise weekly when section changes ─────────────────────────
+  useEffect(() => {
+    if (!selectedSection || filterMode !== "class") return;
+
+    const fetchClassWeekly = async () => {
+      try {
+        setClassLoading(true);
+        setClassError(null);
+        const token = localStorage.getItem("token");
+
+        const response = await axios.get(
+          `http://localhost:5000/api/academic/timetable/section/${selectedSection.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+
+        if (response.data.success) {
+          // Transform API response → TeacherWeeklyEntry shape
+          // getWeeklyTimetableBySection returns: {id, day, startTime, isBreak,
+          // breakLabel, room, color, subject:{name,code}, teacher:{name}}
+          const transformed: TeacherWeeklyEntry[] = response.data.data.map(
+            (row: any) => ({
+              id: row.id,
+              day: row.day,
+              startTime: row.startTime,
+              isBreak: row.isBreak,
+              code: row.isBreak ? "" : row.subject?.code || "N/A",
+              subject: row.isBreak ? "" : row.subject?.name || "No Subject",
+              teacher: row.isBreak ? "" : row.teacher?.name || "Faculty Staff",
+              room: row.isBreak ? "" : row.room || "TBD",
+              color: row.isBreak ? "" : row.color || "BLUE",
+            }),
+          );
+          setClassEntries(transformed);
+        } else {
+          setClassError("Failed to load weekly timetable.");
+        }
+      } catch (err: any) {
+        setClassError(
+          err.response?.data?.message || "Error connecting to server.",
+        );
+      } finally {
+        setClassLoading(false);
+      }
+    };
+
+    fetchClassWeekly();
+  }, [selectedSection, filterMode]);
+
+  // ─── Fetch My Subject weekly ───────────────────────────────────────────────
   useEffect(() => {
     if (filterMode !== "mySubject") return;
 
-    const fetchWeekly = async () => {
+    const fetchMySubjectWeekly = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        setMySubjectLoading(true);
+        setMySubjectError(null);
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
@@ -394,13 +139,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
         if (response.data.success) {
           const apiEntries: TeacherWeeklyEntry[] = response.data.data;
 
-          // Derive unique start times from API data to know where to put lunch row
-          const uniqueTimes = Array.from(
-            new Set(apiEntries.map((e) => e.startTime)),
-          ).sort();
-
-          // Inject a lunch break row for every day if "12:00" slot exists in data
-          // OR always inject it between the last pre-noon and first post-noon slot
+          // Inject break rows for all 6 days at 12:00
           const breakEntries: TeacherWeeklyEntry[] = BREAK_DAYS.map(
             (day, i) => ({
               id: BREAK_IDS[i],
@@ -417,32 +156,37 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
 
           setMySubjectEntries([...apiEntries, ...breakEntries]);
         } else {
-          setError("Failed to load weekly timetable.");
+          setMySubjectError("Failed to load weekly timetable.");
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Error connecting to server.");
+        setMySubjectError(
+          err.response?.data?.message || "Error connecting to server.",
+        );
       } finally {
-        setLoading(false);
+        setMySubjectLoading(false);
       }
     };
 
-    fetchWeekly();
+    fetchMySubjectWeekly();
   }, [filterMode]);
 
-  // Pick the right dataset
-  const entries =
-    filterMode === "mySubject" ? mySubjectEntries : CLASS_WEEKLY_ENTRIES;
+  // ─── Pick active dataset ───────────────────────────────────────────────────
+  const entries = filterMode === "mySubject" ? mySubjectEntries : classEntries;
+  const loading = filterMode === "mySubject" ? mySubjectLoading : classLoading;
+  const error = filterMode === "mySubject" ? mySubjectError : classError;
 
-  // Derive sorted unique time slots — same approach as student WeeklyTimetableGrid
+  // ─── Derive time slots — same as student WeeklyTimetableGrid ──────────────
   const dynamicTimeSlots = useMemo(() => {
-    const times = entries.map((e) => e.startTime);
+    const times = entries
+      .filter((e) => !e.isBreak || e.startTime === "12:00") // keep 12:00 break for lunch label, exclude all other breaks
+      .map((e) => e.startTime);
     return Array.from(new Set(times)).sort((a, b) => a.localeCompare(b));
   }, [entries]);
 
   const lunchRowIndex = dynamicTimeSlots.indexOf("12:00");
 
-  // ─── Loading / error states for My Subject ───────────────────────────────
-  if (filterMode === "mySubject" && loading) {
+  // ─── Loading state ────────────────────────────────────────────────────────
+  if (loading) {
     return (
       <div className="flex items-center gap-3 py-10 justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3B4FE8]" />
@@ -453,10 +197,20 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
     );
   }
 
-  if (filterMode === "mySubject" && error) {
+  // ─── Error state ──────────────────────────────────────────────────────────
+  if (error) {
     return (
       <div className="bg-red-50 text-red-700 p-4 rounded-2xl text-sm font-medium mt-4 border border-red-100">
         ⚠️ {error}
+      </div>
+    );
+  }
+
+  // ─── Empty state ──────────────────────────────────────────────────────────
+  if (entries.length === 0) {
+    return (
+      <div className="bg-gray-50 text-gray-500 p-8 rounded-2xl text-center text-sm font-medium mt-4 border border-dashed border-gray-200">
+        No weekly timetable found.
       </div>
     );
   }
@@ -542,9 +296,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
                   width: `${columnWidth}%`,
                 }}
               >
-                {item.isBreak ? (
-                  <div className="h-[116px] w-full" />
-                ) : (
+                {!item.isBreak && (
                   <WeeklyClassCard
                     code={item.code}
                     subject={item.subject}

@@ -15,11 +15,14 @@ interface NoticeBoardProps {
 }
 
 // 2. Helper to color-code notices based on priority and category
-const getNoticeStyle = (priority: string = "STANDARD", category: string = "ANNOUNCEMENT") => {
+const getNoticeStyle = (
+  priority: string = "STANDARD",
+  category: string = "ANNOUNCEMENT",
+) => {
   if (priority.toUpperCase() === "URGENT") {
     return { dot: "bg-red-500", box: "bg-red-500/5" };
   }
-  
+
   switch (category.toUpperCase()) {
     case "ACADEMIC":
       return { dot: "bg-emerald-500", box: "bg-emerald-500/5" };
@@ -34,30 +37,34 @@ const getNoticeStyle = (priority: string = "STANDARD", category: string = "ANNOU
 
 const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices = [], loading }) => {
   return (
-    <div className="w-full rounded-3xl bg-white py-5 px-5 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.08)]">
-      
+    <div className="w-full rounded-3xl bg-white py-9 px-5 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.08)]">
       {/* Header */}
       <div className="flex items-center">
-        <h2 className="text-[20px] mx-auto font-bold text-black pt-2 pb-4">Notice Board</h2>
+        <h2 className="text-[20px] mx-auto font-bold text-black pt-2 pb-4">
+          Notice Board
+        </h2>
       </div>
 
       {/* Notice List Container - Fixed height to match Homework perfectly! */}
-      <div className="mt-2 flex flex-col gap-3 overflow-y-auto h-[240px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-1">
-        
+      <div className=" flex flex-col gap-3 overflow-y-auto h-[240px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-1">
         {loading ? (
-          <div className="text-sm text-gray-500 text-center mt-6">Loading notices...</div>
+          <div className="text-sm text-gray-500 text-center mt-6">
+            Loading notices...
+          </div>
         ) : notices.length > 0 ? (
           notices.map((notice) => {
             const styles = getNoticeStyle(notice.priority, notice.category);
-            
+
             return (
               <div
                 key={notice.id}
                 className={`flex shrink-0 items-start gap-4 rounded-xl px-6 py-4 ${styles.box}`}
               >
                 {/* Dot */}
-                <div className={`h-[10px] w-[10px] shrink-0 rounded-full mt-1.5 ${styles.dot}`} />
-                
+                <div
+                  className={`h-[10px] w-[10px] shrink-0 rounded-full mt-1.5 ${styles.dot}`}
+                />
+
                 {/* Text Content */}
                 <div className="flex flex-col min-w-0">
                   <h3 className="text-[14px] font-semibold leading-tight text-[#2D2D2D] truncate">
@@ -75,7 +82,6 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices = [], loading }) => {
             No active notices.
           </div>
         )}
-
       </div>
     </div>
   );

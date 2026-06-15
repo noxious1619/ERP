@@ -1,7 +1,8 @@
 import express from 'express';
 import {
   createScheduledExam,
-  getStudentUpcomingExams
+  getStudentUpcomingExams,
+  getDatesheet
 } from '../controllers/examController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
@@ -16,6 +17,12 @@ router.get(
   '/upcoming',
   restrictTo('ADMIN', 'SUPER_ADMIN', 'TEACHER', 'STUDENT'),
   getStudentUpcomingExams
+);
+
+router.get(
+  "/datesheet",
+  restrictTo("TEACHER", "ADMIN", "SUPER_ADMIN"),
+  getDatesheet
 );
 
 export default router;

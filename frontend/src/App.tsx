@@ -37,6 +37,7 @@ import AdminTimetable from "./pages/Admin/Academics/Timetable";
 import AdminDashboard from "./pages/Admin/Dashboard/Dashboard";
 import AdminNotices from "./pages/Admin/Communication/Notices";
 import AdminDatesheet from "./pages/Admin/Academics/Exams/Datesheet";
+import AdminAttendance from "./pages/Admin/Academics/Attendence";
 
 
 
@@ -109,6 +110,7 @@ const App = () => {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/communication/notices" element={<AdminNotices />} />
         <Route path="/admin/academics/exams/datesheet" element={<AdminDatesheet />} />
+        <Route path="/admin/academics/attendance" element={<AdminAttendance />} />
 
 
 

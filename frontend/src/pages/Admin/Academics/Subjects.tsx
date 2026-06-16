@@ -1,3 +1,4 @@
+import { useState } from "react"
 import AdminSidebar from "../../../components/Admin/sidebar"
 import AdminNavbar from "../../../components/Admin/Navbar"
 import SubjectsHeader from "../../../components/Admin/Academics/Subjects/SubjectsHeader"
@@ -5,8 +6,11 @@ import SubjectsStats from "../../../components/Admin/Academics/Subjects/Subjects
 import SubjectsFilters from "../../../components/Admin/Academics/Subjects/SubjectsFilters"
 import SubjectsTable from "../../../components/Admin/Academics/Subjects/SubjectsTable"
 import SubjectsPagination from "../../../components/Admin/Academics/Subjects/SubjectsPagination"
+import AddSubjectModal from "../../../components/Admin/Academics/Subjects/AddSubjectModal"
 
 export default function Subjects() {
+  const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false)
+
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
       <AdminSidebar />
@@ -17,7 +21,7 @@ export default function Subjects() {
         <main className="flex-1 overflow-auto p-6">
           <div className="flex flex-col gap-6 max-w-7xl mx-auto">
             {/* Header */}
-            <SubjectsHeader />
+            <SubjectsHeader onAddSubjectClick={() => setIsAddSubjectOpen(true)} />
 
             {/* Stats Cards */}
             <SubjectsStats />
@@ -33,6 +37,9 @@ export default function Subjects() {
           </div>
         </main>
       </div>
+
+      {/* Add Subject Modal */}
+      <AddSubjectModal isOpen={isAddSubjectOpen} onClose={() => setIsAddSubjectOpen(false)} />
     </div>
   )
 }

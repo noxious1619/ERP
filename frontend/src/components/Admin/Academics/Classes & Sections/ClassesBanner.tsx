@@ -1,6 +1,11 @@
 import { Users } from "lucide-react"
 
-export default function ClassesBanner() {
+interface ClassesBannerProps {
+  onAddSectionClick?: () => void
+  onAddClassClick?: () => void
+}
+
+export default function ClassesBanner({ onAddSectionClick, onAddClassClick }: ClassesBannerProps) {
   return (
     <div className="w-full bg-white rounded-2xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
       {/* Inner Left Container */}
@@ -14,13 +19,19 @@ export default function ClassesBanner() {
 
         <span className="text-sm text-gray-500 font-medium">3 Sections</span>
 
-        <button className="bg-[#4285F4] hover:bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm cursor-pointer">
+        <button 
+          onClick={onAddSectionClick}
+          className="bg-[#4285F4] hover:bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm cursor-pointer"
+        >
           + Add Section
         </button>
       </div>
 
       {/* Right Button */}
-      <button className="bg-[#4285F4] hover:bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-sm self-stretch sm:self-auto flex items-center justify-center gap-1.5 cursor-pointer">
+      <button 
+        onClick={onAddClassClick}
+        className="bg-[#4285F4] hover:bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-sm self-stretch sm:self-auto flex items-center justify-center gap-1.5 cursor-pointer"
+      >
         <span>+</span> Add Class
       </button>
     </div>

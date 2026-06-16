@@ -1,6 +1,10 @@
 import { Search } from "lucide-react"
 
-export default function SubjectsHeader() {
+interface SubjectsHeaderProps {
+  onAddSubjectClick?: () => void
+}
+
+export default function SubjectsHeader({ onAddSubjectClick }: SubjectsHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -20,7 +24,10 @@ export default function SubjectsHeader() {
         </div>
 
         {/* Add Subjects Button */}
-        <button className="bg-[#4285F4] hover:bg-blue-600 text-white text-sm font-semibold px-5 h-10 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+        <button 
+          onClick={onAddSubjectClick}
+          className="bg-[#4285F4] hover:bg-blue-600 text-white text-sm font-semibold px-5 h-10 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+        >
           <span>+</span> Add Subjects
         </button>
       </div>

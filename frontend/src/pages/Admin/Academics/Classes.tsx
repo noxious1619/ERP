@@ -1,10 +1,16 @@
+import { useState } from "react"
 import AdminSidebar from "../../../components/Admin/sidebar"
 import AdminNavbar from "../../../components/Admin/Navbar"
 import ClassesHeader from "../../../components/Admin/Academics/Classes & Sections/ClassesHeader"
 import ClassesBanner from "../../../components/Admin/Academics/Classes & Sections/ClassesBanner"
 import SectionCard from "../../../components/Admin/Academics/Classes & Sections/SectionCard"
+import AddClassModal from "../../../components/Admin/Academics/Classes & Sections/AddClassModal"
+import AddSectionModal from "../../../components/Admin/Academics/Classes & Sections/AddSectionModal"
 
 export default function Classes() {
+  const [isAddClassOpen, setIsAddClassOpen] = useState(false)
+  const [isAddSectionOpen, setIsAddSectionOpen] = useState(false)
+
   const sections = [
     {
       sectionName: "Class 1A",
@@ -42,7 +48,10 @@ export default function Classes() {
             <ClassesHeader />
 
             {/* Banner */}
-            <ClassesBanner />
+            <ClassesBanner 
+              onAddClassClick={() => setIsAddClassOpen(true)}
+              onAddSectionClick={() => setIsAddSectionOpen(true)}
+            />
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
@@ -60,6 +69,10 @@ export default function Classes() {
           </div>
         </main>
       </div>
+
+      {/* Modals */}
+      <AddClassModal isOpen={isAddClassOpen} onClose={() => setIsAddClassOpen(false)} />
+      <AddSectionModal isOpen={isAddSectionOpen} onClose={() => setIsAddSectionOpen(false)} />
     </div>
   )
 }

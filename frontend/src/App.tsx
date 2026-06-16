@@ -34,6 +34,10 @@ import StaffProfile from "./pages/Admin/Staff/StaffProfile";
 import Classes from "./pages/Admin/Academics/Classes";
 import Subjects from "./pages/Admin/Academics/Subjects";
 import AdminTimetable from "./pages/Admin/Academics/Timetable";
+import AdminDashboard from "./pages/Admin/Dashboard/Dashboard";
+import AdminNotices from "./pages/Admin/Communication/Notices";
+import AdminDatesheet from "./pages/Admin/Academics/Exams/Datesheet";
+
 
 
 
@@ -102,6 +106,11 @@ const App = () => {
         <Route path="/admin/academics/classes" element={<Classes />} />
         <Route path="/admin/academics/subjects" element={<Subjects />} />
         <Route path="/admin/academics/timetable" element={<AdminTimetable />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/communication/notices" element={<AdminNotices />} />
+        <Route path="/admin/academics/exams/datesheet" element={<AdminDatesheet />} />
+
+
 
 
 

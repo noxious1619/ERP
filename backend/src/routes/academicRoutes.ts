@@ -10,7 +10,8 @@ import {
   createWeeklyTimetable,
   getWeeklyTimetableBySection,
   getTeacherMySubjectTimetable,
-  getTeacherMySubjectWeekly
+  getTeacherMySubjectWeekly,
+
 } from '../controllers/academicController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';

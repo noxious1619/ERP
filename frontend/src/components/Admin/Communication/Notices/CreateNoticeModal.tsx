@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { X, Upload, Link, Eye } from "lucide-react"
 
 interface CreateNoticeModalProps {
@@ -31,6 +31,38 @@ export default function CreateNoticeModal({ isOpen, onClose }: CreateNoticeModal
   const [description, setDescription] = useState("")
   const [selectedId, setSelectedId] = useState("")
 
+  const backdropRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      e.preventDefault()
+    }
+
+    const backdrop = backdropRef.current
+    if (isOpen && backdrop) {
+      backdrop.addEventListener("wheel", handleScroll, { passive: false })
+      backdrop.addEventListener("touchmove", handleScroll, { passive: false })
+    }
+
+    return () => {
+      if (backdrop) {
+        backdrop.removeEventListener("wheel", handleScroll)
+        backdrop.removeEventListener("touchmove", handleScroll)
+      }
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const getAudienceLabel = () => {
@@ -57,15 +89,16 @@ export default function CreateNoticeModal({ isOpen, onClose }: CreateNoticeModal
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overscroll-none">
       {/* Backdrop blur */}
       <div 
+        ref={backdropRef}
         className="fixed inset-0 bg-[#0F172A]/35 backdrop-blur-[6px] transition-opacity duration-300"
         onClick={onClose}
       />
 
       {/* Modal Box */}
-      <div className="bg-white rounded-2xl border border-gray-100 max-w-2xl w-full p-8 relative shadow-2xl flex flex-col gap-6 z-10 max-h-[90vh] overflow-y-auto transform transition-all duration-300 animate-in fade-in-50 zoom-in-95 scrollbar-thin">
+      <div className="bg-white rounded-2xl border border-gray-100 max-w-2xl w-full p-8 relative shadow-2xl flex flex-col gap-6 z-10 max-h-[90vh] overflow-y-auto overscroll-none transform transition-all duration-300 animate-in fade-in-50 zoom-in-95 scrollbar-thin">
         
         {/* Close Button */}
         <button 

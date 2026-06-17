@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X, Upload, Link as LinkIcon } from "lucide-react"
 
 interface AddNewStaffModalProps {
@@ -30,6 +30,17 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
 
   // Validation errors state
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -100,11 +111,11 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overflow-y-auto overscroll-none">
       {/* Backdrop overlay click to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative w-full max-w-2xl rounded-[28px] bg-[#f8fafd] shadow-2xl z-10 flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-4xl rounded-[28px] bg-[#f8fafd] shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 p-6 bg-white rounded-t-[28px]">
           <h2 className="text-xl font-bold text-[#0a1c3a] font-sans">Add New Staff</h2>
@@ -117,11 +128,11 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
         </div>
 
         {/* Scrollable Content Form */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto flex-1 overscroll-none">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             
-            {/* Identity Row (Employee ID & Role) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Basic Info Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">Employee ID *</label>
                 <input
@@ -136,27 +147,6 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
                 {errors.employeeId && <span className="text-red-500 text-xs">{errors.employeeId}</span>}
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">Role *</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition-all appearance-none cursor-pointer ${
-                    errors.role ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  }`}
-                >
-                  <option value="">Select Role</option>
-                  <option value="Teacher">Teacher</option>
-                  <option value="Principal">Principal</option>
-                  <option value="Accountant">Accountant</option>
-                  <option value="Front Desk">Front Desk</option>
-                </select>
-                {errors.role && <span className="text-red-500 text-xs">{errors.role}</span>}
-              </div>
-            </div>
-
-            {/* Split Name Row (First Name & Last Name) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">Employee First Name *</label>
                 <input
@@ -184,35 +174,28 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
                 />
                 {errors.lastName && <span className="text-red-500 text-xs">{errors.lastName}</span>}
               </div>
-            </div>
-
-            {/* Assignments Row (Subject & Class) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">Subject Assigned (if applicable)</label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Enter Subject"
-                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">Class Assigned (if applicable)</label>
-                <input
-                  type="text"
-                  value={classAssigned}
-                  onChange={(e) => setClassAssigned(e.target.value)}
-                  placeholder="Enter Class"
-                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
+                <label className="text-sm font-semibold text-[#0a1c3a]">Role *</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition-all appearance-none cursor-pointer ${
+                    errors.role ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  }`}
+                >
+                  <option value="">Select Role</option>
+                  <option value="Teacher">Teacher</option>
+                  <option value="Principal">Principal</option>
+                  <option value="Accountant">Accountant</option>
+                  <option value="Front Desk">Front Desk</option>
+                </select>
+                {errors.role && <span className="text-red-500 text-xs">{errors.role}</span>}
               </div>
             </div>
 
-            {/* Contact Info (Contact Number & Email) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Contact & Demographics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">Contact Number *</label>
                 <input
@@ -240,10 +223,7 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
                 />
                 {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
               </div>
-            </div>
 
-            {/* Demographic Info (Gender, DOB & Blood Group) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">Gender</label>
                 <select
@@ -256,16 +236,6 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">Date of Birth</label>
-                <input
-                  type="date"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -285,6 +255,51 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
                   <option value="AB+">AB+</option>
                   <option value="AB-">AB-</option>
                 </select>
+              </div>
+            </div>
+
+            {/* Dates & Academics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">Date of Birth</label>
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">Joining Date</label>
+                <input
+                  type="date"
+                  value={joiningDate}
+                  onChange={(e) => setJoiningDate(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">Subject Assigned (if applicable)</label>
+                <input
+                  type="text"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="Enter Subject"
+                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">Class Assigned (if applicable)</label>
+                <input
+                  type="text"
+                  value={classAssigned}
+                  onChange={(e) => setClassAssigned(e.target.value)}
+                  placeholder="Enter Class"
+                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
               </div>
             </div>
 
@@ -324,19 +339,6 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
               </div>
             </div>
 
-            {/* Dates (Joining Date) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">Joining Date</label>
-                <input
-                  type="date"
-                  value={joiningDate}
-                  onChange={(e) => setJoiningDate(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
-            </div>
-
             {/* Geographical Info (Address, City & State) */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
@@ -350,7 +352,7 @@ export default function AddNewStaffModal({ isOpen, onClose }: AddNewStaffModalPr
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[#0a1c3a]">City</label>
                   <input

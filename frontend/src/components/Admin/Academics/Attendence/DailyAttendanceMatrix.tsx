@@ -59,7 +59,7 @@ export default function DailyAttendanceMatrix() {
   }
 
   return (
-    <div className="border border-gray-200 rounded-xl bg-white shadow-3xs overflow-hidden flex flex-col h-full justify-between">
+    <div className="border border-gray-200 rounded-xl bg-white shadow-3xs overflow-hidden flex flex-col">
       
       {/* Card Header Panel */}
       <div className="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">

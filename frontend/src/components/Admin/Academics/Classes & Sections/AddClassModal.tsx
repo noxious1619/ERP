@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { X } from "lucide-react"
 
 interface AddClassModalProps {
@@ -8,24 +8,54 @@ interface AddClassModalProps {
 
 export default function AddClassModal({ isOpen, onClose }: AddClassModalProps) {
   const [classNameVal, setClassNameVal] = useState("")
-  const [roomNumber, setRoomNumber] = useState("")
-  const [strength, setStrength] = useState("")
-  const [batchSize, setBatchSize] = useState("")
+
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      e.preventDefault()
+    }
+
+    const wrapper = wrapperRef.current
+    if (isOpen && wrapper) {
+      wrapper.addEventListener("wheel", handleScroll, { passive: false })
+      wrapper.addEventListener("touchmove", handleScroll, { passive: false })
+    }
+
+    return () => {
+      if (wrapper) {
+        wrapper.removeEventListener("wheel", handleScroll)
+        wrapper.removeEventListener("touchmove", handleScroll)
+      }
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // Handle submission logic (static for now)
+    setClassNameVal("")
     onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overflow-y-auto">
+    <div ref={wrapperRef} className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overscroll-none">
       {/* Backdrop click to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-[28px] bg-[#f8fafd] p-6 shadow-2xl z-10 flex flex-col gap-6">
+      <div className="relative w-full max-w-md rounded-[28px] bg-[#f8fafd] p-6 shadow-2xl z-10 flex flex-col gap-6 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-[#0a1c3a] font-sans">Add New Class</h2>
@@ -46,43 +76,7 @@ export default function AddClassModal({ isOpen, onClose }: AddClassModalProps) {
               type="text"
               value={classNameVal}
               onChange={(e) => setClassNameVal(e.target.value)}
-              placeholder="Enter Class"
-              className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
-          </div>
-
-          {/* Room Number Field */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Room Number</label>
-            <input
-              type="text"
-              value={roomNumber}
-              onChange={(e) => setRoomNumber(e.target.value)}
-              placeholder="Enter Room Number"
-              className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
-          </div>
-
-          {/* Total Class Strength Field */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Total Class Strength</label>
-            <input
-              type="text"
-              value={strength}
-              onChange={(e) => setStrength(e.target.value)}
-              placeholder="Enter Class Strength"
-              className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
-          </div>
-
-          {/* Total Batch Size Field */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Total Batch Size</label>
-            <input
-              type="text"
-              value={batchSize}
-              onChange={(e) => setBatchSize(e.target.value)}
-              placeholder="Enter Total Batch Size"
+              placeholder="Enter Class (e.g. Class 1)"
               className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
@@ -100,7 +94,7 @@ export default function AddClassModal({ isOpen, onClose }: AddClassModalProps) {
               type="submit"
               className="flex-1 rounded-2xl bg-[#4285F4] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-600 cursor-pointer shadow-sm"
             >
-              Add New Class
+              Add Class
             </button>
           </div>
         </form>

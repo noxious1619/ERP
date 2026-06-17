@@ -1,6 +1,11 @@
 import { ChevronDown } from "lucide-react"
 
 export default function ClassesHeader() {
+  const currentYear = new Date().getFullYear()
+  const startYear = 1900
+  const endYear = currentYear
+  const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i).reverse()
+
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -13,10 +18,13 @@ export default function ClassesHeader() {
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-gray-900 mb-1.5">Year</span>
           <div className="relative">
-            <select className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px] cursor-pointer">
-              <option>2026</option>
-              <option>2025</option>
-              <option>2024</option>
+            <select 
+              defaultValue={currentYear}
+              className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px] cursor-pointer"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>

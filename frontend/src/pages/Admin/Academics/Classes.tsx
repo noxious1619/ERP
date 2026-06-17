@@ -32,6 +32,48 @@ export default function Classes() {
       roomNumber: "103",
       strength: 45,
       maxStrength: 50
+    },
+    {
+      sectionName: "Class 2A",
+      teacherName: "Mr. Amit Sharma",
+      roomNumber: "201",
+      strength: 48,
+      maxStrength: 50
+    },
+    {
+      sectionName: "Class 2B",
+      teacherName: "Mrs. Priya Patel",
+      roomNumber: "202",
+      strength: 45,
+      maxStrength: 50
+    },
+    {
+      sectionName: "Class 2C",
+      teacherName: "Mr. Vikram Rao",
+      roomNumber: "203",
+      strength: 50,
+      maxStrength: 50
+    },
+    {
+      sectionName: "Class 3A",
+      teacherName: "Ms. Neha Singh",
+      roomNumber: "301",
+      strength: 42,
+      maxStrength: 50
+    },
+    {
+      sectionName: "Class 3B",
+      teacherName: "Mr. Rajesh Gupta",
+      roomNumber: "302",
+      strength: 47,
+      maxStrength: 50
+    },
+    {
+      sectionName: "Class 3C",
+      teacherName: "Ms. Pooja Verma",
+      roomNumber: "303",
+      strength: 49,
+      maxStrength: 50
     }
   ]
 
@@ -42,8 +84,8 @@ export default function Classes() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <AdminNavbar />
 
-        <main className="flex-1 overflow-auto p-6">
-          <div className="flex flex-col gap-6 max-w-7xl mx-auto">
+        <main className="flex-1 flex flex-col overflow-hidden p-6">
+          <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full h-full">
             {/* Header */}
             <ClassesHeader />
 
@@ -53,18 +95,20 @@ export default function Classes() {
               onAddSectionClick={() => setIsAddSectionOpen(true)}
             />
 
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-              {sections.map((section) => (
-                <SectionCard
-                  key={section.sectionName}
-                  sectionName={section.sectionName}
-                  teacherName={section.teacherName}
-                  roomNumber={section.roomNumber}
-                  strength={section.strength}
-                  maxStrength={section.maxStrength}
-                />
-              ))}
+            {/* Cards Grid Container (Scrollable) */}
+            <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4 pb-4">
+                {sections.map((section) => (
+                  <SectionCard
+                    key={section.sectionName}
+                    sectionName={section.sectionName}
+                    teacherName={section.teacherName}
+                    roomNumber={section.roomNumber}
+                    strength={section.strength}
+                    maxStrength={section.maxStrength}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </main>

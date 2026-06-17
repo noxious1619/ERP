@@ -28,7 +28,7 @@ export default function SubjectsHeader({ onAddSubjectClick }: SubjectsHeaderProp
           onClick={onAddSubjectClick}
           className="bg-[#4285F4] hover:bg-blue-600 text-white text-sm font-semibold px-5 h-10 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer"
         >
-          <span>+</span> Add Subjects
+          <span>+</span> Add Subject
         </button>
       </div>
     </div>

@@ -83,35 +83,38 @@ export default function StaffView() {
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-5">
-        <StaffHeader 
-          totalCount={filteredStaff.length}
-          search={search}
-          onSearchChange={handleSearch}
-          onAddClick={() => setIsModalOpen(true)}
-          onExportCSV={handleExportCSV}
-        />
-        <StaffFilters 
-          onRoleChange={handleRoleChange}
-          onStatusChange={handleStatusChange}
-        />
-        <StaffStatsCards />
+    <div className="flex flex-col flex-1 overflow-hidden gap-5 h-full">
+      <StaffHeader 
+        totalCount={filteredStaff.length}
+        search={search}
+        onSearchChange={handleSearch}
+        onAddClick={() => setIsModalOpen(true)}
+        onExportCSV={handleExportCSV}
+      />
+      <StaffFilters 
+        onRoleChange={handleRoleChange}
+        onStatusChange={handleStatusChange}
+      />
+      <StaffStatsCards />
+      
+      {/* Scrollable Table Container */}
+      <div className="flex-1 overflow-y-auto min-h-0">
         <StaffTable staffList={currentStaffList} />
-        <StaffPagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredStaff.length}
-          onPageChange={setCurrentPage}
-          startIndex={startIndex}
-          endIndex={endIndex}
-        />
       </div>
+
+      <StaffPagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredStaff.length}
+        onPageChange={setCurrentPage}
+        startIndex={startIndex}
+        endIndex={endIndex}
+      />
 
       <AddNewStaffModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
       />
-    </>
+    </div>
   )
 }

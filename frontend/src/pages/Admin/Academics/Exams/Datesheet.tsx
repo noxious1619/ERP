@@ -64,7 +64,7 @@ export default function Datesheet() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
       {/* Sidebar navigation */}
       <AdminSidebar />
 

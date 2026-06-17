@@ -1,16 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import AdminSidebar from "../../components/Admin/sidebar"
 import AdminNavbar from "../../components/Admin/Navbar"
 import StudentsView from "../../components/Admin/Academics/StudentsView"
 
 
 export default function Academics() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
       <AdminSidebar
       />
 

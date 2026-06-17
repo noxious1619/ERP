@@ -3,7 +3,7 @@ import AdminNavbar from "../../../components/Admin/Navbar"
 
 export default function StaffProfile() {
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
+    <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
       <AdminSidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">

@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
 import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
 import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
@@ -42,7 +41,7 @@ const TimetableHeader = () => {
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-6 pt-2">
+      <div className="flex items-center gap-10 pt-2">
         {/* Toggle */}
         <div className="flex items-center rounded-full bg-[#F2F2F2] p-[4px] shadow-sm">
           <button
@@ -60,11 +59,6 @@ const TimetableHeader = () => {
             Weekly
           </button>
         </div>
-
-        {/* Search */}
-        <button className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6]">
-          <img src={search} alt="Search" className="h-6 w-6" />
-        </button>
 
         {/*  Notification  */}
         <div className="relative" ref={notificationRef}>

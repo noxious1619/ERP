@@ -1,4 +1,5 @@
 import { Download } from "lucide-react";
+import { downloadTimetablePDF } from "../../../utils/downloadtimetable";
 
 interface TimetableEntry {
   id: string;
@@ -21,14 +22,26 @@ interface DateScheduleCardProps {
   isError: boolean;
 }
 
-const DateScheduleCard = ({ selectedDate, timetableData = [], isLoading, isError }: DateScheduleCardProps) => {
-  
+const DateScheduleCard = ({
+  selectedDate,
+  timetableData = [],
+  isLoading,
+  isError,
+}: DateScheduleCardProps) => {
   // Safe validation check for calendar states
   const safeDate = selectedDate instanceof Date ? selectedDate : new Date();
 
   // 1. Identify which calendar day is selected (e.g., "MONDAY")
   const targetDayEnum = (() => {
-    const daysEnumMap = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const daysEnumMap = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
     return daysEnumMap[safeDate.getDay()];
   })();
 
@@ -37,16 +50,41 @@ const DateScheduleCard = ({ selectedDate, timetableData = [], isLoading, isError
     .filter((item) => item.day?.toUpperCase() === targetDayEnum)
     .sort((a, b) => a.startTime.localeCompare(b));
 
+  const handleDownload = () => {
+    if (filteredSchedule.length === 0) return;
+
+    downloadTimetablePDF({
+      teacherName: "My Timetable", // used as the header title
+      filterMode: "class", // reuses class mode PDF layout
+      sectionLabel: "",
+      day: targetDayEnum,
+      items: filteredSchedule.map((item) => ({
+        time: item.startTime,
+        isBreak: item.isBreak,
+        breakLabel: item.breakLabel,
+        subject: item.isBreak ? null : item.subject?.name || "No Subject",
+        professor: item.isBreak ? null : item.teacher?.name || "Faculty Staff",
+        room: item.room,
+      })),
+    });
+  };
+
   const getDynamicTitle = () => {
     const dayNum = safeDate.getDate();
     const monthName = safeDate.toLocaleDateString("en-US", { month: "short" });
-    
+
     let suffix = "th";
     if (dayNum < 11 || dayNum > 13) {
       switch (dayNum % 10) {
-        case 1: suffix = "st"; break;
-        case 2: suffix = "nd"; break;
-        case 3: suffix = "rd"; break;
+        case 1:
+          suffix = "st";
+          break;
+        case 2:
+          suffix = "nd";
+          break;
+        case 3:
+          suffix = "rd";
+          break;
       }
     }
     return `${dayNum}${suffix} ${monthName} Schedule`;
@@ -82,7 +120,9 @@ const DateScheduleCard = ({ selectedDate, timetableData = [], isLoading, isError
             >
               <div className="flex flex-1 items-center">
                 <h4 className="text-[18px] font-medium text-[#1F1F1F]">
-                  {item.isBreak ? item.breakLabel || "Break" : item.subject?.name || "No Subject"}
+                  {item.isBreak
+                    ? item.breakLabel || "Break"
+                    : item.subject?.name || "No Subject"}
                 </h4>
               </div>
 
@@ -91,7 +131,9 @@ const DateScheduleCard = ({ selectedDate, timetableData = [], isLoading, isError
                   {item.startTime}
                 </span>
                 <p className="mt-2 text-[14px] text-[#6F6F6F]">
-                  {item.isBreak ? "Interval" : item.teacher?.name || "Faculty Staff"}
+                  {item.isBreak
+                    ? "Interval"
+                    : item.teacher?.name || "Faculty Staff"}
                 </p>
               </div>
             </div>
@@ -99,10 +141,15 @@ const DateScheduleCard = ({ selectedDate, timetableData = [], isLoading, isError
         )}
       </div>
 
-      <button className="mt-6 flex h-[58px] w-full items-center justify-center gap-3 rounded-full bg-[#3F69FF] text-[20px] font-semibold text-white shadow-[0px_12px_24px_rgba(63,105,255,0.35)] transition-all duration-300 hover:scale-[1.02]">
-        <Download size={22} strokeWidth={2.5} />
-        Download Timetable
-      </button>
+      {filteredSchedule.length > 0 && (
+        <button
+          onClick={handleDownload}
+          className="mt-6 flex h-[58px] w-full items-center justify-center gap-3 rounded-full bg-[#3F69FF] text-[20px] font-semibold text-white shadow-[0px_12px_24px_rgba(63,105,255,0.35)] transition-all duration-300 hover:scale-[1.02] cursor-pointer "
+        >
+          <Download size={22} strokeWidth={2.5} />
+          Download Timetable
+        </button>
+      )}
     </div>
   );
 };

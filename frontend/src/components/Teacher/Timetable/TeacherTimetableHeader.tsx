@@ -42,10 +42,16 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
         setShowNotifications(false);
       }
-      if (classDropdownRef.current && !classDropdownRef.current.contains(event.target as Node)) {
+      if (
+        classDropdownRef.current &&
+        !classDropdownRef.current.contains(event.target as Node)
+      ) {
         setShowClassDropdown(false);
       }
     };
@@ -74,11 +80,9 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-4 pt-2">
-
+      <div className="flex items-center gap-8 pt-2">
         {/* ── Filter Pills ── */}
         <div className="flex items-center gap-2">
-
           {/* Class dropdown pill */}
           <div className="relative" ref={classDropdownRef}>
             <button
@@ -87,9 +91,10 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
                 setShowClassDropdown((prev) => !prev);
               }}
               className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-[14px] font-semibold transition-all duration-200
-                ${filterMode === "class"
-                  ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
-                  : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
+                ${
+                  filterMode === "class"
+                    ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
+                    : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
                 }`}
             >
               {selectedLabel}
@@ -122,9 +127,10 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
           <button
             onClick={() => onFilterChange("mySubject")}
             className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-[14px] font-semibold transition-all duration-200
-              ${filterMode === "mySubject"
-                ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
-                : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
+              ${
+                filterMode === "mySubject"
+                  ? "border-[#3F5BF6] bg-white text-[#3F5BF6] shadow-sm"
+                  : "border-gray-200 bg-[#F2F2F2] text-[#5E5E5E] hover:border-gray-300"
               }`}
           >
             My Subject
@@ -149,11 +155,6 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
           </button>
         </div>
 
-        {/* Search */}
-        <button className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6]">
-          <img src={search} alt="Search" className="h-6 w-6" />
-        </button>
-
         {/* Notification */}
         <div className="relative" ref={notificationRef}>
           <button
@@ -173,7 +174,11 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
           onClick={() => navigate("/teacher/profile")}
           className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer"
         >
-          <img src={profileImage} alt="Teacher" className="h-full w-full object-cover" />
+          <img
+            src={profileImage}
+            alt="Teacher"
+            className="h-full w-full object-cover"
+          />
         </div>
       </div>
     </div>

@@ -272,9 +272,9 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
               className="absolute left-0 z-10 flex w-full items-center justify-center"
               style={{ top: `${lunchRowIndex * 132 + 56}px` }}
             >
-              <span className="bg-[#F3F5FA] px-6 text-[11px] font-bold uppercase tracking-[4px] text-gray-500">
+              {/* <span className="bg-[#F3F5FA] px-6 text-[11px] font-bold uppercase tracking-[4px] text-gray-500">
                 Institutional Lunch Break
-              </span>
+              </span> */}
             </div>
           )}
 

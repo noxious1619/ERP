@@ -104,10 +104,8 @@ const CreateNoticeModal = ({
     }
   };
 
-  // Determine card style for the preview
-  // Next index after all existing notices
-  const previewStyleIndex = existingNotices.length % CARD_STYLES.length;
-  const previewStyle = CARD_STYLES[previewStyleIndex];
+  // Use a fixed style for preview — actual color assigned by DB after creation
+  const previewStyle = CARD_STYLES[0];
 
   const handlePreview = () => {
     if (!title.trim() || !content.trim()) {
@@ -152,6 +150,11 @@ const CreateNoticeModal = ({
       setSubmitting(false);
     }
   };
+
+  const countWords = (text: string) =>
+    text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+
+  const WORD_LIMIT = 200;
 
   return (
     <div
@@ -323,11 +326,30 @@ const CreateNoticeModal = ({
               </label>
               <textarea
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => {
+                  const words =
+                    e.target.value.trim() === ""
+                      ? []
+                      : e.target.value.trim().split(/\s+/);
+                  if (words.length <= WORD_LIMIT) {
+                    setContent(e.target.value);
+                  }
+                }}
                 placeholder="Enter detailed notice description..."
                 rows={4}
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-[14px] text-[#111111] placeholder:text-gray-300 outline-none focus:border-[#3A71FF] transition-colors resize-none"
               />
+              <div className="flex justify-end">
+                <span
+                  className={`text-[12px] ${
+                    countWords(content) >= WORD_LIMIT
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {countWords(content)} / {WORD_LIMIT} words
+                </span>
+              </div>
             </div>
 
             {/* Error */}
@@ -398,7 +420,7 @@ const CreateNoticeModal = ({
                   : audience === "ALL_TEACHERS"
                     ? "All teachers"
                     : audience === "CLASS"
-                      ? `Class: ${uniqueClasses.find((c) => c.id === selectedId)?.name}`
+                      ? ` ${uniqueClasses.find((c) => c.id === selectedId)?.name}`
                       : `Section: ${sections.find((s) => s.id === selectedId)?.academicClass.name} – ${sections.find((s) => s.id === selectedId)?.name}`,
                 CATEGORIES.find((c) => c.value === category)?.label,
                 PRIORITIES.find((p) => p.value === priority)?.label,

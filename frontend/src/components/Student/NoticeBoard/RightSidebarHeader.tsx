@@ -32,7 +32,7 @@ const RightSidebarHeader = ({
   }, []);
 
   return (
-    <div className="flex items-center justify-end gap-7">
+    <div className="flex items-center justify-end gap-10">
       {/* Notification */}
       <div className="relative" ref={notificationRef}>
         <button

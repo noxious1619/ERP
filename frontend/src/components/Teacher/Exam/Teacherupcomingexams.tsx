@@ -3,7 +3,7 @@ import axios from "axios";
 import ExamCard from "../../../components/Student/Exam/ExamCard";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-interface ExamData {
+export interface ExamData {
   id: string;
   title: string;
   syllabus: string;
@@ -20,8 +20,12 @@ interface ExamData {
 
 interface Props {
   classId: string;
-  subjectOnly?: boolean; // true = filter to teacher's subject only
-  onMetaReady?: (termName: string, instruction: string | null) => void;
+  subjectOnly?: boolean;
+  onMetaReady?: (
+    termName: string,
+    instruction: string | null,
+    exams: ExamData[],
+  ) => void;
 }
 
 // ─── Date formatter ──────────────────────────────────────────────────────────
@@ -90,11 +94,11 @@ const TeacherUpcomingExams = ({
         if (response.data.success) {
           const data: ExamData[] = response.data.data;
           setExamData(data);
-          // Bubble term name + instruction up to the page so the header can show them
           if (onMetaReady && data.length > 0) {
             const firstInstruction =
               data.find((e) => e.instruction)?.instruction ?? null;
-            onMetaReady(data[0].termName, firstInstruction);
+            // Pass full exam list up so the page can use it for PDF
+            onMetaReady(data[0].termName, firstInstruction, data);
           }
         } else {
           setError("Failed to fetch exam datesheet.");

@@ -1,19 +1,33 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ExamCard from "./ExamCard";
-interface ExamData {
+
+export interface ExamData {
   id: string;
   title: string;
   syllabus: string;
   examDate: string;
   status: string;
-  subject: string; // subject name string
-  icon: string | null; // DB path e.g. "/icons/chemistry.png" or null
+  subject: string;
+  icon: string | null;
+  startTime: string | null;
+  endTime: string | null;
+  totalMarks: number | null;
+  instruction: string | null;
+  termName?: string;
 }
+
+interface Props {
+  onMetaReady?: (
+    termName: string,
+    instruction: string | null,
+    exams: ExamData[],
+  ) => void;
+}
+
 // ─── Date formatter ───────────────────────────────────────────────
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  // Use UTC date to avoid timezone shift
   const day = date.getUTCDate();
   let suffix = "th";
   if (day === 1 || day === 21 || day === 31) suffix = "st";
@@ -21,11 +35,8 @@ const formatDate = (dateString: string) => {
   else if (day === 3 || day === 23) suffix = "rd";
   return { day: day.toString(), suffix };
 };
+
 // ─── Card color logic ─────────────────────────────────────────────
-// COMPLETED                              → grey   #EEEFF0
-// ONGOING (today)                        → dark blue #4285F4
-// UPCOMING index 0,2,4… (1st,3rd,5th…)  → pink
-// UPCOMING index 1,3,5… (2nd,4th,6th…)  → blue
 const getCardColors = (status: string, upcomingIndex: number) => {
   if (status === "COMPLETED") {
     return { bgColor: "#EEEFF0", iconBg: "#D9DADB", textColor: "#9B9B9B" };
@@ -50,8 +61,9 @@ const getCardColors = (status: string, upcomingIndex: number) => {
         textColor: "#484848",
       };
 };
+
 // ─── Component ────────────────────────────────────────────────────
-const UpcomingExams = () => {
+const UpcomingExams = ({ onMetaReady }: Props) => {
   const [examData, setExamData] = useState<ExamData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +79,14 @@ const UpcomingExams = () => {
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (response.data.success) {
-          setExamData(response.data.data);
+          const data: ExamData[] = response.data.data;
+          setExamData(data);
+          if (onMetaReady && data.length > 0) {
+            const termName = data[0].termName ?? "Exam";
+            const firstInstruction =
+              data.find((e) => e.instruction)?.instruction ?? null;
+            onMetaReady(termName, firstInstruction, data);
+          }
         } else {
           setError("Failed to fetch upcoming exams.");
         }
@@ -106,6 +125,7 @@ const UpcomingExams = () => {
       </div>
     );
   }
+
   let upcomingCounter = 0;
   return (
     <div className="w-full max-w-[90%] xl:max-w-[95%] 2xl:max-w-full">
@@ -122,11 +142,14 @@ const UpcomingExams = () => {
               syllabus={exam.syllabus ?? ""}
               date={day}
               suffix={suffix}
-              subjectName={exam.subject} // for SVG fallback
-              icon={exam.icon} // DB path — null = auto SVG fallback
+              subjectName={exam.subject}
+              icon={exam.icon}
               bgColor={colors.bgColor}
               iconBg={colors.iconBg}
               textColor={colors.textColor}
+              startTime={exam.startTime}
+              endTime={exam.endTime}
+              totalMarks={exam.totalMarks}
             />
           );
         })}
@@ -134,4 +157,5 @@ const UpcomingExams = () => {
     </div>
   );
 };
+
 export default UpcomingExams;

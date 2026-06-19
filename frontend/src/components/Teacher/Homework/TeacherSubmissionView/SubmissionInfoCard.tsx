@@ -1,33 +1,47 @@
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 type Grade = "Complete" | "Incomplete" | "Wrong" | null;
 
-const SUBMISSION_IMAGES = [
-  "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800",
-  "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=800",
-  "https://images.unsplash.com/photo-1596496050827-8299e0220de1?w=800",
-  "https://images.unsplash.com/photo-1544531585-9847b68c8c86?w=800",
-  "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800",
-];
+interface Props {
+  data: any; // Data from your custom hook
+  saving: boolean;
+  onSubmitGrade: (score: number, status: string, remarks: string) => void;
+}
 
-const SubmissionInfoCard = () => {
+// Helper to format the date to match your exact UI
+const formatSubmitDate = (isoString?: string) => {
+  if (!isoString) return { month: "—", day: "—", fullDate: "—", time: "—" };
+  const d = new Date(isoString);
+  const month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+  const day = d.getDate().toString();
+  const fullDate = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return { month, day, fullDate, time };
+};
+
+const SubmissionInfoCard = ({ data, saving, onSubmitGrade }: Props) => {
+  // Use backend attachments, fallback to empty array
+  const images = data?.attachments || [];
+  
   const [activeImage, setActiveImage] = useState(0);
-  const [selectedGrade, setSelectedGrade] = useState<Grade>(null);
-  const [marks, setMarks] = useState("");
-  const [saved, setSaved] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState<Grade>(data?.score ? "Complete" : null);
+  const [marks, setMarks] = useState(data?.score?.toString() || "");
 
-  const handlePrev = () =>
-    setActiveImage(
-      (i) => (i - 1 + SUBMISSION_IMAGES.length) % SUBMISSION_IMAGES.length,
-    );
-  const handleNext = () =>
-    setActiveImage((i) => (i + 1) % SUBMISSION_IMAGES.length);
+  const dateDetails = formatSubmitDate(data?.submittedAt);
+
+  const handlePrev = () => setActiveImage((i) => (i - 1 + images.length) % images.length);
+  const handleNext = () => setActiveImage((i) => (i + 1) % images.length);
 
   const handleSave = () => {
     if (!selectedGrade) return;
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    if (!marks || isNaN(Number(marks))) {
+      alert("Please enter a valid number for marks.");
+      return;
+    }
+    
+    // Pass the marks and use the grade status as the remark
+    onSubmitGrade(Number(marks), "GRADED", `Marked as: ${selectedGrade}`);
   };
 
   const grades: {
@@ -57,65 +71,66 @@ const SubmissionInfoCard = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
       {/* ── Banner carousel ── */}
-      <div className="relative w-full h-[210px] shrink-0 overflow-hidden bg-gray-900">
-        {/* Image */}
-        <img
-          src={SUBMISSION_IMAGES[activeImage]}
-          alt={`Submission page ${activeImage + 1}`}
-          className="w-full h-full object-cover transition-opacity duration-200"
-        />
+      {images.length > 0 ? (
+        <div className="relative w-full h-[210px] shrink-0 overflow-hidden bg-gray-900">
+          <img
+            src={images[activeImage]}
+            alt={`Submission page ${activeImage + 1}`}
+            className="w-full h-full object-cover transition-opacity duration-200"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 pointer-events-none" />
 
-        {/* Dark gradient overlay so buttons are always visible */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 pointer-events-none" />
+          <div className="absolute top-3 right-3 bg-black/50 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+            {activeImage + 1}/{images.length}
+          </div>
 
-        {/* Page counter — top right */}
-        <div className="absolute top-3 right-3 bg-black/50 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
-          {activeImage + 1}/{SUBMISSION_IMAGES.length}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={handlePrev}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow flex items-center justify-center transition-all cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-700" />
+              </button>
+              <button
+                onClick={handleNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow flex items-center justify-center transition-all cursor-pointer"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-700" />
+              </button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(i)}
+                    className={`rounded-full transition-all cursor-pointer ${
+                      i === activeImage
+                        ? "w-4 h-[6px] bg-white"
+                        : "w-[6px] h-[6px] bg-white/50 hover:bg-white/75"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
-
-        {/* Prev chevron */}
-        <button
-          onClick={handlePrev}
-          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow flex items-center justify-center transition-all"
-        >
-          <ChevronLeft className="w-4 h-4 text-gray-700" />
-        </button>
-
-        {/* Next chevron */}
-        <button
-          onClick={handleNext}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow flex items-center justify-center transition-all"
-        >
-          <ChevronRight className="w-4 h-4 text-gray-700" />
-        </button>
-
-        {/* Dot indicators — bottom center */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {SUBMISSION_IMAGES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveImage(i)}
-              className={`rounded-full transition-all ${
-                i === activeImage
-                  ? "w-4 h-[6px] bg-white"
-                  : "w-[6px] h-[6px] bg-white/50 hover:bg-white/75"
-              }`}
-            />
-          ))}
+      ) : (
+        <div className="w-full h-[140px] shrink-0 bg-gray-100 flex flex-col items-center justify-center text-gray-400">
+          <p className="text-[13px] font-medium">No Image Attachments</p>
         </div>
-      </div>
+      )}
 
       {/* ── Content ── */}
       <div className="flex flex-col gap-[18px] px-6 pt-5 pb-7 flex-1">
         {/* Student name + class */}
         <div>
           <h2 className="text-[24px] font-bold text-gray-900 leading-snug">
-            Prince Sharma
+            {data?.student?.name || "Student Name"}
           </h2>
           <p className="text-[13px] text-gray-400 mt-0.5">
-            Class - X(A) &nbsp;•&nbsp; Roll no: 25
+            {data?.student?.classSection || "Class - Unknown"} &nbsp;•&nbsp; Roll no: {data?.student?.rollNo || "-"}
           </p>
         </div>
 
@@ -123,17 +138,17 @@ const SubmissionInfoCard = () => {
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center rounded-[10px] border border-gray-200 overflow-hidden w-[44px] shadow-sm shrink-0">
             <div className="w-full bg-[#4285F4] text-white text-[9px] font-bold text-center py-[3px] tracking-widest">
-              MAY
+              {dateDetails.month}
             </div>
             <div className="text-[17px] font-extrabold text-gray-800 leading-none py-[5px]">
-              22
+              {dateDetails.day}
             </div>
           </div>
           <div>
             <p className="text-[13px] font-semibold text-gray-800">
-              Monday, May 21
+              {dateDetails.fullDate}
             </p>
-            <p className="text-[12px] text-gray-500 mt-0.5">10:25 PM</p>
+            <p className="text-[12px] text-gray-500 mt-0.5">{dateDetails.time}</p>
           </div>
         </div>
 
@@ -143,12 +158,7 @@ const SubmissionInfoCard = () => {
             Description
           </p>
           <p className="text-[13px] text-gray-700 leading-relaxed">
-            Get your graph theory homework done quickly by focusing on these key
-            graph concepts Get your graph theory homework done quickly by
-            focusing on these concepts{" "}
-            <button className="text-[#4D8DFF] font-semibold hover:underline">
-              Read more...
-            </button>
+            {data?.description || data?.assignment?.content || "No description provided."}
           </p>
         </div>
 
@@ -163,11 +173,11 @@ const SubmissionInfoCard = () => {
                 key={label}
                 onClick={() => setSelectedGrade(label)}
                 className={`
-                  flex-1 h-[42px] rounded-full border-2 text-[12.5px] font-semibold transition-all
+                  flex-1 h-[42px] rounded-full border-2 text-[12.5px] font-semibold transition-all cursor-pointer
                   ${
                     selectedGrade === label
                       ? `${bgActive} ${textColor} ${borderActive}`
-                      : `bg-white ${textColor} border-[#E4E7EC]`
+                      : `bg-white ${textColor} border-[#E4E7EC] hover:bg-gray-50`
                   }
                 `}
               >
@@ -178,34 +188,44 @@ const SubmissionInfoCard = () => {
         </div>
 
         {/* Marks — floating label */}
-        <div className="relative">
+        <div className="relative mt-2">
           <label className="absolute -top-[9px] left-3 bg-white px-1 text-[11px] text-gray-400 font-medium z-10">
-            Marks
+            Marks (Max: {data?.assignment?.maxScore || 100})
           </label>
           <input
-            type="text"
+            type="number"
             value={marks}
             onChange={(e) => setMarks(e.target.value)}
-            placeholder="Eg. 30/50"
+            placeholder={`Eg. 30/${data?.assignment?.maxScore || 100}`}
             className="w-full h-[50px] rounded-[12px] border border-gray-300 px-4 text-[13px] text-gray-700 placeholder-gray-300 outline-none focus:border-[#4D8DFF] transition-colors"
           />
         </div>
 
+        {/* Spacer to push button to bottom */}
+        <div className="flex-1 min-h-[10px]" />
+
         {/* Save button */}
         <button
           onClick={handleSave}
-          disabled={!selectedGrade}
+          disabled={!selectedGrade || saving}
           className={`
             w-full h-[52px] rounded-full text-[14px] font-bold tracking-widest
-            transition-all mt-auto
+            transition-all mt-auto flex items-center justify-center gap-2
             ${
-              selectedGrade
-                ? "bg-[#4D8DFF] text-white shadow-md hover:bg-[#3d7dee] active:scale-[0.98]"
+              selectedGrade && !saving
+                ? "bg-[#4D8DFF] text-white shadow-md hover:bg-[#3d7dee] active:scale-[0.98] cursor-pointer"
                 : "bg-white text-gray-300 border border-gray-200 cursor-not-allowed"
             }
           `}
         >
-          {saved ? "SAVED ✓" : "SAVE & NEXT"}
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              SAVING...
+            </>
+          ) : (
+            "SAVE & NEXT"
+          )}
         </button>
       </div>
     </div>

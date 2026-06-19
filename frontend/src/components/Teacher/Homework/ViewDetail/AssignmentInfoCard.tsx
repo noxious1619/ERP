@@ -2,21 +2,56 @@ import { useState } from "react";
 import { Sigma } from "lucide-react";
 import ViewDetailSidebar from "../../../Student/Homework/ViewDetailSidebar";
 import type { HomeworkTask } from "../../../Student/Homework/ViewDetailSidebar";
-const teacherTask: HomeworkTask = {
-  id: 1,
-  title: "Vertices and Edges",
-  subject: "Mathematics",
-  status: "DUE TODAY",
-  dueDate: "Thursday, May 22",
-  dueTime: "10:00 PM",
-  givenBy: "Miss. Archana Shah",
-  description:
-    "Get your graph theory homework done quickly by focusing on these key graph concepts. These are very important questions for the upcoming unit exams.",
-  teacherImages: [], // add image URLs if available
+
+interface AssignmentInfoProps {
+  info?: {
+    title: string;
+    subject: string;
+    class: string;
+    section: string;
+    dueDate: string;
+    createdAt: string;
+    maxScore: number;
+  };
+}
+
+// Helper to extract date components (e.g., "MAY", "20", "20 May, 2026")
+const parseDateString = (isoString?: string) => {
+  if (!isoString) return { month: "—", day: "—", full: "—" };
+  const d = new Date(isoString);
+  const month = d.toLocaleString("en-US", { month: "short" }).toUpperCase();
+  const day = d.getDate().toString();
+  const full = d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return { month, day, full };
 };
 
-const AssignmentInfoCard = () => {
+const AssignmentInfoCard = ({ info }: AssignmentInfoProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Fallbacks if data is still loading
+  const currentTitle = info?.title || "Loading Assignment...";
+  const currentSubject = info?.subject || "—";
+  const currentClass = info?.class && info?.section ? `Class - ${info.class} (${info.section})` : "—";
+  
+  const startParsed = parseDateString(info?.createdAt);
+  const dueParsed = parseDateString(info?.dueDate);
+
+  // Map backend details cleanly into your existing sidebar structure
+  const teacherTask: HomeworkTask = {
+    id: 1, // Static placeholder identifier required by the type
+    title: currentTitle,
+    subject: currentSubject,
+    status: "ASSIGNED",
+    dueDate: info?.dueDate ? new Date(info.dueDate).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' }) : "—",
+    dueTime: info?.dueDate ? new Date(info.dueDate).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' }) : "—",
+    givenBy: "Teacher Session", 
+    description: `Maximum points achievable for this assignment: ${info?.maxScore || 0} marks. Detailed analytics regarding sections and individual completions are displayed below.`,
+    teacherImages: [], 
+  };
 
   return (
     <>
@@ -28,7 +63,6 @@ const AssignmentInfoCard = () => {
           View Details
         </button>
 
-        {/* rest of the card unchanged */}
         <div className="flex items-center justify-between pr-4 mt-5">
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 rounded-full bg-[#EEEDF8] flex items-center justify-center shrink-0">
@@ -36,23 +70,24 @@ const AssignmentInfoCard = () => {
             </div>
             <div>
               <p className="text-[14px] text-gray-400 font-medium mb-1">
-                Class - X (A)
+                {currentClass}
               </p>
               <h2 className="text-[26px] font-bold text-gray-900 leading-tight">
-                Vertices and Edges
+                {currentTitle}
               </h2>
-              <p className="text-[15px] text-gray-500 mt-1">Graph theory</p>
+              <p className="text-[15px] text-gray-500 mt-1">{currentSubject}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 mt-4 ">
+          <div className="flex items-center gap-4 mt-4">
+            {/* Start Date Box */}
             <div className="flex items-center gap-3 bg-[#EEF3FF] rounded-[12px] px-4 py-3">
               <div className="flex flex-col items-center leading-none min-w-[28px]">
                 <span className="text-[10px] font-bold text-[#4D8DFF] uppercase tracking-widest">
-                  MAY
+                  {startParsed.month}
                 </span>
                 <span className="text-[18px] font-bold text-[#1D2939] leading-tight">
-                  20
+                  {startParsed.day}
                 </span>
               </div>
               <div>
@@ -60,20 +95,21 @@ const AssignmentInfoCard = () => {
                   Start Date
                 </p>
                 <p className="text-[14px] font-semibold text-gray-800 whitespace-nowrap">
-                  20 May, 2026
+                  {startParsed.full}
                 </p>
               </div>
             </div>
 
             <span className="text-[14px] text-gray-400 font-medium">to</span>
 
+            {/* Due Date Box */}
             <div className="flex items-center gap-3 bg-[#EEF3FF] rounded-[12px] px-4 py-3">
               <div className="flex flex-col items-center leading-none min-w-[28px]">
                 <span className="text-[10px] font-bold text-[#4D8DFF] uppercase tracking-widest">
-                  MAY
+                  {dueParsed.month}
                 </span>
                 <span className="text-[18px] font-bold text-[#1D2939] leading-tight">
-                  22
+                  {dueParsed.day}
                 </span>
               </div>
               <div>
@@ -81,7 +117,7 @@ const AssignmentInfoCard = () => {
                   Due Date
                 </p>
                 <p className="text-[14px] font-semibold text-gray-800 whitespace-nowrap">
-                  22 May, 2026
+                  {dueParsed.full}
                 </p>
               </div>
             </div>

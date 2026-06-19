@@ -1,36 +1,45 @@
-const AssignmentStatsCard = () => {
-  const submitted = 43;
-  const late = 5;
-  const missing = 2;
-  const total = 50;
-  // Gauge arc calculations
-  // semicircle = 180deg, split proportionally
-  const submittedDeg = (submitted / total) * 180;
-  const lateDeg = (late / total) * 180;
-  // missing fills the rest
+interface AssignmentStatsProps {
+  stats?: {
+    total: number;
+    submitted: number;
+    late: number;
+    missing: number;
+  };
+}
+
+const AssignmentStatsCard = ({ stats }: AssignmentStatsProps) => {
+  // Destructure with fallbacks for loading states
+  const submitted = stats?.submitted || 0;
+  const late = stats?.late || 0;
+  const missing = stats?.missing || 0;
+  const rawTotal = stats?.total || 0;
+
+  // Prevent division by zero in the SVG math if a class has 0 students
+  const total = rawTotal > 0 ? rawTotal : 1;
+
   return (
-    <div className="w-[320px] shrink-0 bg-white rounded-[18px] border border-[#EAECF0] px-5  shadow-sm">
+    <div className="w-[320px] shrink-0 bg-white rounded-[18px] border border-[#EAECF0] px-5 shadow-sm">
       {/* Stat boxes */}
       <div className="grid grid-cols-3 gap-2 mb-4 mt-0">
-        <div className="bg-[#EEF3FF] rounded-[10px]  py-2 text-center">
-          <p className="text-[10px]  text-[#4285F4] uppercase tracking-wider">
+        <div className="bg-[#EEF3FF] rounded-[10px] py-2 text-center">
+          <p className="text-[10px] text-[#4285F4] uppercase tracking-wider">
             Submitted
           </p>
           <p className="text-[24px] text-[#0E0E8A] leading-tight">
             {submitted}
           </p>
         </div>
-        <div className="bg-[#FFF8EC] rounded-[10px]  py-2 text-center">
-          <p className="text-[10px]  text-[#FAAB00] uppercase tracking-wider">
+        <div className="bg-[#FFF8EC] rounded-[10px] py-2 text-center">
+          <p className="text-[10px] text-[#FAAB00] uppercase tracking-wider">
             Late
           </p>
-          <p className="text-[24px]  text-[#FAAB00] leading-tight">{late}</p>
+          <p className="text-[24px] text-[#FAAB00] leading-tight">{late}</p>
         </div>
-        <div className="bg-[#FFF0F0] rounded-[10px]  py-2 text-center">
-          <p className="text-[10px]  text-[#D8072E] uppercase tracking-wider">
+        <div className="bg-[#FFF0F0] rounded-[10px] py-2 text-center">
+          <p className="text-[10px] text-[#D8072E] uppercase tracking-wider">
             Missing
           </p>
-          <p className="text-[24px]  text-[#D8072E] leading-tight">{missing}</p>
+          <p className="text-[24px] text-[#D8072E] leading-tight">{missing}</p>
         </div>
       </div>
 
@@ -84,10 +93,10 @@ const AssignmentStatsCard = () => {
 
           {/* Center text */}
           <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center">
-            <p className="text-[10px] text-[#888889]  font-medium">
+            <p className="text-[10px] text-[#888889] font-medium">
               Total Students
             </p>
-            <p className="text-[20px] text-[#0E0E8A] leading-none">{total}</p>
+            <p className="text-[20px] text-[#0E0E8A] leading-none">{rawTotal}</p>
           </div>
         </div>
       </div>

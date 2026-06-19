@@ -248,42 +248,67 @@ export const updateTeacher = async (req: Request, res: Response) => {
 };
 
 // ─── GET /api/teachers/me (Teacher only) ─────────────────────────────────────
+
 export const getMyProfile = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
+
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorised" });
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorised",
+      });
     }
 
     const teacher = await prisma.teacher.findUnique({
-      where:  { userId },
-      select: {
-        ...teacherSelect, 
-        
-      classTeacherOf: { 
+      where: {
+        userId,
+      },
       select: {
         id: true,
-        name: true,
-        academicClass: {
-          select: {
-            name: true 
-          }
-        }
-      }
-    }
-      },
-    sections: {
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+
+        classTeacherOf: {
           select: {
             id: true,
-            name: true, // e.g., "A", "B"
+            name: true,
             academicClass: {
               select: {
-                name: true // e.g., "Class 10"
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+
+        // Updated section: Routing through the new teachingAssignments join table
+        teachingAssignments: {
+          select: {
+            section: {
+              select: {
+                id: true,
+                name: true,
+                academicClass: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+            // Optionally fetch the subject they teach in that section too!
+            subject: {
+              select: {
+                id: true,
+                name: true,
               }
             }
-          }
-      }
-
+          },
+        },
+      },
     });
 
     if (!teacher) {
@@ -293,9 +318,191 @@ export const getMyProfile = async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(200).json({ success: true, data: teacher });
+    // Optional: Format the data to flatten 'teachingAssignments' back into a 'sections' array 
+    // if your frontend is strictly expecting an array of sections.
+    /*
+    const formattedTeacher = {
+      ...teacher,
+      sections: teacher.teachingAssignments.map(ta => ({
+        ...ta.section,
+        subject: ta.subject 
+      }))
+    };
+    // Then return `data: formattedTeacher` below.
+    */
+
+    return res.status(200).json({
+      success: true,
+      data: teacher,
+    });
   } catch (error: any) {
     console.error("[getMyProfile] Error:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+// POST /api/teachers/assign-subject-section
+
+export const assignTeacherToSectionSubject = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { teacherId, sectionId, subjectId } = req.body;
+
+    if (!teacherId || !sectionId || !subjectId) {
+      return res.status(400).json({
+        success: false,
+        message: "teacherId, sectionId and subjectId are required",
+      });
+    }
+
+    // Verify entities exist
+    const [teacher, section, subject] = await Promise.all([
+      prisma.teacher.findUnique({ where: { id: teacherId } }),
+      prisma.section.findUnique({ where: { id: sectionId } }),
+      prisma.subject.findUnique({ where: { id: subjectId } }),
+    ]);
+
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher not found",
+      });
+    }
+
+    if (!section) {
+      return res.status(404).json({
+        success: false,
+        message: "Section not found",
+      });
+    }
+
+    if (!subject) {
+      return res.status(404).json({
+        success: false,
+        message: "Subject not found",
+      });
+    }
+
+    // Prevent duplicate assignment
+    const existing = await prisma.teacherSectionSubject.findFirst({
+      where: {
+        teacherId,
+        sectionId,
+        subjectId,
+      },
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: "Assignment already exists",
+      });
+    }
+
+    const assignment = await prisma.teacherSectionSubject.create({
+      data: {
+        teacherId,
+        sectionId,
+        subjectId,
+      },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        section: {
+          select: {
+            id: true,
+            name: true,
+            academicClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Teaching assignment created successfully",
+      data: assignment,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// GET /api/teachers/:id/teaching-assignments
+
+export const getTeacherTeachingAssignments = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+
+    const assignments = await prisma.teacherSectionSubject.findMany({
+      where: {
+        teacherId: id,
+      },
+      select: {
+        id: true,
+
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+
+        section: {
+          select: {
+            id: true,
+            name: true,
+
+            academicClass: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      count: assignments.length,
+      data: assignments,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

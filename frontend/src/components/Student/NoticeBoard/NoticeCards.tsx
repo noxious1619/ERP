@@ -176,6 +176,7 @@ const CARD_STYLES = [
   { bg: "bg-violet-50", iconBg: "bg-violet-400/20", icon: noticeIconPurple },
 ];
 
+
 const isToday = (dateStr: string) => {
   const d = new Date(dateStr),
     now = new Date();
@@ -399,6 +400,7 @@ const NoticeCards = ({
     );
   }
 
+  // 1. Isolate Today and Yesterday
   const todayNotices = notices.filter((n) => isToday(n.createdAt));
   const yesterdayNotices = notices.filter((n) => isYesterday(n.createdAt));
   // Notices older than yesterday — group them under their date or just "Earlier"

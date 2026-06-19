@@ -1,21 +1,17 @@
-"use client"
-
 import AdminSidebar from "../../components/Admin/sidebar"
 import AdminNavbar from "../../components/Admin/Navbar"
-import StudentsView from "../../components/Admin/Academics/StudentsView"
+import StaffView from "../../components/Admin/Academics/Staff/StaffView"
 
-
-export default function Academics() {
+export default function Staff() {
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
-      <AdminSidebar
-      />
+      <AdminSidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <AdminNavbar />
 
-        <main className="flex-1 overflow-auto p-6">
-          <StudentsView />
+        <main className="flex-1 flex flex-col overflow-hidden p-6">
+          <StaffView />
         </main>
       </div>
     </div>

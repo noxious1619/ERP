@@ -40,7 +40,6 @@ model User {
   attendanceMarked  Attendance[]    @relation("MarkedBy")
   notices           Notice[]
   noticeViews       NoticeView[]
-  gradedSubmissions Submission[]    @relation("Grader")
   timetables        Timetable[]
   createdExams      ScheduledExam[]
 }
@@ -76,7 +75,7 @@ model Student {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   // Academic Relations
-  submissions       Submission[]
+  gradedSubmissions Submission[]    @relation("Grader")
   marks             Mark[]
   calculatedResults CalculatedResult[]
   feeRecords        MonthlyFeeRecord[]
@@ -121,7 +120,7 @@ model Teacher {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  classTeacherOf Section?  @relation("ClassTeacher") // If they lead a section
+  classTeacherOf Section?  @relation("ClassTeacher")
   sections       Section[]
   subjects       Subject[]
 
@@ -284,8 +283,8 @@ model Notice {
   id         String         @id @default(uuid())
   title      String
   content    String         @db.Text
-  targetType TargetType     // GLOBAL, ROLE, CLASS, SECTION
-  targetId   String?         // ID of the Class or Section
+  targetType TargetType // GLOBAL, ROLE, CLASS, SECTION
+  targetId   String? // ID of the Class or Section
   priority   NoticePriority @default(STANDARD)
   category   NoticeCategory @default(ANNOUNCEMENT)
   author     User           @relation(fields: [authorId], references: [id])
@@ -346,24 +345,23 @@ model Assignment {
 }
 
 model Submission {
-  id           String     @id @default(uuid())
-  assignmentId String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  id              String     @id @default(uuid())
+  assignmentId    String
+  assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
-  studentId String
-  student   Student @relation(fields: [studentId], references: [id])
+  studentId       String
+  student         Student @relation(fields: [studentId], references: [id])
 
-  fileUrl String?
-  content String? @db.Text
+  fileUrl         String?
+  content         String? @db.Text
 
-  submittedAt DateTime         @default(now())
-  status      SubmissionStatus @default(SUBMITTED)
+  submittedAt     DateTime         @default(now())
+  status          SubmissionStatus @default(SUBMITTED)
+  marksObtained   Float?
+  remarks         String?
 
-  score   Float?
-  remarks String?
-
-  gradedById String?
-  gradedBy   User?   @relation("Grader", fields: [gradedById], references: [id])
+  gradedById      String?
+  gradedBy        Teacher?       @relation("Grader", fields: [gradedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

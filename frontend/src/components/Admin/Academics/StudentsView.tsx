@@ -6,6 +6,7 @@ import StudentFilters from "./StudentFilters"
 import StudentStatsCards from "./StudentStatsCards"
 import StudentTable from "./StudentTable"
 import StudentPagination from "./StudentPagination"
+import AddNewStudentModal from "./AddNewStudentModal"
 import { useStudents } from "../../../hooks/useStudents"
 
 const PAGE_SIZE = 6
@@ -13,6 +14,7 @@ const PAGE_SIZE = 6
 export default function StudentsView() {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const [selectedClass, setSelectedClass] = useState("")
   const [selectedSection, setSelectedSection] = useState("")
@@ -42,14 +44,16 @@ export default function StudentsView() {
   }, [])
 
   return (
-    <div className="flex flex-col gap-5">
-      <StudentsHeader
-        totalCount={pagination?.total ?? 0}
-        search={search}
-        onSearchChange={handleSearch}
-      />
+    <>
+      <div className="flex flex-col gap-5">
+        <StudentsHeader
+          totalCount={pagination?.total ?? 0}
+          search={search}
+          onSearchChange={handleSearch}
+          onAddClick={() => setIsModalOpen(true)}
+        />
 
-      <StudentFilters
+        <StudentFilters
         onClassChange={(value) => {
           setSelectedClass(value)
           setPage(1)
@@ -80,12 +84,18 @@ export default function StudentsView() {
         error={error}
       />
 
-      <StudentPagination
-        total={pagination?.total ?? 0}
-        perPage={pagination?.limit ?? PAGE_SIZE}
-        currentPage={pagination?.page ?? 1}
-        onPageChange={setPage}
+        <StudentPagination
+          total={pagination?.total ?? 0}
+          perPage={pagination?.limit ?? PAGE_SIZE}
+          currentPage={pagination?.page ?? 1}
+          onPageChange={setPage}
+        />
+      </div>
+
+      <AddNewStudentModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
       />
-    </div>
+    </>
   )
 }

@@ -257,7 +257,33 @@ export const getMyProfile = async (req: Request, res: Response) => {
 
     const teacher = await prisma.teacher.findUnique({
       where:  { userId },
-      select: teacherSelect,
+      select: {
+        ...teacherSelect, 
+        
+      classTeacherOf: { 
+      select: {
+        id: true,
+        name: true,
+        academicClass: {
+          select: {
+            name: true 
+          }
+        }
+      }
+    }
+      },
+    sections: {
+          select: {
+            id: true,
+            name: true, // e.g., "A", "B"
+            academicClass: {
+              select: {
+                name: true // e.g., "Class 10"
+              }
+            }
+          }
+      }
+
     });
 
     if (!teacher) {

@@ -96,6 +96,164 @@ export const getSectionAttendance = async (req: Request, res: Response) => {
   }
 };
 
+export const getDailyAttendance = async (req: Request, res: Response) => {
+  try {
+    const { sectionId, date } = req.query;
+
+    if (!sectionId || !date) {
+      return res.status(400).json({ success: false, message: "Missing parameters" });
+    }
+
+    // 🚀 THE FIX: Strip any time/timezone data sent by the frontend
+    const targetDateStr = String(date).split('T')[0]; // Guarantees strictly "YYYY-MM-DD"
+    
+    // Build strict UTC boundaries
+    const startOfDay = new Date(`${targetDateStr}T00:00:00.000Z`);
+    const endOfDay = new Date(`${targetDateStr}T23:59:59.999Z`);
+
+    // Get strictly today's date in YYYY-MM-DD format based on server time
+    const todayStr = new Date().toLocaleDateString('en-CA', { 
+      timeZone: 'Asia/Kolkata' 
+    });
+
+    // 🛡️ RULE 1: BLOCK THE FUTURE
+    if (targetDateStr > todayStr) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Cannot view or take attendance for future dates." 
+      });
+    }
+
+    const existingAttendance = await prisma.attendance.findMany({
+      where: {
+        sectionId: String(sectionId),
+        date: { gte: startOfDay, lte: endOfDay },
+      },
+      include: {
+        student: {
+          select: { id: true, firstName: true, lastName: true, rollNumber: true, admissionNumber: true }
+        }
+      },
+      orderBy: { student: { rollNumber: 'asc' } }
+    });
+
+    // 🛡️ RULE 2: PAST OR TODAY (DATA EXISTS) -> Return the saved receipt
+    if (existingAttendance.length > 0) {
+      return res.status(200).json({
+        success: true,
+        isSaved: true, 
+        data: existingAttendance,
+      });
+    }
+
+    // 🛡️ RULE 3: PAST DATE (NO DATA) -> Return empty array (No Ghost Template!)
+    if (targetDateStr < todayStr) {
+      return res.status(200).json({
+        success: true,
+        isSaved: true, // Treat as saved/locked so the UI doesn't try to save an empty list
+        data: [],      // Empty array triggers the frontend "No Data" screen
+      });
+    }
+
+    // 🛡️ RULE 4: TODAY (NO DATA) -> Generate the Ghost Template
+    const students = await prisma.student.findMany({
+      where: { sectionId: String(sectionId), isActive: true },
+      orderBy: { rollNumber: 'asc' }
+    });
+
+    const ghostAttendance = students.map((student) => ({
+      id: `ghost-${student.id}`, 
+      date: startOfDay, // Returns the clean UTC midnight string
+      status: "PRESENT", 
+      studentId: student.id,
+      sectionId: String(sectionId),
+      student: {
+        id: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        rollNumber: student.rollNumber,
+        admissionNumber: student.admissionNumber
+      }
+    }));
+
+    return res.status(200).json({
+      success: true,
+      isSaved: false, 
+      data: ghostAttendance,
+    });
+
+  } catch (error: any) {
+    console.error("[getDailyAttendance] Error:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const saveDailyAttendance = async (req: Request, res: Response) => {
+  try {
+    const { sectionId, date, attendanceData } = req.body;
+
+    // We assume your auth middleware attaches the user ID
+    const markedById = (req as any).user.id; 
+
+    if (!sectionId || !date || !attendanceData || !Array.isArray(attendanceData)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid payload. Required: sectionId, date, and attendanceData array." 
+      });
+    }
+
+    // 🚀 THE FIX: Prevent JavaScript from shifting the timezone
+    const strictDateStr = String(date).split('T')[0]; // Guarantees "YYYY-MM-DD"
+    const cleanUtcDate = new Date(`${strictDateStr}T00:00:00.000Z`);
+
+    // Strict boundaries for wiping the old data safely
+    const startOfDay = new Date(`${strictDateStr}T00:00:00.000Z`);
+    const endOfDay = new Date(`${strictDateStr}T23:59:59.999Z`);
+
+    // 🚀 THE PRISMA TRANSACTION
+    await prisma.$transaction(async (tx) => {
+      
+      // Step 1: Wipe any existing records for this specific section and date.
+      await tx.attendance.deleteMany({
+        where: {
+          sectionId: String(sectionId),
+          date: {
+            gte: startOfDay,
+            lte: endOfDay,
+          }
+        }
+      });
+
+      // Step 2: Map the frontend array using the clean UTC Date
+      const newRecords = attendanceData.map((record: any) => ({
+        date: cleanUtcDate, // 🚀 Saves directly as T00:00:00.000Z
+        status: record.status, 
+        studentId: record.studentId,
+        sectionId: String(sectionId),
+        markedById: markedById
+      }));
+
+      // Step 3: Bulk insert the fresh records
+      await tx.attendance.createMany({
+        data: newRecords
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance successfully saved."
+    });
+
+  } catch (error: any) {
+    console.error("🔥 saveDailyAttendance Error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Internal Server Error",
+      error: error.message 
+    });
+  }
+};
+
 export const updateStudentYearlyAttendance = async (req: Request, res: Response) => {
   try {
     const { studentId, sectionId, attendanceRecords } = req.body; 

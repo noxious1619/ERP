@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -12,7 +12,21 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-const NAV = [
+interface NavItemChild {
+  label: string;
+  href: string;
+  children?: NavItemChild[];
+}
+
+interface NavItem {
+  label: string;
+  icon: any;
+  href: string;
+  defaultOpen?: boolean;
+  children: NavItemChild[];
+}
+
+const NAV: NavItem[] = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
@@ -31,8 +45,14 @@ const NAV = [
       { label: "Subjects", href: "/admin/academics/subjects" },
       { label: "Timetable", href: "/admin/academics/timetable" },
       { label: "Attendance", href: "/admin/academics/attendance" },
-      { label: "Exams", href: "/admin/academics/exams" },
-      { label: "Results", href: "/admin/academics/results" },
+      {
+        label: "Exams",
+        href: "#",
+        children: [
+          { label: "Date sheet", href: "/admin/academics/exams/datesheet" },
+          { label: "Exam Template", href: "#" },
+        ],
+      },
     ],
   },
   {
@@ -71,7 +91,7 @@ export default function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(true);
 
   const [activeParent, setActiveParent] = useState("Academics");
-  const [activeChild, setActiveChild] = useState("Students");
+  const [activeChild, setActiveChild] = useState("Date sheet");
 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
     () =>
@@ -83,8 +103,47 @@ export default function AdminSidebar() {
       ),
   );
 
+  const [openSubSections, setOpenSubSections] = useState<Record<string, boolean>>({
+    Exams: true, // Exams section default open as shown in mockup
+  });
+
+  // Track active page routes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      NAV.forEach((item) => {
+        if (item.href === path) {
+          setActiveParent(item.label);
+          setActiveChild("");
+        }
+        item.children.forEach((child) => {
+          if (child.href === path) {
+            setActiveParent(item.label);
+            setActiveChild(child.label);
+          }
+          if (child.children) {
+            child.children.forEach((sub) => {
+              if (sub.href === path) {
+                setActiveParent(item.label);
+                setActiveChild(sub.label);
+                setOpenSubSections((prev) => ({ ...prev, [child.label]: true }));
+              }
+            });
+          }
+        });
+      });
+    }
+  }, []);
+
   const toggleSection = (label: string) => {
     setOpenSections((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
+
+  const toggleSubSection = (label: string) => {
+    setOpenSubSections((prev) => ({
       ...prev,
       [label]: !prev[label],
     }));
@@ -95,7 +154,7 @@ export default function AdminSidebar() {
       onMouseEnter={() => setCollapsed(false)}
       onMouseLeave={() => setCollapsed(true)}
       className={[
-        "group flex h-screen flex-col border-r border-gray-200 bg-white transition-all duration-200 ease-linear",
+        "group flex h-screen flex-col border-r border-gray-200 bg-white transition-all duration-200 ease-linear z-30",
         collapsed ? "w-[3.5rem]" : "w-[16rem]",
       ].join(" ")}
     >
@@ -106,6 +165,7 @@ export default function AdminSidebar() {
           viewBox="0 0 43 40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
+          className="shrink-0"
         >
           <rect
             x="1.5"
@@ -159,7 +219,7 @@ export default function AdminSidebar() {
                 }}
                 title={collapsed ? item.label : undefined}
                 className={[
-                  "flex w-full items-center gap-2.5 rounded-3xl px-2.5 py-2 text-sm font-medium transition-colors",
+                  "flex w-full items-center gap-2.5 rounded-3xl px-2.5 py-2 text-sm font-medium transition-colors cursor-pointer",
                   activeParent === item.label
                     ? "bg-[#4285F4] text-white"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
@@ -186,26 +246,73 @@ export default function AdminSidebar() {
               </button>
 
               {hasChildren && !collapsed && isOpen && (
-                <ul className="ml-[1.65rem] mt-0.5 border-l border-[#4285F4]/40 py-0.5">
-                  {item.children.map((child) => (
-                    <li key={child.label}>
-                      <a
-                        href={child.href}
-                        onClick={() => {
-                          setActiveParent(item.label);
-                          setActiveChild(child.label);
-                        }}
-                        className={[
-                          "block py-1.5 pl-3 text-sm transition-colors",
-                          activeChild === child.label
-                            ? "font-medium text-[#4285F4]"
-                            : "text-gray-500 hover:text-[#4285F4]",
-                        ].join(" ")}
-                      >
-                        {child.label}
-                      </a>
-                    </li>
-                  ))}
+                <ul className="ml-[1.65rem] mt-0.5 border-l border-gray-200 py-0.5 flex flex-col gap-0.5">
+                  {item.children.map((child) => {
+                    const hasSubChildren = child.children && child.children.length > 0;
+                    const isSubOpen = openSubSections[child.label] ?? false;
+
+                    if (hasSubChildren) {
+                      return (
+                        <li key={child.label} className="mt-0.5">
+                          <button
+                            onClick={() => toggleSubSection(child.label)}
+                            className="flex w-full items-center justify-between py-1.5 pl-3 pr-2 text-sm text-gray-500 hover:text-[#4285F4] transition-colors focus:outline-none cursor-pointer font-medium"
+                          >
+                            <span className="truncate">{child.label}</span>
+                            <ChevronDown
+                              className={[
+                                "h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+                                isSubOpen ? "rotate-180" : "",
+                              ].join(" ")}
+                            />
+                          </button>
+                          {isSubOpen && (
+                            <ul className="ml-[0.75rem] mt-0.5 border-l border-gray-200 py-0.5 flex flex-col gap-0.5">
+                              {child.children!.map((subChild) => (
+                                <li key={subChild.label}>
+                                  <a
+                                    href={subChild.href}
+                                    onClick={() => {
+                                      setActiveParent(item.label);
+                                      setActiveChild(subChild.label);
+                                    }}
+                                    className={[
+                                      "block py-1.5 pl-3 text-sm transition-colors rounded-lg",
+                                      activeChild === subChild.label
+                                        ? "font-bold text-[#4285F4]"
+                                        : "text-gray-500 hover:text-[#4285F4]",
+                                    ].join(" ")}
+                                  >
+                                    {subChild.label}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li key={child.label}>
+                        <a
+                          href={child.href}
+                          onClick={() => {
+                            setActiveParent(item.label);
+                            setActiveChild(child.label);
+                          }}
+                          className={[
+                            "block py-1.5 pl-3 text-sm transition-colors rounded-lg",
+                            activeChild === child.label
+                              ? "font-bold text-[#4285F4]"
+                              : "text-gray-500 hover:text-[#4285F4]",
+                          ].join(" ")}
+                        >
+                          {child.label}
+                        </a>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

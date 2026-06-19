@@ -22,26 +22,26 @@ enum Role {
 }
 
 model User {
-  id                String          @id @default(uuid())
-  name              String
-  email             String          @unique
-  passwordHash      String
-  role              Role            @default(STUDENT)
-  isActive          Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id               String          @id @default(uuid())
+  name             String
+  email            String          @unique
+  passwordHash     String
+  role             Role            @default(STUDENT)
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
   // Profiles
-  student           Student?
-  teacher           Teacher?
-  staff             Staff?
-  parent            Parent?
+  student          Student?
+  teacher          Teacher?
+  staff            Staff?
+  parent           Parent?
   // Relations
-  logs              AuditLog[]
-  attendanceMarked  Attendance[]    @relation("MarkedBy")
-  notices           Notice[]
-  noticeViews       NoticeView[]
-  timetables        Timetable[]
-  createdExams      ScheduledExam[]
+  logs             AuditLog[]
+  attendanceMarked Attendance[]    @relation("MarkedBy")
+  notices          Notice[]
+  noticeViews      NoticeView[]
+  timetables       Timetable[]
+  createdExams     ScheduledExam[]
 }
 
 model Student {
@@ -75,10 +75,10 @@ model Student {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   // Academic Relations
-  gradedSubmissions Submission[]    @relation("Grader")
   marks             Mark[]
   calculatedResults CalculatedResult[]
   feeRecords        MonthlyFeeRecord[]
+  submissions       Submission[]
 }
 
 model Parent {
@@ -120,13 +120,14 @@ model Teacher {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
-  classTeacherOf Section?  @relation("ClassTeacher")
-  sections       Section[]
-  subjects       Subject[]
+  classTeacherOf Section? @relation("ClassTeacher")
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  assignments Assignment[]
+  teachingAssignments TeacherSectionSubject[]
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  assignments       Assignment[]
+  gradedSubmissions Submission[] @relation("Grader")
 }
 
 model Staff {
@@ -180,10 +181,11 @@ model Class {
 }
 
 model Section {
-  id             String   @id @default(uuid())
-  name           String // e.g., "Alpha", "Omega"
-  classId        String
-  academicClass  Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  id            String @id @default(uuid())
+  name          String
+  classId       String
+  academicClass Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
   classTeacherId String?  @unique
   classTeacher   Teacher? @relation("ClassTeacher", fields: [classTeacherId], references: [id])
 
@@ -191,14 +193,14 @@ model Section {
   students    Student[]
   attendances Attendance[]
   assignments Assignment[]
-  teacher     Teacher?     @relation(fields: [teacherId], references: [id])
-  teacherId   String?
+
+  teachingAssignments TeacherSectionSubject[]
 }
 
 model Subject {
   id                   String                @id @default(uuid())
-  name                 String // e.g., "Mathematics"
-  code                 String // e.g., "MATH101"
+  name                 String
+  code                 String
   icon                 String?
   classId              String
   class                Class                 @relation(fields: [classId], references: [id])
@@ -206,8 +208,29 @@ model Subject {
   assignments          Assignment[]
   scheduledExams       ScheduledExam[]
   assessmentComponents AssessmentComponent[]
-  teacher              Teacher?              @relation(fields: [teacherId], references: [id])
-  teacherId            String?
+
+  teachingAssignments TeacherSectionSubject[]
+}
+
+model TeacherSectionSubject {
+  id String @id @default(uuid())
+
+  teacherId String
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  sectionId String
+  section   Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teacherId, sectionId, subjectId])
+  @@index([teacherId])
+  @@index([sectionId])
+  @@index([subjectId])
 }
 
 model Timetable {
@@ -345,23 +368,23 @@ model Assignment {
 }
 
 model Submission {
-  id              String     @id @default(uuid())
-  assignmentId    String
-  assignment      Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
-  studentId       String
-  student         Student @relation(fields: [studentId], references: [id])
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
 
-  fileUrl         String?
-  content         String? @db.Text
+  fileUrl String?
+  content String? @db.Text
 
-  submittedAt     DateTime         @default(now())
-  status          SubmissionStatus @default(SUBMITTED)
-  marksObtained   Float?
-  remarks         String?
+  submittedAt   DateTime         @default(now())
+  status        SubmissionStatus @default(SUBMITTED)
+  marksObtained Float?
+  remarks       String?
 
-  gradedById      String?
-  gradedBy        Teacher?       @relation("Grader", fields: [gradedById], references: [id])
+  gradedById String?
+  gradedBy   Teacher? @relation("Grader", fields: [gradedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

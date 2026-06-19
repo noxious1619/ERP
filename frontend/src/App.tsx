@@ -58,8 +58,8 @@ const App = () => {
         <Route path="/teacher/profile" element={<TeacherProfile />} />
         <Route path="/teacher/attendance" element={<AttendanceManagement />} />
         <Route path="/teacher/homework" element={<TeacherHomework />} />
-        <Route path="/teacher/homework/viewdetail" element={<TeacherHomeworkDetail />} />
-        <Route path="/teacher/homework/submission" element={<TeacherSubmissionView />} />
+        <Route path="/teacher/homework/:id" element={<TeacherHomeworkDetail />} />
+        <Route path="/teacher/homework/submission/:submissionId" element={<TeacherSubmissionView />} />
 
         {/* ========================================== */}
         {/* ADMIN ROUTES                               */}

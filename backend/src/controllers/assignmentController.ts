@@ -158,25 +158,137 @@ export const submitAssignment = async (req: Request, res: Response) => {
 
 export const getAssignmentSubmissions = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params; // Assignment ID
+    const assignmentId = req.params.id;
+    const { search = "", status = "ALL", page = "1", pageSize = "10" } = req.query;
 
-    const submissions = await prisma.submission.findMany({
-      where: { assignmentId: id },
+    // 1. Fetch Assignment basic details
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: assignmentId },
       include: {
-        student: {
-          select: {
-            id: true,
-            rollNumber: true,
-            user: { select: { name: true } }
-          }
-        }
-      },
-      orderBy: { submittedAt: 'desc' }
+        class: { select: { name: true } },
+        section: { select: { id: true, name: true } },
+        subject: { select: { name: true } },
+      }
     });
 
-    res.status(200).json({ success: true, data: submissions });
+    if (!assignment || !assignment.sectionId) {
+      return res.status(404).json({ success: false, message: "Assignment or Section not found" });
+    }
+
+    const sectionId = assignment.sectionId;
+
+    // 2. ⚡ OPTIMIZED STATS: Let the database count the rows
+    const [totalStudents, submittedCount, lateCount] = await Promise.all([
+      prisma.student.count({ where: { sectionId } }),
+      prisma.submission.count({ 
+        where: { assignmentId, status: { in: ["SUBMITTED", "GRADED"] } } 
+      }),
+      prisma.submission.count({ 
+        where: { assignmentId, status: "LATE" } 
+      })
+    ]);
+
+    const stats = {
+      total: totalStudents,
+      submitted: submittedCount,
+      late: lateCount,
+      missing: totalStudents - (submittedCount + lateCount),
+    };
+
+    // 3. ⚡ DYNAMIC WHERE CLAUSE: Let Prisma filter everything
+    const studentWhere: any = { sectionId };
+
+    if (search) {
+      studentWhere.OR = [
+        { firstName: { contains: String(search), mode: 'insensitive' } },
+        { lastName: { contains: String(search), mode: 'insensitive' } },
+        { rollNumber: { contains: String(search), mode: 'insensitive' } },
+      ];
+    }
+
+    if (status !== "ALL") {
+      if (status === "MISSING") {
+        // Students with NO submission for this assignment
+        studentWhere.submissions = { none: { assignmentId } };
+      } else {
+        // Students WITH a submission matching the status
+        const targetStatuses = status === "SUBMITTED" ? ["SUBMITTED", "GRADED"] : [status];
+        studentWhere.submissions = { 
+          some: { assignmentId, status: { in: targetStatuses } } 
+        };
+      }
+    }
+
+    // 4. ⚡ TRUE PAGINATION: Only pull the 10 rows we actually need
+    const pageNum = Math.max(1, parseInt(page as string));
+    const limit = Math.max(1, parseInt(pageSize as string));
+    const skip = (pageNum - 1) * limit;
+
+    const [filteredTotal, paginatedStudents] = await Promise.all([
+      prisma.student.count({ where: studentWhere }),
+      prisma.student.findMany({
+        where: studentWhere,
+        skip,
+        take: limit,
+        orderBy: { rollNumber: 'asc' }, // Keep the UI list ordered
+        include: {
+          submissions: {
+            where: { assignmentId },
+            take: 1
+          }
+        }
+      })
+    ]);
+
+    // 5. Format for the React Frontend
+    const formattedSubmissions = paginatedStudents.map(student => {
+      const sub = student.submissions[0]; // Will be undefined if missing
+      
+      let currentStatus = "MISSING";
+      if (sub) {
+         currentStatus = sub.status === "GRADED" ? "SUBMITTED" : sub.status;
+      }
+
+      return {
+        studentId: student.id,
+        rollNo: student.rollNumber,
+        name: `${student.firstName} ${student.lastName}`,
+        submittedOn: sub ? sub.submittedAt : null,
+        status: currentStatus,
+        marks: sub?.marksObtained ?? null,
+        result: sub?.marksObtained !== null && sub?.marksObtained !== undefined 
+            ? (sub.marksObtained >= (assignment.maxScore * 0.4) ? "Pass" : "Fail") 
+            : null,
+        submissionId: sub?.id ?? null,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+         assignmentInfo: {
+             title: assignment.title,
+             subject: assignment.subject.name,
+             class: assignment.class.name,
+             section: assignment.section.name,
+             dueDate: assignment.dueDate,
+             createdAt: assignment.createdAt,
+             maxScore: assignment.maxScore
+         },
+         stats,
+         submissions: formattedSubmissions,
+      },
+      pagination: {
+        total: filteredTotal,
+        page: pageNum,
+        pageSize: limit,
+        totalPages: Math.ceil(filteredTotal / limit)
+      }
+    });
+
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("[getAssignmentSubmissions] Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -189,7 +301,7 @@ export const gradeSubmission = async (req: Request, res: Response) => {
     const updatedSubmission = await prisma.submission.update({
       where: { id: submissionId },
       data: {
-        score: parseFloat(score),
+        marksObtained: parseFloat(score),
         remarks,
         status: 'GRADED',
         gradedById: teacherId
@@ -230,7 +342,8 @@ export const getAssignmentList = async (req: Request, res: Response) => {
     }
 
     // ── Parse & validate query params ──────────────────────────
-    const { classId, sectionId, date } = req.query as Record<string, string>;
+    // Added subjectId here!
+    const { classId, sectionId, subjectId, date } = req.query as Record<string, string>;
 
     const page     = Math.max(1, parseInt((req.query.page     as string) ?? '1',  10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt((req.query.pageSize as string) ?? '10', 10) || 10));
@@ -248,6 +361,10 @@ export const getAssignmentList = async (req: Request, res: Response) => {
 
     if (sectionId) {
       where.sectionId = sectionId;
+    }
+    
+    if (subjectId) {
+      where.subjectId = subjectId;
     }
 
     if (date === 'today') {
@@ -309,6 +426,7 @@ export const getAssignmentList = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
+    console.error("[getAssignmentList] Error:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

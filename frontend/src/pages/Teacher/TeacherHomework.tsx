@@ -5,9 +5,46 @@ import TeacherHomeworkFilters from "../../components/Teacher/Homework/HomeworkMa
 import TeacherHomeworkTaskList from "../../components/Teacher/Homework/HomeworkManagment/TeacherHomeworkTaskList";
 import TeacherHomeworkSidebar from "../../components/Teacher/Homework/HomeworkManagment/TeacherHomeworkSidebar";
 import CreateAssignmentForm from "../../components/Teacher/Homework/HomeworkManagment/CreateAssignmentForm";
+import useAuth from "../../hooks/useAuth";
+import useAssignmentList from "../../hooks/useAssignmentList";
+
+// ─── Filter state shape (Updated) ─────────────────────────────────────────────
+interface Filters {
+  classId: string;
+  sectionId: string;
+  subjectId: string; // Added subject filtering
+  date: "today" | "all";
+}
 
 const TeacherHomework = () => {
   const [openModal, setOpenModal] = useState(false);
+  const { teacherData, loading: authLoading } = useAuth();
+
+  const [filters, setFilters] = useState<Filters>({
+    classId: "",
+    sectionId: "",
+    subjectId: "",
+    date: "today",
+  });
+
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  // ── Fetch assignments whenever filters or page change ─────────────────────
+  // Make sure your useAssignmentList hook can accept the new subjectId parameter
+  const { assignments, pagination, loading, error, refetch } = useAssignmentList({
+    classId: filters.classId,
+    sectionId: filters.sectionId,
+    subjectId: filters.subjectId, 
+    date: filters.date,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
+  const handleFilterChange = (newFilters: Filters) => {
+    setPage(1); // reset to first page on filter change
+    setFilters(newFilters);
+  };
 
   return (
     <>
@@ -37,28 +74,56 @@ const TeacherHomework = () => {
               />
 
               <div className="mt-8">
-                <TeacherHomeworkFilters />
+                {/* Pass teachingAssignments to drive the dropdowns dynamically */}
+                {!authLoading && (
+                  <TeacherHomeworkFilters
+                    teachingAssignments={teacherData?.teachingAssignments ?? []}
+                    onFilterChange={handleFilterChange}
+                  />
+                )}
               </div>
             </div>
 
             {/* Task List */}
             <div className="px-10 pb-10 mt-6">
-              <TeacherHomeworkTaskList />
+              <TeacherHomeworkTaskList
+                assignments={assignments}
+                loading={loading || authLoading}
+                error={error}
+              />
+
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 mt-8">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-4 py-2 rounded-full border border-[#EAECF0] text-[13px] font-medium text-[#344054] disabled:opacity-40 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Previous
+                  </button>
+
+                  <span className="text-[13px] text-gray-500">
+                    Page {page} of {pagination.totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    disabled={page === pagination.totalPages}
+                    className="px-4 py-2 rounded-full border border-[#EAECF0] text-[13px] font-medium text-[#344054] disabled:opacity-40 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Sidebar */}
           <div
             className="
-              w-[380px]
-              shrink-0
-              h-screen
-              sticky
-              top-0
-              overflow-y-auto
-              px-6
-              pt-4
-              pb-10
+              w-[380px] shrink-0 h-screen sticky top-0
+              overflow-y-auto px-6 pt-4 pb-10
               [&::-webkit-scrollbar]:hidden
               [-ms-overflow-style:none]
               [scrollbar-width:none]
@@ -74,7 +139,10 @@ const TeacherHomework = () => {
       {/* Modal */}
       <CreateAssignmentForm
         open={openModal}
-        onClose={() => setOpenModal(false)}
+        onClose={() => {
+          setOpenModal(false);
+          refetch();
+        }}
       />
     </>
   );

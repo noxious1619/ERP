@@ -21,7 +21,7 @@ router.use(protect);
 
 router.post(
   '/', 
-  restrictTo('TEACHER', 'ADMIN'), 
+  restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
   upload.single('file'), 
   createAssignment
 );
@@ -35,7 +35,7 @@ router.get(
 // Students can submit homework
 router.post(
   '/submit', 
-  restrictTo('STUDENT'), 
+  restrictTo('STUDENT', 'TEACHER'), 
   upload.single('file'), 
   submitAssignment
 );

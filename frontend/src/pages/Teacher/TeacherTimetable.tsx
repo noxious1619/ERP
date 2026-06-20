@@ -97,9 +97,7 @@ const TeacherTimetablePage = () => {
     MySubjectWeeklyEntry[]
   >([]);
   const [mySubjectWeeklyLoading, setMySubjectWeeklyLoading] = useState(false);
-
-  // Hardcoded for now — replace with getCurrentAPIDay() once data exists for today
-  const ACTIVE_DAY = "Monday";
+  const ACTIVE_DAY = getCurrentAPIDay();
 
   // ─── 1. Fetch teacher profile ─────────────────────────────────────────────
   useEffect(() => {

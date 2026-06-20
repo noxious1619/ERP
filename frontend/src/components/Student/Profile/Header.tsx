@@ -35,10 +35,7 @@ const ProfileHeader = () => {
 
       {/* Right Actions */}
       <div className="flex items-center gap-8 pt-2">
-        {/* Search */}
-        <button className="transition-transform duration-200 hover:scale-105 cursor-pointer">
-          <img src={search} alt="Search" className="h-[26px] w-[26px]" />
-        </button>
+       
 
         {/* Notification */}
         <div className="relative">

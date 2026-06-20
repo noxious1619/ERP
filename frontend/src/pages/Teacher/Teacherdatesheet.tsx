@@ -3,7 +3,9 @@ import axios from "axios";
 import Navbar from "../../components/Teacher/Dashboard/Navbar";
 import Calendar from "../../components/Student/Dashboard/Calendar";
 import TeacherUpcomingExams from "../../components/Teacher/Exam/Teacherupcomingexams";
+import type { ExamData } from "../../components/Teacher/Exam/Teacherupcomingexams";
 import { getDynamicHeaderDate } from "../../utils/dateHelpers";
+import { downloadDatesheetPdf } from "../../utils/Downloaddatesheet";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface ClassOption {
@@ -11,7 +13,6 @@ interface ClassOption {
   name: string;
 }
 
-// Special sentinel value for "My Subject" filter
 const MY_SUBJECT = "__MY_SUBJECT__";
 
 // ─── Instruction popup ───────────────────────────────────────────────────────
@@ -30,7 +31,6 @@ const InstructionPopup = ({
       className="relative mx-4 w-full max-w-md rounded-[24px] bg-white p-8 shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Header */}
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF2FF]">
           <svg
@@ -49,9 +49,7 @@ const InstructionPopup = ({
         </div>
         <h3 className="text-[18px] font-[700] text-[#2D3335]">Instructions</h3>
       </div>
-
       <p className="text-[14px] leading-[22px] text-[#484848]">{instruction}</p>
-
       <button
         onClick={onClose}
         className="
@@ -70,16 +68,15 @@ const InstructionPopup = ({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const TeacherDatesheet = () => {
   const [classes, setClasses] = useState<ClassOption[]>([]);
-  const [selectedValue, setSelectedValue] = useState<string>(""); // classId or MY_SUBJECT
-  const [loadedValue, setLoadedValue] = useState<string | null>(null);
+  const [selectedValue, setSelectedValue] = useState<string>("");
   const [profileLoading, setProfileLoading] = useState(true);
 
-  // Meta bubbled up from TeacherUpcomingExams after fetch
   const [termName, setTermName] = useState<string | null>(null);
   const [instruction, setInstruction] = useState<string | null>(null);
   const [showInstruction, setShowInstruction] = useState(false);
+  const [examList, setExamList] = useState<ExamData[]>([]);
 
-  // ── On mount: fetch teacher profile ──────────────────────────────────────
+  // ── Fetch teacher profile on mount ───────────────────────────────────────
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -106,7 +103,6 @@ const TeacherDatesheet = () => {
 
           const classArr = Array.from(classMap.values());
           setClasses(classArr);
-          // Default to "My Subject"
           setSelectedValue(MY_SUBJECT);
         }
       } catch (err) {
@@ -119,40 +115,38 @@ const TeacherDatesheet = () => {
     fetchProfile();
   }, []);
 
-  // ── Derive props for TeacherUpcomingExams ─────────────────────────────────
-  // If "My Subject" is selected, pass the first class the teacher teaches
-  // with subjectOnly=true. Backend filters to teacher's subject only.
-  const isMySubject = loadedValue === MY_SUBJECT;
-  const resolvedClassId = isMySubject
-    ? (classes[0]?.id ?? "")
-    : (loadedValue ?? "");
-
-  const loadedLabel =
-    loadedValue === MY_SUBJECT
-      ? "My Subject"
-      : (classes.find((c) => c.id === loadedValue)?.name ?? "");
-
-  // ── Heading above cards: "termName · loadedLabel" ─────────────────────────
+  // ── Derived values ────────────────────────────────────────────────────────
+  const isMySubject = selectedValue === MY_SUBJECT;
+  const resolvedClassId = isMySubject ? (classes[0]?.id ?? "") : selectedValue;
+  const loadedLabel = isMySubject
+    ? "My Subject"
+    : (classes.find((c) => c.id === selectedValue)?.name ?? "");
   const headingText = termName ? `${termName} · ${loadedLabel}` : loadedLabel;
 
-  // ── Reset meta when filter changes ────────────────────────────────────────
-  const handleLoad = () => {
-    if (!selectedValue) return;
-    setTermName(null);
-    setInstruction(null);
-    setLoadedValue(selectedValue);
-  };
-
-  const handleMetaReady = (tn: string, ins: string | null) => {
+  const handleMetaReady = (
+    tn: string,
+    ins: string | null,
+    exams: ExamData[],
+  ) => {
     setTermName(tn);
     setInstruction(ins);
+    setExamList(exams);
+  };
+
+  const handleDownload = () => {
+    console.log("examList:", examList.length, termName, loadedLabel);
+    if (!examList.length) return;
+    downloadDatesheetPdf({
+      exams: examList,
+      termName: termName ?? "Exam",
+      filterLabel: loadedLabel,
+    });
   };
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FE]">
       <Navbar />
 
-      {/* Instruction popup */}
       {showInstruction && instruction && (
         <InstructionPopup
           instruction={instruction}
@@ -163,7 +157,6 @@ const TeacherDatesheet = () => {
       <div className="flex flex-1 h-screen">
         {/* ── LEFT ────────────────────────────────────────────────────────── */}
         <div className="flex flex-1 flex-col h-screen">
-          {/* Sticky header */}
           <div className="px-14 pt-10 shrink-0">
             <h1 className="text-[44px] font-[700] leading-[54px] tracking-[-1.8px] text-[#2D3335]">
               Exam Date Sheet
@@ -172,17 +165,19 @@ const TeacherDatesheet = () => {
               {getDynamicHeaderDate()}
             </p>
 
-            {/* ── Filters ────────────────────────────────────────────────── */}
             {!profileLoading && (
               <div className="mt-8 flex items-center gap-3 mx-auto justify-center">
-                {/* Dropdown: My Subject + class list */}
                 <div className="relative">
                   <select
                     value={selectedValue}
-                    onChange={(e) => setSelectedValue(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedValue(e.target.value);
+                      setTermName(null);
+                      setInstruction(null);
+                      setExamList([]);
+                    }}
                     className="
-                      appearance-none
-                      h-[40px] pl-4 pr-9
+                      appearance-none h-[40px] pl-4 pr-9
                       rounded-full border border-[#D8DCE6]
                       bg-white text-[14px] font-semibold text-[#484848]
                       focus:outline-none focus:ring-2 focus:ring-[#4285F4]/30
@@ -209,31 +204,13 @@ const TeacherDatesheet = () => {
                   </div>
                 </div>
 
-                {/* Load button */}
-                <button
-                  onClick={handleLoad}
-                  disabled={!selectedValue}
-                  className="
-                    h-[40px] px-6
-                    rounded-full bg-[#4285F4]
-                    text-[14px] font-semibold text-white
-                    shadow-[0px_6px_14px_rgba(66,133,244,0.35)]
-                    transition-all duration-200
-                    hover:scale-[1.02] hover:shadow-[0px_8px_18px_rgba(66,133,244,0.4)]
-                    disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 cursor-pointer
-                  "
-                >
-                  Load Datesheet
-                </button>
-
-                {/* Instruction button — only visible after load if instruction exists */}
-                {loadedValue && instruction && (
+                {instruction && (
                   <button
                     onClick={() => setShowInstruction(true)}
                     className="
                       flex h-[40px] w-[40px] items-center justify-center
                       rounded-full border border-[#D8DCE6] bg-white
-                      text-[#4285F4] transition hover:bg-[#EEF2FF] cursor-pointer
+                      text-[#4285F4] transition hover:bg-[#EEF2FF]
                     "
                     title="View instructions"
                   >
@@ -256,12 +233,10 @@ const TeacherDatesheet = () => {
             )}
           </div>
 
-          {/* Scrollable exam list */}
           <div className="flex-1 overflow-y-auto px-14 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex justify-center">
-              {loadedValue && resolvedClassId ? (
+              {selectedValue && resolvedClassId ? (
                 <div className="w-full max-w-[90%] xl:max-w-[95%] 2xl:max-w-full">
-                  {/* Heading: term name · class label */}
                   <p className="mb-6 text-[18px] font-[600] text-[#484747]">
                     {headingText}
                   </p>
@@ -290,7 +265,7 @@ const TeacherDatesheet = () => {
                       </svg>
                     </div>
                     <p className="text-[15px] font-semibold text-[#484848]">
-                      Select a filter and tap Load Datesheet
+                      Select a filter to view the exam schedule
                     </p>
                     <p className="text-[13px] text-gray-400">
                       Exam schedule will appear here
@@ -310,17 +285,20 @@ const TeacherDatesheet = () => {
             <div className="flex flex-col gap-6">
               <Calendar variant="timetable" />
 
-              {/* Download Timetable */}
+              {/* Download Datesheet — disabled until data is loaded */}
               <button
+                onClick={handleDownload}
+                disabled={examList.length === 0}
                 className="
                   mt-2 h-[56px] w-full rounded-full bg-[#3F6EF6]
                   shadow-[0px_8px_18px_rgba(63,110,246,0.35)]
                   flex items-center justify-center gap-3
                   text-white font-semibold text-[16px]
                   transition-all duration-200 hover:scale-[1.01]
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100 cursor-pointer
                 "
               >
-                <span>Download Timetable</span>
+                <span>Download Datesheet</span>
                 <div className="w-7 h-7 rounded-full border border-white flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

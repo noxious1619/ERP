@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+
 
 // ==========================================
 // STUDENT IMPORTS
@@ -16,6 +16,7 @@ import Exam from "./pages/Student/Exam";
 // ==========================================
 // TEACHER IMPORTS
 // ==========================================
+import { AuthProvider } from "./context/AuthContext";
 import TeacherNoticeBoard from "./pages/Teacher/TeacherNoticeBoard";
 import TeacherTimetablePage from "./pages/Teacher/TeacherTimetable";
 import TeacherWeeklytimetable from "./pages/Teacher/Teacherweeklytimetable";
@@ -38,10 +39,6 @@ import AdminDashboard from "./pages/Admin/Dashboard/Dashboard";
 import AdminNotices from "./pages/Admin/Communication/Notices";
 import AdminDatesheet from "./pages/Admin/Academics/Exams/Datesheet";
 import AdminAttendance from "./pages/Admin/Academics/Attendence";
-
-
-
-
 import Teacherdatesheet from "./pages/Teacher/Teacherdatesheet";
 import Teacherdashboard from "./pages/Teacher/Teacherdashboard";
 const App = () => {
@@ -67,25 +64,6 @@ const App = () => {
         <Route path="/student/homework" element={<Homework />} />
         <Route path="/student/notices" element={<NoticeBoard />} />
         <Route path="/student/exams" element={<Exam />} />
-        {/* Teacher Routes */}
-        <Route path="/teacher/notices" element={<TeacherNoticeBoard />} />
-        <Route path="/teacher/timetable" element={<TeacherTimetablePage />} />
-        <Route path="/teacher/profile" element={<TeacherProfile />} />
-        <Route
-          path="/teacher/timetable/weekly"
-          element={<TeacherWeeklytimetable />}
-        />
-        <Route path="/teacher/homework" element={<TeacherHomework />} />
-        <Route
-          path="/teacher/homework/viewdetail"
-          element={<TeacherHomeworkDetail />}
-        />
-        <Route
-          path="/teacher/homework/submission"
-          element={<TeacherSubmissionView />}
-        />
-        <Route path="/teacher/attendance" element={<AttendanceManagement />} />
-
         {/* ========================================== */}
         {/* TEACHER ROUTES                             */}
         {/* ========================================== */}
@@ -95,27 +73,34 @@ const App = () => {
         <Route path="/teacher/profile" element={<TeacherProfile />} />
         <Route path="/teacher/attendance" element={<AttendanceManagement />} />
         <Route path="/teacher/homework" element={<TeacherHomework />} />
-        <Route path="/teacher/homework/viewdetail" element={<TeacherHomeworkDetail />} />
-        <Route path="/teacher/homework/submission" element={<TeacherSubmissionView />} />
+        <Route path="/teacher/homework/:id" element={<TeacherHomeworkDetail />} />
+        <Route path="/teacher/homework/submission/:submissionId" element={<TeacherSubmissionView />} />
 
         {/* ========================================== */}
         {/* ADMIN ROUTES                               */}
         {/* ========================================== */}
         <Route path="/admin/academics" element={<Academics />} />
-        <Route path="/admin/academics/staff" element={<Staff />} />
-        <Route path="/admin/academics/staff/profile" element={<StaffProfile />} />
-        <Route path="/admin/academics/classes" element={<Classes />} />
-        <Route path="/admin/academics/subjects" element={<Subjects />} />
-        <Route path="/admin/academics/timetable" element={<AdminTimetable />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/communication/notices" element={<AdminNotices />} />
-        <Route path="/admin/academics/exams/datesheet" element={<AdminDatesheet />} />
-        <Route path="/admin/academics/attendance" element={<AdminAttendance />} />
-
-
-
-
-
+<Route path="/admin/academics/staff" element={<Staff />} />
+<Route
+  path="/admin/academics/staff/profile"
+  element={<StaffProfile />}
+/>
+<Route path="/admin/academics/classes" element={<Classes />} />
+<Route path="/admin/academics/subjects" element={<Subjects />} />
+<Route path="/admin/academics/timetable" element={<AdminTimetable />} />
+<Route path="/admin/dashboard" element={<AdminDashboard />} />
+<Route
+  path="/admin/communication/notices"
+  element={<AdminNotices />}
+/>
+<Route
+  path="/admin/academics/exams/datesheet"
+  element={<AdminDatesheet />}
+/>
+<Route
+  path="/admin/academics/attendance"
+  element={<AdminAttendance />}
+/>
 
 
         {/* Catch-all 404 Route */}

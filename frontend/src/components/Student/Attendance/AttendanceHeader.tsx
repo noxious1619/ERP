@@ -49,18 +49,9 @@ const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
       </div>
 
       {/* Right Side Icons */}
-      <div className="flex items-center gap-6 pt-2">
-        {/* Search */}
-        <button className="flex items-center justify-center cursor-pointer">
-          <img
-            src={search}
-            alt="Search"
-            className="h-[24px] w-[24px] object-contain"
-          />
-        </button>
-
+      <div className="flex items-center gap-10 pt-2">
         {/* Notification */}
-        <div className="relative" ref={notificationRef}>
+        <div className="relative " ref={notificationRef}>
           <button
             onClick={() => setShowNotifications((prev) => !prev)}
             className="relative flex items-center justify-center cursor-pointer"

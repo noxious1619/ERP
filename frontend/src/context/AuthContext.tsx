@@ -40,15 +40,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 1. Reading both from local storage
   const [token] = useState<string | null>(localStorage.getItem("token"));
   const [role] = useState<string | null>(localStorage.getItem("role"));
+
+  console.log("🔥 AuthProvider Mounted");
+  console.log("TOKEN:", token);
+  console.log("ROLE:", role);
+
   
   const [studentData, setStudentData] = useState<StudentProfile | null>(null);
   const [teacherData, setTeacherData] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const logout = () => {
-    localStorage.clear();
-    window.location.href = "/login";
-  };
+  // const logout = () => {
+  //   localStorage.clear();
+  //   window.location.href = "/login";
+  // };
 
   useEffect(() => {
     const hydrateSession = async () => {
@@ -60,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         setLoading(true);
         const headers = { Authorization: `Bearer ${token}` };
+        console.log("ROLE FROM STORAGE:", role);
 
         if (role === "STUDENT") {
           console.log("📡 useAuth: Fetching student profile...");
@@ -104,7 +110,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sectionName: globalSectionName,
         sectionId: globalSectionId,
         loading, 
-        logout 
       }}
     >
       {children}

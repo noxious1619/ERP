@@ -11,6 +11,7 @@ import {
   getWeeklyTimetableBySection,
   getTeacherMySubjectTimetable,
   getTeacherMySubjectWeekly,
+
   getDailyTimetableBySection
 } from '../controllers/academicController.js';
 import { protect } from '../middleware/authMiddleware.js';

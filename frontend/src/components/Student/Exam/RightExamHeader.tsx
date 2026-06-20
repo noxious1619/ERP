@@ -26,11 +26,7 @@ const RightHeader = () => {
   }, []);
   return (
     <div className="flex items-center justify-end gap-8 items-start ">
-      {/* Search */}
-      <button className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6]">
-        <img src={search} alt="Search" className="h-6 w-6" />
-      </button>
-
+    
       {/*  Notification  */}
       <div className="relative" ref={notificationRef}>
         <button

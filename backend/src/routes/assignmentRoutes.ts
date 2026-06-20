@@ -4,7 +4,11 @@ import {
   getStudentAssignments, 
   submitAssignment,
   getAssignmentSubmissions,
-  gradeSubmission  
+  gradeSubmission,
+  getAssignmentList,
+  getAssignmentDetails,
+  getAssignmentSummary,
+
 } from '../controllers/assignmentController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
@@ -17,7 +21,7 @@ router.use(protect);
 
 router.post(
   '/', 
-  restrictTo('TEACHER', 'ADMIN'), 
+  restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
   upload.single('file'), 
   createAssignment
 );
@@ -31,7 +35,7 @@ router.get(
 // Students can submit homework
 router.post(
   '/submit', 
-  restrictTo('STUDENT'), 
+  restrictTo('STUDENT', 'TEACHER'), 
   upload.single('file'), 
   submitAssignment
 );
@@ -45,6 +49,24 @@ router.get('/:id/submissions',
 router.patch('/submissions/:submissionId/grade', 
   restrictTo('TEACHER', 'ADMIN'), 
   gradeSubmission
+);
+
+// Get list of assignments for students
+router.get('/list', 
+  restrictTo('TEACHER', 'ADMIN'), 
+  getAssignmentList
+);
+
+// Get details of a specific assignment
+router.get('/:id', 
+  restrictTo('TEACHER', 'ADMIN'), 
+  getAssignmentDetails
+);
+
+// Get summary of a specific assignment
+router.get('/:id/summary', 
+  restrictTo('TEACHER', 'ADMIN'), 
+  getAssignmentSummary
 );
 
 export default router;

@@ -21,10 +21,7 @@ const NoticeBoardHeader = () => {
         </p>
       </div>
 
-      {/* Search Only */}
-      <button className="pt-2 transition-transform duration-200 hover:scale-105 cursor-pointer">
-        <img src={search} alt="Search" className="h-[24px] w-[24px]" />
-      </button>
+      
     </div>
   );
 };

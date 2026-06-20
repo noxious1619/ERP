@@ -20,7 +20,7 @@ router.get(
 // 3. PROFILE: 
 router.get(
   "/me", 
-  restrictTo("STUDENT", "ADMIN", "SUPER_ADMIN"), 
+  restrictTo("STUDENT", "TEACHER","ADMIN", "SUPER_ADMIN"), 
   getStudentProfile
 );
 router.post(

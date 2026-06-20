@@ -47,12 +47,7 @@ const HomeworkHeader = ({
       </div>
 
       {/* Right Section */}
-      <div className="ml-auto flex items-center gap-8 pt-3 pr-2">
-        {/* Search */}
-        <button className="transition-transform duration-200 hover:scale-105 cursor-pointer">
-          <img src={search} alt="Search" className="h-[26px] w-[26px]" />
-        </button>
-
+      <div className="ml-auto flex items-center gap-10 pt-3 pr-2">
         {/* Notification */}
         <div className="relative" ref={notificationRef}>
           <button

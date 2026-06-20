@@ -15,7 +15,7 @@ interface TimetableItem {
   color: string | null;
   subject: string | null;
   professor: string | null;
-  duration?: string; // Optional field handled gracefully
+  duration?: string; 
 }
 const TimetableSchedule: React.FC = () => {
   const [scheduleItems, setScheduleItems] = useState<TimetableItem[]>([]);
@@ -29,22 +29,30 @@ const TimetableSchedule: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem("token"); 
+        const token = localStorage.getItem("token");
 
-        const response = await axios.get(`http://localhost:5000/api/academic/timetable/student?day=${activeDay}`, { 
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const response = await axios.get(
+          `http://localhost:5000/api/academic/timetable/student?day=${activeDay}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         if (response.data.success) {
           setScheduleItems(response.data.data);
-          console.log("Timetable data fetched successfully:", response.data.data);
+          console.log(
+            "Timetable data fetched successfully:",
+            response.data.data,
+          );
         } else {
           setError("Failed to resolve timetable parameters.");
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Error connecting to academic server.");
+        setError(
+          err.response?.data?.message || "Error connecting to academic server.",
+        );
       } finally {
         setLoading(false);
       }
@@ -57,7 +65,9 @@ const TimetableSchedule: React.FC = () => {
     return (
       <div className="flex justify-center items-center py-10">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3B4FE8]"></div>
-        <span className="ml-3 text-sm font-medium text-gray-500">Syncing live timetable...</span>
+        <span className="ml-3 text-sm font-medium text-gray-500">
+          Syncing live timetable...
+        </span>
       </div>
     );
   }

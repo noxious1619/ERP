@@ -443,6 +443,8 @@ model ScheduledExam {
   classId String
   class   Class  @relation(fields: [classId], references: [id])
 
+  instruction String?
+
   createdById String
   createdBy   User   @relation(fields: [createdById], references: [id])
 

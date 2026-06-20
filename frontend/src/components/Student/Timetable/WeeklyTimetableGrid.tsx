@@ -13,7 +13,7 @@ const DAY_COLUMNS: Record<DayOfWeek, number> = {
   WEDNESDAY: 2,
   THURSDAY: 3,
   FRIDAY: 4,
-  SATURDAY: 5
+  SATURDAY: 5,
 };
 
 const DAYS_HEADER = [
@@ -25,11 +25,14 @@ const DAYS_HEADER = [
   { day: "Saturday", date: "21" },
 ];
 
-const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({ entries }) => {
-  
+const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({
+  entries,
+}) => {
   // DYNAMIC SLOT CALCULATION: Extract all startTimes across your database data and sort them chronologically
   const dynamicTimeSlots = useMemo(() => {
-    const times = entries.map((e) => e.startTime);
+    const times = entries
+      .filter((e) => !e.isBreak || e.startTime === "12:00") // keep 12:00 break for lunch label, exclude all other breaks
+      .map((e) => e.startTime);
     return Array.from(new Set(times)).sort((a, b) => a.localeCompare(b));
   }, [entries]);
 
@@ -51,7 +54,7 @@ const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({ entries }) =>
           </div>
         ))}
       </div>
-      
+
       {/* Grid Layout */}
       <div className="mt-2 flex">
         {/* Time Labels */}
@@ -65,24 +68,26 @@ const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({ entries }) =>
             </div>
           ))}
         </div>
-        
+
         {/* Right Grid */}
         <div className="relative grid flex-1 grid-cols-6 border-l border-t border-[#E6EAF2]">
           {/* Background Cells - Calculates wireframe boxes based on dynamic slots length */}
-          {Array.from({ length: 6 * dynamicTimeSlots.length }).map((_, index) => (
-            <div
-              key={index}
-              className="h-[132px] border-r border-b border-[#E6EAF2]"
-            />
-          ))}
-          
+          {Array.from({ length: 6 * dynamicTimeSlots.length }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="h-[132px] border-r border-b border-[#E6EAF2]"
+              />
+            ),
+          )}
+
           {/* Lunch Break */}
           {/* <div className="absolute left-0 top-[310px] z-10 flex w-full items-center justify-center">
             <div className="bg-[#F3F5FA] px-6 text-[11px] font-bold uppercase tracking-[4px]  text-gray-600">
               Institutional Lunch Break
             </div>
           </div> */}
-          
+
           {/* Cards */}
           {entries.map((item) => {
             const columnIndex = DAY_COLUMNS[item.day];

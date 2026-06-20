@@ -1,23 +1,26 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import ExamCard from "./ExamCard";
+import ExamCard from "../../../components/Student/Exam/ExamCard";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 export interface ExamData {
   id: string;
   title: string;
   syllabus: string;
   examDate: string;
-  status: string;
-  subject: string;
-  icon: string | null;
   startTime: string | null;
   endTime: string | null;
   totalMarks: number | null;
+  status: string;
+  subject: string;
+  icon: string | null;
+  termName: string;
   instruction: string | null;
-  termName?: string;
 }
 
 interface Props {
+  classId: string;
+  subjectOnly?: boolean;
   onMetaReady?: (
     termName: string,
     instruction: string | null,
@@ -25,7 +28,7 @@ interface Props {
   ) => void;
 }
 
-// ─── Date formatter ───────────────────────────────────────────────
+// ─── Date formatter ──────────────────────────────────────────────────────────
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   const day = date.getUTCDate();
@@ -36,18 +39,16 @@ const formatDate = (dateString: string) => {
   return { day: day.toString(), suffix };
 };
 
-// ─── Card color logic ─────────────────────────────────────────────
+// ─── Card color logic ────────────────────────────────────────────────────────
 const getCardColors = (status: string, upcomingIndex: number) => {
-  if (status === "COMPLETED") {
+  if (status === "COMPLETED")
     return { bgColor: "#EEEFF0", iconBg: "#D9DADB", textColor: "#9B9B9B" };
-  }
-  if (status === "ONGOING") {
+  if (status === "ONGOING")
     return {
       bgColor: "#4285F4",
       iconBg: "rgba(255,255,255,0.2)",
       textColor: "#FFFFFF",
     };
-  }
   const isPink = upcomingIndex % 2 === 0;
   return isPink
     ? {
@@ -62,33 +63,45 @@ const getCardColors = (status: string, upcomingIndex: number) => {
       };
 };
 
-// ─── Component ────────────────────────────────────────────────────
-const UpcomingExams = ({ onMetaReady }: Props) => {
+// ─── Component ───────────────────────────────────────────────────────────────
+const TeacherUpcomingExams = ({
+  classId,
+  subjectOnly = false,
+  onMetaReady,
+}: Props) => {
   const [examData, setExamData] = useState<ExamData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!classId) return;
+
     const fetchExams = async () => {
       try {
         setLoading(true);
         setError(null);
+        setExamData([]);
+
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/exams/upcoming",
-          { headers: { Authorization: `Bearer ${token}` } },
+          "http://localhost:5000/api/exams/datesheet",
+          {
+            params: { classId, subjectOnly: subjectOnly ? "true" : undefined },
+            headers: { Authorization: `Bearer ${token}` },
+          },
         );
+
         if (response.data.success) {
           const data: ExamData[] = response.data.data;
           setExamData(data);
           if (onMetaReady && data.length > 0) {
-            const termName = data[0].termName ?? "Exam";
             const firstInstruction =
               data.find((e) => e.instruction)?.instruction ?? null;
-            onMetaReady(termName, firstInstruction, data);
+            // Pass full exam list up so the page can use it for PDF
+            onMetaReady(data[0].termName, firstInstruction, data);
           }
         } else {
-          setError("Failed to fetch upcoming exams.");
+          setError("Failed to fetch exam datesheet.");
         }
       } catch (err: any) {
         setError(
@@ -98,19 +111,21 @@ const UpcomingExams = ({ onMetaReady }: Props) => {
         setLoading(false);
       }
     };
+
     fetchExams();
-  }, []);
+  }, [classId, subjectOnly]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#4285F4]" />
         <span className="ml-3 text-sm font-medium text-gray-500">
-          Loading upcoming exams...
+          Loading exam datesheet...
         </span>
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="rounded-3xl border border-red-100 bg-red-50 p-6 text-sm font-medium text-red-700">
@@ -118,15 +133,17 @@ const UpcomingExams = ({ onMetaReady }: Props) => {
       </div>
     );
   }
+
   if (examData.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm font-medium text-gray-500">
-        No upcoming exams available.
+        No exams scheduled for this class.
       </div>
     );
   }
 
   let upcomingCounter = 0;
+
   return (
     <div className="w-full max-w-[90%] xl:max-w-[95%] 2xl:max-w-full">
       <div className="flex flex-col gap-5">
@@ -158,4 +175,4 @@ const UpcomingExams = ({ onMetaReady }: Props) => {
   );
 };
 
-export default UpcomingExams;
+export default TeacherUpcomingExams;

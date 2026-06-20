@@ -113,7 +113,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import type { Notice } from "../../types/notice";
 import Navbar from "../../components/Teacher/Dashboard/Navbar";
 import NoticeBoardHeader from "../../components/Student/NoticeBoard/NoticeHeader";
@@ -166,13 +166,11 @@ const TeacherNoticeBoard = () => {
     fetchNotices(activeFilter);
   }, [activeFilter]);
 
-  // ── When arriving with a highlight id, force ALL filter so the notice ─────
-  // is visible regardless of which category it belongs to.
   useEffect(() => {
     if (highlightId && activeFilter !== "ALL") {
       setActiveFilter("ALL");
     }
-  }, [highlightId]);
+  }, [highlightId, activeFilter]);
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FE]">

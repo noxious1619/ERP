@@ -198,6 +198,15 @@ const isYesterday = (dateStr: string) => {
   );
 };
 
+// Formats a date string into "Month Day, Year" (e.g., "June 4, 2026")
+const formatDate = (dateStr: string) => {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 // ─── Truncated content with Read more / Read less ────────────────────────────
 const TruncatedContent = ({ content }: { content: string }) => {
   const [expanded, setExpanded] = useState(false);
@@ -403,11 +412,6 @@ const NoticeCards = ({
   // 1. Isolate Today and Yesterday
   const todayNotices = notices.filter((n) => isToday(n.createdAt));
   const yesterdayNotices = notices.filter((n) => isYesterday(n.createdAt));
-  // Notices older than yesterday — group them under their date or just "Earlier"
-  const earlierNotices = notices.filter(
-    (n) => !isToday(n.createdAt) && !isYesterday(n.createdAt),
-  );
-
   const sharedGroupProps = {
     allNotices,
     // highlightId for REF ATTACHMENT — uses the prop so the ref is attached immediately
@@ -419,20 +423,33 @@ const NoticeCards = ({
   };
 
   return (
-    <div className="mt-8">
-      <NoticeGroup label="Today" notices={todayNotices} {...sharedGroupProps} />
-      <NoticeGroup
-        label="Yesterday"
-        notices={yesterdayNotices}
-        {...sharedGroupProps}
-      />
-      <NoticeGroup
-        label="Earlier"
-        notices={earlierNotices}
-        {...sharedGroupProps}
-      />
-    </div>
-  );
+  <div className="mt-8">
+    {/* Static Groups */}
+    <NoticeGroup
+      label="Today"
+      notices={todayNotices}
+      {...sharedGroupProps}
+    />
+
+    <NoticeGroup
+      label="Yesterday"
+      notices={yesterdayNotices}
+      {...sharedGroupProps}
+    />
+
+    {/* Dynamic groups for older notices grouped by date */}
+    {Object.entries(groupedOlderNotices).map(
+      ([dateLabel, noticesForDate]) => (
+        <NoticeGroup
+          key={dateLabel}
+          label={dateLabel}
+          notices={noticesForDate}
+          {...sharedGroupProps}
+        />
+      )
+    )}
+  </div>
+);
 };
 
 export default NoticeCards;

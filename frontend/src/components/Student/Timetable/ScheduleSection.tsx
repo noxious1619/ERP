@@ -32,7 +32,7 @@ const TimetableSchedule: React.FC = () => {
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
-          `http://localhost:5000/api/academic/timetable/student?day=${activeDay}`,
+          `http://localhost:5000/api/timetable/student?day=${activeDay}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -44,13 +44,14 @@ const Timetable = () => {
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
-          `http://localhost:5000/api/academic/timetable/section/${targetSectionId}`,
+          `http://localhost:5000/api/timetable/section/${targetSectionId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         if (response.data.success) {
+          console.log("Fetched Timetable Data:", response.data.data);
           setScheduleData(response.data.data);
         } else {
           setError("Failed to load timetable dataset.");
@@ -89,15 +90,20 @@ const Timetable = () => {
             
             {/* LEFT - Main Weekly Timetable Grid */}
             <div className="flex-1 min-w-0">
-              <TimetableSchedule />
+              <TimetableSchedule 
+                selectedDate={selectedDate} 
+                scheduleData={scheduleData} 
+                isLoading={timetableLoading} 
+                error={error} 
+              />
             </div>
             
             {/* RIGHT - Sidebar Frame */}
             <div className="w-90 shrink-0 bg-gray-100 px-5 py-6 rounded-[32px]">
               <CalendarSection 
                 variant="timetable" 
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
+                selectedDate={selectedDate}  
+                onDateSelect={setSelectedDate}  
               />
               
               <DateScheduleCard 

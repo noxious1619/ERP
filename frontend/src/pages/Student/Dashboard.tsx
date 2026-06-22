@@ -25,7 +25,7 @@ const Dashboard = () => {
   
   // Data Extraction
   const studentId = studentData?.id;
-  const firstName = studentData?.firstName || "Dishant";
+  const firstName = studentData?.firstName || "STUDENT";
   const lastName = studentData?.lastName || null;
   const displayId = studentData?.admissionNumber || "ADM-2026-001";
   const classValue = studentData?.class?.name || studentData?.class || "11";
@@ -63,7 +63,7 @@ const Dashboard = () => {
             { params: { year: currentYear }, headers: { Authorization: `Bearer ${token}` } }
           ),
           targetSectionId 
-            ? axios.get(`http://localhost:5000/api/academic/timetable/section/${targetSectionId}`, 
+            ? axios.get(`http://localhost:5000/api/timetable/section/${targetSectionId}`, 
             { headers: { Authorization: `Bearer ${token}` } }) 
             : Promise.resolve(null),
           axios.get(`http://localhost:5000/api/assignments/my-feed`, 
@@ -74,11 +74,11 @@ const Dashboard = () => {
           )
         ]);
         
-        console.log("Heatmap API response:", heatmapResponse?.data || "No data");
-        console.log("Aggregates API response:", aggResponse?.data || "No data");
-        console.log("Timetable API response:", timetableResponse?.data || "No data");
-        console.log("Homework API response:", homeworkResponse?.data || "No data");
-        console.log("Notice API response:", noticeResponse?.data || "No data");
+        // console.log("Heatmap API response:", heatmapResponse?.data || "No data");
+        // console.log("Aggregates API response:", aggResponse?.data || "No data");
+        // console.log("Timetable API response:", timetableResponse?.data || "No data");
+        // console.log("Homework API response:", homeworkResponse?.data || "No data");
+        // console.log("Notice API response:", noticeResponse?.data || "No data");
 
         if (heatmapResponse?.data?.success) {
           setHeatmapData(heatmapResponse.data.heatmapMap);

@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       } catch (err: any) {
         console.error("❌ useAuth: Session restoration failed:", err.response?.data?.message || err.message);
-        logout();
+        // logout();
       } finally {
         setLoading(false);
       }

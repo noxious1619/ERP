@@ -7,6 +7,8 @@ import type { TimetableEntry } from "../../types";
 
 const WeeklyTimetable = () => {
   const [scheduleData, setScheduleData] = useState<TimetableEntry[]>([]);
+  // 1. Catch the new label for the UI and PDF generator
+  const [sectionLabel, setSectionLabel] = useState<string>("Class Timetable");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,14 +22,19 @@ const WeeklyTimetable = () => {
         
         const token = localStorage.getItem("token");
 
-        const response = await axios.get(`http://localhost:5000/api/academic/timetable/section/${targetSectionId}`, {
+        const response = await axios.get(`http://localhost:5000/api/timetable/section/${targetSectionId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
 
         if (response.data.success) {
+          console.log("Loaded weekly timetable data:", response.data.data);
           setScheduleData(response.data.data);
+          // 2. Set the label from the backend response
+          if (response.data.sectionLabel) {
+            setSectionLabel(response.data.sectionLabel);
+          }
         } else {
           setError(response.data.message || "Failed to load database timetable elements.");
         }
@@ -47,7 +54,11 @@ const WeeklyTimetable = () => {
       <div className="flex flex-1 flex-col h-screen min-w-0">
         {/* Sticky Header */}
         <div className="px-10 pt-8 py-4 shrink-0 bg-[#F5F6FA]">
-          <TimetableHeader />
+          {/* 3. Pass the data down to the header for the PDF button */}
+          <TimetableHeader 
+            sectionLabel={sectionLabel} 
+            scheduleData={scheduleData} 
+          />
         </div>
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

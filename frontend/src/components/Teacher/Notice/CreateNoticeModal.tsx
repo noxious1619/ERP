@@ -11,10 +11,6 @@ interface Section {
   academicClass: { id: string; name: string };
 }
 
-interface TeacherProfile {
-  sections: Section[];
-}
-
 interface CreateNoticeModalProps {
   existingNotices: Notice[];
   onClose: () => void;
@@ -42,6 +38,11 @@ const PRIORITIES = [
   { label: "Urgent", value: "URGENT" },
 ];
 
+const countWords = (text: string) =>
+  text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+
+const WORD_LIMIT = 175;
+
 type AudienceType = "ALL_STUDENTS" | "ALL_TEACHERS" | "CLASS" | "SECTION";
 
 const CreateNoticeModal = ({
@@ -49,7 +50,6 @@ const CreateNoticeModal = ({
   onClose,
   onSuccess,
 }: CreateNoticeModalProps) => {
-  // Form state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [audience, setAudience] = useState<AudienceType>("ALL_STUDENTS");
@@ -58,12 +58,11 @@ const CreateNoticeModal = ({
   const [expiresAt, setExpiresAt] = useState("");
   const [selectedId, setSelectedId] = useState("");
 
-  // UI state
   const [view, setView] = useState<"form" | "preview">("form");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Teacher profile for sections/classes
   const [sections, setSections] = useState<Section[]>([]);
 
   useEffect(() => {
@@ -74,7 +73,13 @@ const CreateNoticeModal = ({
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success) {
-          setSections(res.data.data.sections || []);
+          const assignments = res.data.data.teachingAssignments || [];
+          const uniqueSections: Section[] = Array.from(
+            new Map(
+              assignments.map((a: any) => [a.section.id, a.section as Section]),
+            ).values(),
+          ) as Section[];
+          setSections(uniqueSections);
         }
       } catch (err) {
         console.error("Failed to fetch teacher profile", err);
@@ -83,14 +88,12 @@ const CreateNoticeModal = ({
     fetchProfile();
   }, []);
 
-  // Derive unique classes from teacher's sections
   const uniqueClasses = Array.from(
     new Map(
       sections.map((s) => [s.academicClass.id, s.academicClass]),
     ).values(),
   );
 
-  // Map audience selection to targetType + targetId
   const getTarget = () => {
     switch (audience) {
       case "ALL_STUDENTS":
@@ -104,7 +107,26 @@ const CreateNoticeModal = ({
     }
   };
 
-  // Use a fixed style for preview — actual color assigned by DB after creation
+  const getAudienceLabel = () => {
+    switch (audience) {
+      case "ALL_STUDENTS":
+        return "All Students";
+      case "ALL_TEACHERS":
+        return "All Teachers";
+      case "CLASS":
+        return (
+          uniqueClasses.find((c) => c.id === selectedId)?.name ||
+          "Selected Class"
+        );
+      case "SECTION": {
+        const sec = sections.find((s) => s.id === selectedId);
+        return sec
+          ? `${sec.academicClass.name} – ${sec.name}`
+          : "Selected Section";
+      }
+    }
+  };
+
   const previewStyle = CARD_STYLES[0];
 
   const handlePreview = () => {
@@ -141,8 +163,11 @@ const CreateNoticeModal = ({
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      onSuccess();
-      onClose();
+      setSuccessMessage(`Notice sent to ${getAudienceLabel()}`);
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 2000);
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to publish notice.");
       setView("form");
@@ -150,11 +175,6 @@ const CreateNoticeModal = ({
       setSubmitting(false);
     }
   };
-
-  const countWords = (text: string) =>
-    text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-
-  const WORD_LIMIT = 200;
 
   return (
     <div
@@ -179,7 +199,7 @@ const CreateNoticeModal = ({
             </div>
             <button
               onClick={onClose}
-              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
             >
               ✕
             </button>
@@ -243,7 +263,7 @@ const CreateNoticeModal = ({
               </div>
             </div>
 
-            {/* Dependent dropdown — class or section */}
+            {/* Dependent — class */}
             {audience === "CLASS" && (
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-[500] text-[#444444]">
@@ -264,6 +284,7 @@ const CreateNoticeModal = ({
               </div>
             )}
 
+            {/* Dependent — section */}
             {audience === "SECTION" && (
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-[500] text-[#444444]">
@@ -341,11 +362,7 @@ const CreateNoticeModal = ({
               />
               <div className="flex justify-end">
                 <span
-                  className={`text-[12px] ${
-                    countWords(content) >= WORD_LIMIT
-                      ? "text-red-500"
-                      : "text-gray-400"
-                  }`}
+                  className={`text-[12px] ${countWords(content) >= WORD_LIMIT ? "text-red-500" : "text-gray-400"}`}
                 >
                   {countWords(content)} / {WORD_LIMIT} words
                 </span>
@@ -363,13 +380,13 @@ const CreateNoticeModal = ({
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={onClose}
-                className="px-6 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
+                className="px-6 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-500 hover:bg-gray-50 transition-colors"
               >
                 Discard
               </button>
               <button
                 onClick={handlePreview}
-                className="px-6 py-2.5 rounded-xl bg-[#3A71FF] text-white text-[14px] font-[500] hover:bg-[#2d5fd4] transition-colors cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-[#3A71FF] text-white text-[14px] font-[500] hover:bg-[#2d5fd4] transition-colors"
               >
                 Preview
               </button>
@@ -380,21 +397,12 @@ const CreateNoticeModal = ({
         {/* ── PREVIEW VIEW ── */}
         {view === "preview" && (
           <div className="px-8 py-6 flex flex-col gap-6">
-            {/* Notice card — exact same design as NoticeCards */}
+            {/* Notice card */}
             <div
-              className={`
-                ${previewStyle.bg}
-                flex items-center gap-10
-                rounded-3xl px-10 py-9
-                shadow-[0px_10px_50px_0px_rgba(0,0,0,0.10)]
-              `}
+              className={`${previewStyle.bg} flex items-center gap-10 rounded-3xl px-10 py-9 shadow-[0px_10px_50px_0px_rgba(0,0,0,0.10)]`}
             >
               <div
-                className={`
-                  ${previewStyle.iconBg}
-                  flex h-[84px] w-[84px] shrink-0
-                  items-center justify-center rounded-full
-                `}
+                className={`${previewStyle.iconBg} flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-full`}
               >
                 <img
                   src={previewStyle.icon}
@@ -412,16 +420,10 @@ const CreateNoticeModal = ({
               </div>
             </div>
 
-            {/* Meta info */}
+            {/* Meta tags */}
             <div className="flex flex-wrap gap-2 px-1">
               {[
-                audience === "ALL_STUDENTS"
-                  ? "All students"
-                  : audience === "ALL_TEACHERS"
-                    ? "All teachers"
-                    : audience === "CLASS"
-                      ? ` ${uniqueClasses.find((c) => c.id === selectedId)?.name}`
-                      : `Section: ${sections.find((s) => s.id === selectedId)?.academicClass.name} – ${sections.find((s) => s.id === selectedId)?.name}`,
+                getAudienceLabel(),
                 CATEGORIES.find((c) => c.value === category)?.label,
                 PRIORITIES.find((p) => p.value === priority)?.label,
                 expiresAt
@@ -437,28 +439,57 @@ const CreateNoticeModal = ({
               ))}
             </div>
 
-            {error && (
-              <p className="text-[13px] text-red-500 bg-red-50 px-4 py-3 rounded-xl">
-                ⚠️ {error}
-              </p>
+            {/* Success state */}
+            {successMessage ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-6">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+                  <svg
+                    className="h-7 w-7 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-[16px] font-[600] text-[#111111]">
+                    Notice published!
+                  </p>
+                  <p className="mt-1 text-[14px] text-[#888888]">
+                    {successMessage}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {error && (
+                  <p className="text-[13px] text-red-500 bg-red-50 px-4 py-3 rounded-xl">
+                    ⚠️ {error}
+                  </p>
+                )}
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setView("form")}
+                    className="px-6 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-500 hover:bg-gray-50 transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleSend}
+                    disabled={submitting}
+                    className="px-6 py-2.5 rounded-xl bg-[#3A71FF] text-white text-[14px] font-[500] hover:bg-[#2d5fd4] transition-colors disabled:opacity-60"
+                  >
+                    {submitting ? "Publishing..." : "Send notice"}
+                  </button>
+                </div>
+              </>
             )}
-
-            {/* Footer */}
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setView("form")}
-                className="px-6 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleSend}
-                disabled={submitting}
-                className="px-6 py-2.5 rounded-xl bg-[#3A71FF] text-white text-[14px] font-[500] hover:bg-[#2d5fd4] transition-colors disabled:opacity-60 cursor-pointer"
-              >
-                {submitting ? "Publishing..." : "Send notice"}
-              </button>
-            </div>
           </div>
         )}
       </div>

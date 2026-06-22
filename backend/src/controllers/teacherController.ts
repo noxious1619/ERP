@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
-// ─── Shared select ────────────────────────────────────────────────────────────
+
 const teacherSelect = {
   id:             true,
   firstName:      true,
@@ -25,29 +25,26 @@ const teacherSelect = {
   user: {
     select: { id: true, email: true },
   },
-  // The one subject this teacher owns
-  subjects: {
-    select: {
-      id:   true,
-      name: true,
-      code: true,
-      class: { select: { id: true, name: true } },
-    },
-  },
-  // Sections where they are subject teacher → drives CLASSES ASSIGNED
-  sections: {
-    select: {
-      id:   true,
-      name: true,
-      academicClass: { select: { id: true, name: true } },
-    },
-  },
-  // Section where they are homeroom teacher
   classTeacherOf: {
     select: {
       id:   true,
       name: true,
       academicClass: { select: { name: true } },
+    },
+  },
+  teachingAssignments: {
+    select: {
+      id: true,
+      subject: {
+        select: { id: true, name: true, code: true },
+      },
+      section: {
+        select: {
+          id:   true,
+          name: true,
+          academicClass: { select: { id: true, name: true } },
+        },
+      },
     },
   },
 } as const;
@@ -104,30 +101,23 @@ export const registerTeacher = async (req: Request, res: Response) => {
         },
       });
 
-      // Link subject (set Subject.teacherId)
-      if (subjectId) {
-        await tx.subject.update({
-          where: { id: subjectId },
-          data:  { teacherId: teacher.id },
-        });
-      }
+  if (subjectId && Array.isArray(sectionIds) && sectionIds.length > 0) {
+  await tx.teacherSectionSubject.createMany({
+    data: sectionIds.map((sectionId: string) => ({
+      teacherId: teacher.id,
+      sectionId,
+      subjectId,
+    })),
+    skipDuplicates: true,
+  });
+}
 
-      // Link sections (set Section.teacherId for each)
-      if (Array.isArray(sectionIds) && sectionIds.length > 0) {
-        await tx.section.updateMany({
-          where: { id: { in: sectionIds } },
-          data:  { teacherId: teacher.id },
-        });
-      }
-
-      // Set homeroom section (set Section.classTeacherId)
-      if (classTeacherOfId) {
-        await tx.section.update({
-          where: { id: classTeacherOfId },
-          data:  { classTeacherId: teacher.id },
-        });
-      }
-
+if (classTeacherOfId) {
+  await tx.section.update({
+    where: { id: classTeacherOfId },
+    data:  { classTeacherId: teacher.id },
+  });
+}
       return tx.teacher.findUnique({
         where:  { id: teacher.id },
         select: teacherSelect,
@@ -187,33 +177,23 @@ export const updateTeacher = async (req: Request, res: Response) => {
         },
       });
 
-      // 3. Re-assign subject: remove old, link new
-      if (subjectId !== undefined) {
-        await tx.subject.updateMany({
-          where: { teacherId: id },
-          data:  { teacherId: null },
-        });
-        if (subjectId) {
-          await tx.subject.update({
-            where: { id: subjectId },
-            data:  { teacherId: id },
-          });
-        }
-      }
+      
+if (subjectId && Array.isArray(sectionIds) && sectionIds.length > 0) {
+  // Delete old assignments for this teacher
+  await tx.teacherSectionSubject.deleteMany({
+    where: { teacherId: id },
+  });
+  // Create new assignments
+  await tx.teacherSectionSubject.createMany({
+    data: sectionIds.map((sectionId: string) => ({
+      teacherId: id,
+      sectionId,
+      subjectId,
+    })),
+    skipDuplicates: true,
+  });
+}
 
-      // 4. Re-assign sections: remove old, link new
-      if (Array.isArray(sectionIds)) {
-        await tx.section.updateMany({
-          where: { teacherId: id },
-          data:  { teacherId: null },
-        });
-        if (sectionIds.length > 0) {
-          await tx.section.updateMany({
-            where: { id: { in: sectionIds } },
-            data:  { teacherId: id },
-          });
-        }
-      }
 
       // 5. Re-assign homeroom: remove old, set new
       if (classTeacherOfId !== undefined) {
@@ -261,55 +241,66 @@ export const getMyProfile = async (req: Request, res: Response) => {
     }
 
     const teacher = await prisma.teacher.findUnique({
-      where: {
-        userId,
+  where: { userId },
+  select: {
+    id:             true,
+    firstName:      true,
+    lastName:       true,
+    email:          true,
+    phone:          true,
+    designation:    true,
+    qualification:  true,
+    specialization: true,
+    experience:     true,
+    joiningDate:    true,
+    gender:         true,
+    dateOfBirth:    true,
+    address:        true,
+    city:           true,
+    state:          true,
+    bloodGroup:     true,
+    bio:            true,
+    status:         true,
+    employeeId:     true,
+
+    // Login identity — keep for future use
+    user: {
+      select: {
+        id:    true,
+        email: true,
+        role:  true,
       },
+    },
+
+    classTeacherOf: {
+      select: {
+        id:   true,
+        name: true,
+        academicClass: {
+          select: { id: true, name: true },
+        },
+      },
+    },
+
+    teachingAssignments: {
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-
-        classTeacherOf: {
+        section: {
           select: {
-            id: true,
+            id:   true,
             name: true,
             academicClass: {
-              select: {
-                id: true,
-                name: true,
-              },
+              select: { id: true, name: true },
             },
           },
         },
-
-        // Updated section: Routing through the new teachingAssignments join table
-        teachingAssignments: {
-          select: {
-            section: {
-              select: {
-                id: true,
-                name: true,
-                academicClass: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-            // Optionally fetch the subject they teach in that section too!
-            subject: {
-              select: {
-                id: true,
-                name: true,
-              }
-            }
-          },
+        subject: {
+          select: { id: true, name: true, code: true },
         },
       },
-    });
+    },
+  },
+});
 
     if (!teacher) {
       return res.status(404).json({
@@ -461,8 +452,7 @@ export const getTeacherTeachingAssignments = async (
   res: Response
 ) => {
   try {
-    const { id } = req.params;
-
+    const id = req.params.id as string; 
     const assignments = await prisma.teacherSectionSubject.findMany({
       where: {
         teacherId: id,

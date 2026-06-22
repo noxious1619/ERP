@@ -1,4 +1,5 @@
 import type { TeacherProfileData } from "../../../types/teacherprofile";
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (raw: string | null): string => {
   if (!raw) return "—";
@@ -6,23 +7,24 @@ const formatDate = (raw: string | null): string => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
-/** "English, Mathematics" from subjects array */
-const buildSubjects = (subjects: TeacherProfileData["subjects"]): string =>
-  subjects.length
-    ? [...new Set(subjects.map((s) => s.name))].join(", ")
-    : "—";
+/** "English, Mathematics" — deduplicated from teachingAssignments */
+const buildSubjects = (teacher: TeacherProfileData): string => {
+  const names = [
+    ...new Set(teacher.teachingAssignments.map((a) => a.subject.name)),
+  ];
+  return names.length ? names.join(", ") : "—";
+};
 
-/**
- * "Grade 10 - A, Grade 10 - B" from sections array
- * Each section knows its class via academicClass.name
- */
-const buildClassesAssigned = (sections: TeacherProfileData["sections"]): string =>
-  sections.length
-    ? sections.map((s) => `${s.academicClass.name} - ${s.name}`).join(", ")
-    : "—";
+/** "Class 10 - Section A, Class 10 - Section B" from teachingAssignments */
+const buildClassesAssigned = (teacher: TeacherProfileData): string => {
+  const classes = teacher.teachingAssignments.map(
+    (a) => `${a.section.academicClass.name} - ${a.section.name}`,
+  );
+  const unique = [...new Set(classes)];
+  return unique.length ? unique.join(", ") : "—";
+};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
 const SkeletonRow = () => (
   <div className="contents">
     <div className="h-4 w-28 animate-pulse rounded-full bg-gray-200" />
@@ -41,14 +43,10 @@ const Row = ({ label, value }: { label: string; value?: string | null }) => (
   </>
 );
 
-// ─── Props ────────────────────────────────────────────────────────────────────
-
 interface Props {
   teacher: TeacherProfileData | null;
   isLoading: boolean;
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 const ProfessionalInfoCard = ({ teacher, isLoading }: Props) => {
   return (
@@ -62,9 +60,12 @@ const ProfessionalInfoCard = ({ teacher, isLoading }: Props) => {
           Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)
         ) : (
           <>
-            <Row label="JOINING DATE"     value={formatDate(teacher?.joiningDate ?? null)} />
-            <Row label="DESIGNATION"      value={teacher?.designation} />
-            <Row label="QUALIFICATION"    value={teacher?.qualification} />
+            <Row
+              label="JOINING DATE"
+              value={formatDate(teacher?.joiningDate ?? null)}
+            />
+            <Row label="DESIGNATION" value={teacher?.designation} />
+            <Row label="QUALIFICATION" value={teacher?.qualification} />
             <Row
               label="EXPERIENCE"
               value={
@@ -73,10 +74,14 @@ const ProfessionalInfoCard = ({ teacher, isLoading }: Props) => {
                   : null
               }
             />
-            {/* SUB ASSIGNED — from subjects[] */}
-            <Row label="SUB ASSIGNED"     value={teacher ? buildSubjects(teacher.subjects) : null} />
-            {/* CLASSES ASSIGNED — from sections[] via academicClass */}
-            <Row label="CLASSES ASSIGNED" value={teacher ? buildClassesAssigned(teacher.sections) : null} />
+            <Row
+              label="SUB ASSIGNED"
+              value={teacher ? buildSubjects(teacher) : null}
+            />
+            <Row
+              label="CLASSES ASSIGNED"
+              value={teacher ? buildClassesAssigned(teacher) : null}
+            />
             {teacher?.specialization && (
               <Row label="SPECIALIZATION" value={teacher.specialization} />
             )}

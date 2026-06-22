@@ -39,7 +39,9 @@ const TeacherProfileCard = ({ teacher, isLoading, error }: Props) => {
     ? `${teacher.firstName} ${teacher.lastName}`.trim() || "—"
     : "";
 
-  const subjectNames = teacher?.subjects.map((s) => s.name).join(", ") ?? "";
+  const subjectNames = teacher
+  ? [...new Set(teacher.teachingAssignments.map((a) => a.subject.name))].join(", ")
+  : "";
 
   return (
     <div className="w-[460px] bg-white/40 rounded-3xl shadow-[0px_4px_88px_0px_rgba(0,0,0,0.05)] border-[0.50px] border-stone-300/80 px-12 py-8 backdrop-blur-[2px]">

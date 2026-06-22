@@ -1,14 +1,15 @@
-export interface TeacherSubject {
+export interface TeachingAssignment {
   id: string;
-  name: string;
-  code: string;
-  class: { id: string; name: string };
-}
-
-export interface TeacherSection {
-  id: string;
-  name: string;
-  academicClass: { id: string; name: string };
+  subject: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  section: {
+    id: string;
+    name: string;
+    academicClass: { id: string; name: string };
+  };
 }
 
 export interface TeacherClassTeacherOf {
@@ -38,7 +39,6 @@ export interface TeacherProfileData {
   status: string;
   email: string | null;
   user: { id: string; email: string };
-  subjects: TeacherSubject[];           // the one subject they own
-  sections: TeacherSection[];           // sections they teach in
+  teachingAssignments: TeachingAssignment[];  // replaces subjects + sections
   classTeacherOf: TeacherClassTeacherOf | null;
 }

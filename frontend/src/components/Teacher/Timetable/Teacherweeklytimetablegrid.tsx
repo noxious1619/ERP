@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import axios from "axios";
 import WeeklyClassCard from "../../../components/Student/Timetable/WeeklyCard";
+import useAuth from "../../../hooks/useAuth"; // ✅ 1. Bring in the auth hook
 import type {
   TeacherFilterMode,
   TeacherSection,
@@ -32,12 +33,12 @@ const DAY_COLUMNS: Record<string, number> = {
 };
 
 const DAYS_HEADER = [
-  { day: "Monday", date: "16" },
-  { day: "Tuesday", date: "17" },
-  { day: "Wednesday", date: "18" },
-  { day: "Thursday", date: "19" },
-  { day: "Friday", date: "20" },
-  { day: "Saturday", date: "21" },
+  { day: "Monday"},
+  { day: "Tuesday"},
+  { day: "Wednesday"},
+  { day: "Thursday"},
+  { day: "Friday"},
+  { day: "Saturday"},
 ];
 
 // ─── Break injection helpers ──────────────────────────────────────────────────
@@ -61,15 +62,16 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
   filterMode,
   selectedSection,
 }) => {
+  // ✅ 2. Extract teacherData for the API call
+  const { teacherData } = useAuth();
+
   // ─── Class-wise weekly state ───────────────────────────────────────────────
   const [classEntries, setClassEntries] = useState<TeacherWeeklyEntry[]>([]);
   const [classLoading, setClassLoading] = useState(false);
   const [classError, setClassError] = useState<string | null>(null);
 
   // ─── My Subject weekly state ───────────────────────────────────────────────
-  const [mySubjectEntries, setMySubjectEntries] = useState<
-    TeacherWeeklyEntry[]
-  >([]);
+  const [mySubjectEntries, setMySubjectEntries] = useState<TeacherWeeklyEntry[]>([]);
   const [mySubjectLoading, setMySubjectLoading] = useState(false);
   const [mySubjectError, setMySubjectError] = useState<string | null>(null);
 
@@ -83,15 +85,13 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
         setClassError(null);
         const token = localStorage.getItem("token");
 
+        // ✅ FIXED PATH: Pointing to the new Section Weekly endpoint
         const response = await axios.get(
-          `http://localhost:5000/api/academic/timetable/section/${selectedSection.id}`,
+          `http://localhost:5000/api/timetable/section/${selectedSection.id}/weekly`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
 
         if (response.data.success) {
-          // Transform API response → TeacherWeeklyEntry shape
-          // getWeeklyTimetableBySection returns: {id, day, startTime, isBreak,
-          // breakLabel, room, color, subject:{name,code}, teacher:{name}}
           const transformed: TeacherWeeklyEntry[] = response.data.data.map(
             (row: any) => ({
               id: row.id,
@@ -99,8 +99,8 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
               startTime: row.startTime,
               isBreak: row.isBreak,
               code: row.isBreak ? "" : row.subject?.code || "N/A",
-              subject: row.isBreak ? "" : row.subject?.name || "No Subject",
-              teacher: row.isBreak ? "" : row.teacher?.name || "Faculty Staff",
+              subject: row.isBreak ? (row.breakLabel || "Break") : (row.subject?.name || "No Subject"),
+              teacher: row.isBreak ? "" : row.displayTeacherName || "Faculty Staff",
               room: row.isBreak ? "" : row.room || "TBD",
               color: row.isBreak ? "" : row.color || "BLUE",
             }),
@@ -123,7 +123,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
 
   // ─── Fetch My Subject weekly ───────────────────────────────────────────────
   useEffect(() => {
-    if (filterMode !== "mySubject") return;
+    if (filterMode !== "mySubject" || !teacherData?.id) return;
 
     const fetchMySubjectWeekly = async () => {
       try {
@@ -131,13 +131,27 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
         setMySubjectError(null);
         const token = localStorage.getItem("token");
 
+        // ✅ FIXED PATH: Pointing to the new Teacher Weekly endpoint
         const response = await axios.get(
-          "http://localhost:5000/api/academic/timetable/teacher/my-subject/weekly",
+          `http://localhost:5000/api/timetable/teacher/${teacherData.id}/weekly`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
 
         if (response.data.success) {
-          const apiEntries: TeacherWeeklyEntry[] = response.data.data;
+          // ✅ Map the custom backend properties so the WeeklyCard renders perfectly
+          const apiEntries: TeacherWeeklyEntry[] = response.data.data.map(
+            (row: any) => ({
+              id: row.id,
+              day: row.day,
+              startTime: row.time, // Backend returns 'time' here
+              isBreak: false, // Teacher schedule doesn't have school breaks returned
+              code: row.code || "",
+              subject: row.sectionLabel || "Class", // e.g., "Class 10 - A"
+              teacher: row.subject || "No Subject", // Swap professor name for the subject name
+              room: row.room || "TBD",
+              color: row.color || "BLUE",
+            })
+          );
 
           // Inject break rows for all 6 days at 12:00
           const breakEntries: TeacherWeeklyEntry[] = BREAK_DAYS.map(
@@ -168,17 +182,17 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
     };
 
     fetchMySubjectWeekly();
-  }, [filterMode]);
+  }, [filterMode, teacherData?.id]);
 
   // ─── Pick active dataset ───────────────────────────────────────────────────
   const entries = filterMode === "mySubject" ? mySubjectEntries : classEntries;
   const loading = filterMode === "mySubject" ? mySubjectLoading : classLoading;
   const error = filterMode === "mySubject" ? mySubjectError : classError;
 
-  // ─── Derive time slots — same as student WeeklyTimetableGrid ──────────────
+  // ─── Derive time slots ─────────────────────────────────────────────────────
   const dynamicTimeSlots = useMemo(() => {
     const times = entries
-      .filter((e) => !e.isBreak || e.startTime === "12:00") // keep 12:00 break for lunch label, exclude all other breaks
+      .filter((e) => !e.isBreak || e.startTime === "12:00") // keep 12:00 break for lunch label
       .map((e) => e.startTime);
     return Array.from(new Set(times)).sort((a, b) => a.localeCompare(b));
   }, [entries]);
@@ -264,18 +278,6 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
                 className="h-[132px] border-r border-b border-[#E6EAF2]"
               />
             ),
-          )}
-
-          {/* Lunch break label */}
-          {lunchRowIndex !== -1 && (
-            <div
-              className="absolute left-0 z-10 flex w-full items-center justify-center"
-              style={{ top: `${lunchRowIndex * 132 + 56}px` }}
-            >
-              {/* <span className="bg-[#F3F5FA] px-6 text-[11px] font-bold uppercase tracking-[4px] text-gray-500">
-                Institutional Lunch Break
-              </span> */}
-            </div>
           )}
 
           {/* Cards */}

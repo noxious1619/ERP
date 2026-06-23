@@ -13,6 +13,7 @@ export interface TimetableItem {
   color: string | null;
   subject: string | null;
   professor: string | null;
+  sectionLabel?: string;
   duration?: string;
 }
 
@@ -37,6 +38,7 @@ const MySubjectScheduleCard: React.FC<TimetableItem> = ({
   color,
   subject,
   professor,
+  sectionLabel,
   duration,
 }) => {
   return (
@@ -78,7 +80,7 @@ const MySubjectScheduleCard: React.FC<TimetableItem> = ({
             {/* BookOpen icon instead of User */}
             <p className="text-xs text-gray-400 flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.8} />
-              {professor}
+              {sectionLabel || professor}
             </p>
           </div>
         ) : (
@@ -97,7 +99,7 @@ const MySubjectScheduleCard: React.FC<TimetableItem> = ({
             {/* BookOpen icon instead of User */}
             <p className="text-xs text-gray-400 flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.8} />
-              {professor}
+              {sectionLabel || professor}
             </p>
           </div>
         )}

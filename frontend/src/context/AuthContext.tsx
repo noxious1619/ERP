@@ -31,7 +31,7 @@ interface AuthContextType {
   sectionName: string | null;
   sectionId: string | null;
   loading: boolean;
-  logout: () => void;
+  // logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

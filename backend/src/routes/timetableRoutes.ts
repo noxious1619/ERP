@@ -4,23 +4,26 @@ import { restrictTo } from "../middleware/roleMiddleware.js";
 
 import { 
     createTimetableEntry,
-    getStudentTimetable,
     createWeeklyTimetable,
     getWeeklyTimetableBySection,
-    getTeacherMySubjectTimetable,
-    getTeacherMySubjectWeekly,
+    getDailyTeacherTimetable,
+    getWeeklyTeacherTimetable,
     getDailyTimetableBySection
 } from "../controllers/timetableController.js";
 
 const router = Router();
 router.use(protect);
 
+// Timetable creation routes
 router.post('/', restrictTo('SUPER_ADMIN', 'ADMIN'), createTimetableEntry);
-router.get('/student', getStudentTimetable);
 router.post('/bulk', restrictTo('SUPER_ADMIN', 'ADMIN'), createWeeklyTimetable);
-router.get('/section/:sectionId', getWeeklyTimetableBySection);
-router.get('/teacher/my-subject', restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN'), getTeacherMySubjectTimetable);
-router.get('/teacher/my-subject/weekly', restrictTo('TEACHER'), getTeacherMySubjectWeekly);
-router.get('/section/:sectionId/daily', getDailyTimetableBySection);
+
+//Student Timetable retrieval routes
+router.get('/section/:sectionId/daily',restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN', 'STUDENT'), getDailyTimetableBySection);
+router.get('/section/:sectionId/weekly',restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN', 'STUDENT'), getWeeklyTimetableBySection);
+
+// Teacher-specific timetable routes
+router.get('/teacher/:teacherId/daily', restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN'), getDailyTeacherTimetable); 
+router.get('/teacher/:teacherId/weekly', restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN'), getWeeklyTeacherTimetable); 
 
 export default router;

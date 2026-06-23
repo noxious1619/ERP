@@ -45,40 +45,37 @@ export const getMyNotices = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: "Student profile not found" });
     }
 
-    const notices = await prisma.notice.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { targetType: 'GLOBAL' },
-              { targetType: 'ROLE', targetId: 'STUDENT' },
-              { targetType: 'CLASS', targetId: student.section?.classId },
-              { targetType: 'SECTION', targetId: student.sectionId },
-              { category: { not: 'STAFF_CIRCULAR' } }
-            ]
-          },
-          {
-            OR: [
-              { expiresAt: null },
-              { expiresAt: { gt: new Date() } }
-            ]
-          },
-          { category: { not: 'STAFF_CIRCULAR' } },
-          // Only apply category filter if it's not "ALL"
-          ...(category && category !== 'ALL'
-            ? [{ category: category as any }]
-            : []
-          )
+   const notices = await prisma.notice.findMany({
+  where: {
+    AND: [
+      {
+        OR: [
+          { targetType: 'GLOBAL' },
+          { targetType: 'ROLE', targetId: 'STUDENT' },
+          { targetType: 'CLASS', targetId: student.section?.classId },
+          { targetType: 'SECTION', targetId: student.sectionId },
         ]
       },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        author: {
-          select: { name: true, role: true }
-        }
-      }
-    });
-
+      {
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } }
+        ]
+      },
+      { category: { not: 'STAFF_CIRCULAR' } }, // ← moved here into AND
+      ...(category && category !== 'ALL'
+        ? [{ category: category as any }]
+        : []
+      )
+    ]
+  },
+  orderBy: { createdAt: 'desc' },
+  include: {
+    author: {
+      select: { name: true, role: true }
+    }
+  }
+});
     res.status(200).json({
       success: true,
       count: notices.length,
@@ -94,12 +91,13 @@ export const getTeacherNotices = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const { category } = req.query;
 
-    // 1. Get teacher's assigned sections → derive classIds
     const teacher = await prisma.teacher.findUnique({
       where: { userId },
       include: {
-        sections: {
-          select: { id: true, classId: true }
+        teachingAssignments: {
+          select: {
+            section: { select: { id: true, classId: true } }
+          }
         }
       }
     });
@@ -108,10 +106,15 @@ export const getTeacherNotices = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: "Teacher profile not found" });
     }
 
-    const sectionIds = teacher.sections.map((s) => s.id);
-    const classIds = [...new Set(teacher.sections.map((s) => s.classId))];
+    // Derive unique sectionIds and classIds from teachingAssignments
+    const sectionIds = [...new Set(
+      teacher.teachingAssignments.map((a) => a.section.id)
+    )];
+    const classIds = [...new Set(
+      teacher.teachingAssignments.map((a) => a.section.classId)
+    )];
 
-    // 2. Build scope conditions
+    // Build scope conditions
     const scopeConditions: any[] = [
       { targetType: "GLOBAL" },
       { targetType: "ROLE", targetId: "TEACHER" },
@@ -129,7 +132,6 @@ export const getTeacherNotices = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Fetch notices
     const notices = await prisma.notice.findMany({
       where: {
         AND: [

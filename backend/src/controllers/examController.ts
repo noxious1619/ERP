@@ -1,164 +1,3 @@
-// import { prisma } from '../lib/prisma.js';
-// import type { Request, Response } from 'express';
-
-// export const createScheduledExam = async (
-//   req: any,
-//   res: Response
-// ) => {
-//   try {
-//     const {
-//       title,
-//       syllabus,
-//       examDate,
-//       startTime,
-//       endTime,
-//       termId,
-//       subjectId,
-//       classId,
-//       totalMarks
-//     } = req.body;
-
-//     const exam = await prisma.scheduledExam.create({
-//       data: {
-//         title,
-//         syllabus,
-//         examDate,
-//         startTime,
-//         endTime,
-//         termId,
-//         subjectId,
-//         classId,
-//         totalMarks,
-//         createdById: req.user.id
-//       }
-//     });
-
-//     res.status(201).json({
-//       success: true,
-//       data: exam
-//     });
-
-//   } catch (error: any)  {
-//     res.status(500).json({
-//       success: false,
-//       message: error.message
-//     });
-//   }
-// };
-
-// export const getStudentUpcomingExams = async (req: any, res: Response) => {
-//   try {
-//     const student = await prisma.student.findFirst({
-//       where: {
-//         userId: req.user.id
-//       },
-//       include: {
-//         section: true
-//       }
-//     });
-
-//     if (!student) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Student not found"
-//       });
-//     }
-//     const exams = await prisma.scheduledExam.findMany({
-//       where: {
-//         classId: student.section.classId
-//       },
-//       include: {
-//         subject: true,
-//         term: true
-//       },
-//       orderBy: {
-//         examDate: 'asc'
-//       }
-//     });
-
-//     const today = new Date();
-
-//     const formatted = exams.map(exam => {
-
-//       let status = "UPCOMING";
-//       const examDate = new Date(exam.examDate);
-//       if (today.toDateString() === examDate.toDateString()) {
-//         status = "ONGOING";
-//       }
-//       if (today > examDate) {
-//         status = "COMPLETED";
-//       }
-//       return {
-//         id: exam.id,
-//         title: exam.title,
-//         syllabus: exam.syllabus,
-//         examDate: exam.examDate,
-//         startTime: exam.startTime,
-//         endTime: exam.endTime,
-//         status,
-//         subject: exam.subject.name,
-//         icon: exam.subject.icon
-//       };
-//     });
-
-//     res.json({
-//       success: true,
-//       data: formatted
-//     });
-
-//   } catch (error: any)  {
-//     res.status(500).json({
-//       success: false,
-//       message: error.message
-//     });
-//   }
-// };
-
-// export const getDatesheet = async (req: Request, res: Response) => {
-//   const { classId } = req.query as { classId?: string };
- 
-//   if (!classId) {
-//     return res.status(400).json({ success: false, message: "classId is required" });
-//   }
- 
-//   try {
-//     const exams = await prisma.scheduledExam.findMany({
-//       where: { classId },
-//       include: { subject: true },
-//       orderBy: { examDate: 'asc' }
-//     });
- 
-//     const today = new Date();
- 
-//     const data = exams.map(exam => {
-//       const examDate = new Date(exam.examDate);
-//       let status = "UPCOMING";
-//       if (today.toDateString() === examDate.toDateString()) {
-//         status = "ONGOING";
-//       } else if (today > examDate) {
-//         status = "COMPLETED";
-//       }
- 
-//       return {
-//         id:        exam.id,
-//         title:     exam.title,
-//         syllabus:  exam.syllabus,
-//         examDate:  exam.examDate,
-//         startTime: exam.startTime,
-//         endTime:   exam.endTime,
-//         status,
-//         subject:   exam.subject.name,
-//         icon:      exam.subject.icon
-//       };
-//     });
- 
-//     return res.status(200).json({ success: true, data });
-//   } catch (error: any) {
-//     console.error("[getDatesheet] Error:", error);
-//     return res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
 import { prisma } from '../lib/prisma.js';
 import type { Request, Response } from 'express';
 
@@ -244,29 +83,35 @@ export const getDatesheet = async (req: any, res: Response) => {
   }
 
   try {
-    // If subjectOnly=true, find the teacher's assigned subject for this class
+    // If subjectOnly=true, find the teacher's subject for this class via
+    // TeacherSectionSubject — a teacher teaches exactly one subject per class,
+    // so we just need the first assignment whose section belongs to this class.
     let subjectFilter: { subjectId: string } | {} = {};
 
     if (subjectOnly === "true") {
       const teacher = await prisma.teacher.findUnique({
         where: { userId: req.user.id },
         include: {
-          subjects: {
-            select: { id: true },
-            // teacher's subject that belongs to this class
-            where: { class: { id: classId } }
-          }
-        }
+          teachingAssignments: {
+            where: {
+              section: { classId },
+            },
+            select: {
+              subjectId: true,
+            },
+            take: 1,
+          },
+        },
       });
 
-      const subjectId = teacher?.subjects?.[0]?.id;
-      if (subjectId) {
-        subjectFilter = { subjectId };
-      }
-      // If no subject match found, return empty gracefully
+      const subjectId = teacher?.teachingAssignments?.[0]?.subjectId;
+
       if (!subjectId) {
+        // Teacher doesn't teach any subject in this class — return empty gracefully
         return res.status(200).json({ success: true, data: [] });
       }
+
+      subjectFilter = { subjectId };
     }
 
     const exams = await prisma.scheduledExam.findMany({

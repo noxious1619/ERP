@@ -56,7 +56,7 @@ const InstructionPopup = ({
           mt-6 w-full rounded-full bg-[#4285F4] py-3
           text-[14px] font-semibold text-white
           shadow-[0px_6px_14px_rgba(66,133,244,0.3)]
-          transition hover:scale-[1.01] cursor-pointer
+          transition hover:scale-[1.01]
         "
       >
         Got it
@@ -85,17 +85,21 @@ const TeacherDatesheet = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success) {
-          const { sections } = res.data.data as {
-            sections: {
+          const { teachingAssignments } = res.data.data as {
+            teachingAssignments: {
               id: string;
-              name: string;
-              academicClass: { id: string; name: string };
+              section: {
+                id: string;
+                name: string;
+                academicClass: { id: string; name: string };
+              };
+              subject: { id: string; name: string; code: string };
             }[];
           };
 
           const classMap = new Map<string, ClassOption>();
-          sections.forEach((sec) => {
-            const cls = sec.academicClass;
+          teachingAssignments.forEach((assignment) => {
+            const cls = assignment.section.academicClass;
             if (!classMap.has(cls.id)) {
               classMap.set(cls.id, { id: cls.id, name: cls.name });
             }
@@ -134,7 +138,6 @@ const TeacherDatesheet = () => {
   };
 
   const handleDownload = () => {
-    console.log("examList:", examList.length, termName, loadedLabel);
     if (!examList.length) return;
     downloadDatesheetPdf({
       exams: examList,
@@ -157,7 +160,7 @@ const TeacherDatesheet = () => {
       <div className="flex flex-1 h-screen">
         {/* ── LEFT ────────────────────────────────────────────────────────── */}
         <div className="flex flex-1 flex-col h-screen">
-          <div className="px-14 pt-10 shrink-0">
+          <div className="px-14  shrink-0 py-6">
             <h1 className="text-[44px] font-[700] leading-[54px] tracking-[-1.8px] text-[#2D3335]">
               Exam Date Sheet
             </h1>
@@ -295,7 +298,7 @@ const TeacherDatesheet = () => {
                   flex items-center justify-center gap-3
                   text-white font-semibold text-[16px]
                   transition-all duration-200 hover:scale-[1.01]
-                  disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100 cursor-pointer
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100
                 "
               >
                 <span>Download Datesheet</span>

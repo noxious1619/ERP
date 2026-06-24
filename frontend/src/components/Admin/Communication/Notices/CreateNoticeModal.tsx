@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { X, Upload, Eye, ChevronLeft } from "lucide-react"
+import { X, Eye, ChevronLeft } from "lucide-react"
 import axios from "axios"
 
 interface ClassOption {
@@ -15,18 +15,18 @@ interface CreateNoticeModalProps {
 }
 
 const CATEGORIES = [
-  { label: "Announcement",  value: "ANNOUNCEMENT" },
-  { label: "Academic",      value: "ACADEMIC" },
-  { label: "Holiday",       value: "HOLIDAY" },
-  { label: "Exam",          value: "EXAM" },
-  { label: "School Event",  value: "SCHOOL_EVENT" },
-  { label: "Staff Circular",value: "STAFF_CIRCULAR" },
+  { label: "Announcement", value: "ANNOUNCEMENT" },
+  { label: "Academic", value: "ACADEMIC" },
+  { label: "Holiday", value: "HOLIDAY" },
+  { label: "Exam", value: "EXAM" },
+  { label: "School Event", value: "SCHOOL_EVENT" },
+  { label: "Staff Circular", value: "STAFF_CIRCULAR" },
 ]
 
 const PRIORITIES = [
   { label: "Standard", value: "STANDARD" },
-  { label: "High",     value: "HIGH" },
-  { label: "Urgent",   value: "URGENT" },
+  { label: "High", value: "HIGH" },
+  { label: "Urgent", value: "URGENT" },
 ]
 
 type AudienceType = "GLOBAL" | "ALL_STUDENTS" | "ALL_TEACHERS" | "CLASS" | "SECTION"
@@ -34,8 +34,8 @@ type View = "form" | "preview"
 
 const PRIORITY_COLORS: Record<string, string> = {
   STANDARD: "bg-gray-100 text-gray-600",
-  HIGH:     "bg-orange-100 text-orange-700",
-  URGENT:   "bg-red-100 text-red-700",
+  HIGH: "bg-orange-100 text-orange-700",
+  URGENT: "bg-red-100 text-red-700",
 }
 
 const WORD_LIMIT = 200
@@ -43,21 +43,28 @@ const countWords = (text: string) =>
   text.trim() === "" ? 0 : text.trim().split(/\s+/).length
 
 export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: CreateNoticeModalProps) {
-  const [view, setView]             = useState<View>("form")
-  const [title, setTitle]           = useState("")
-  const [content, setContent]       = useState("")
-  const [audience, setAudience]     = useState<AudienceType>("ALL_STUDENTS")
-  const [category, setCategory]     = useState("ANNOUNCEMENT")
-  const [priority, setPriority]     = useState("STANDARD")
-  const [expiresAt, setExpiresAt]   = useState("")
+  const [view, setView] = useState<View>("form")
+  const [title, setTitle] = useState("")
+  const [content, setContent] = useState("")
+  const [audience, setAudience] = useState<AudienceType>("ALL_STUDENTS")
+  const [category, setCategory] = useState("ANNOUNCEMENT")
+  const [priority, setPriority] = useState("STANDARD")
+  const [expiresAt, setExpiresAt] = useState("")
   const [selectedId, setSelectedId] = useState("")
+  const [selectedClassId, setSelectedClassId] = useState("")
 
-  const [classes, setClasses]       = useState<ClassOption[]>([])
+  const [classes, setClasses] = useState<ClassOption[]>([])
   const [submitting, setSubmitting] = useState(false)
-  const [formError, setFormError]   = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
   const wrapperRef = useRef<HTMLDivElement>(null)
+
+  // Clear selections when audience tab changes
+  useEffect(() => {
+    setSelectedId("")
+    setSelectedClassId("")
+  }, [audience])
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -80,22 +87,22 @@ export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: Create
   if (!isOpen) return null
 
   // ── Helpers ──────────────────────────────────────────────────────────────
-  const selectedClass = classes.find((c) => c.id === selectedId)
-  const sectionsList  = selectedClass?.sections ?? []
+  const selectedClass = classes.find((c) => c.id === selectedClassId)
+  const sectionsList = selectedClass?.sections ?? []
 
   const getTarget = () => {
     switch (audience) {
-      case "GLOBAL":       return { targetType: "GLOBAL",  targetId: null }
-      case "ALL_STUDENTS": return { targetType: "ROLE",    targetId: "STUDENT" }
-      case "ALL_TEACHERS": return { targetType: "ROLE",    targetId: "TEACHER" }
-      case "CLASS":        return { targetType: "CLASS",   targetId: selectedId }
-      case "SECTION":      return { targetType: "SECTION", targetId: selectedId }
+      case "GLOBAL": return { targetType: "GLOBAL", targetId: null }
+      case "ALL_STUDENTS": return { targetType: "ROLE", targetId: "STUDENT" }
+      case "ALL_TEACHERS": return { targetType: "ROLE", targetId: "TEACHER" }
+      case "CLASS": return { targetType: "CLASS", targetId: selectedId }
+      case "SECTION": return { targetType: "SECTION", targetId: selectedId }
     }
   }
 
   const getAudienceLabel = () => {
     switch (audience) {
-      case "GLOBAL":       return "Everyone (School-wide)"
+      case "GLOBAL": return "Everyone (School-wide)"
       case "ALL_STUDENTS": return "All Students"
       case "ALL_TEACHERS": return "All Teachers"
       case "CLASS": {
@@ -113,7 +120,7 @@ export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: Create
   }
 
   const handlePreview = () => {
-    if (!title.trim())   { setFormError("Notice title is required."); return }
+    if (!title.trim()) { setFormError("Notice title is required."); return }
     if (!content.trim()) { setFormError("Notice description is required."); return }
     if ((audience === "CLASS" || audience === "SECTION") && !selectedId) {
       setFormError("Please select a class or section.")
@@ -139,7 +146,7 @@ export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: Create
         onSuccess(); onClose()
         setTitle(""); setContent(""); setAudience("ALL_STUDENTS")
         setCategory("ANNOUNCEMENT"); setPriority("STANDARD")
-        setExpiresAt(""); setSelectedId(""); setView("form"); setSuccessMsg(null)
+        setExpiresAt(""); setSelectedId(""); setSelectedClassId(""); setView("form"); setSuccessMsg(null)
       }, 1800)
     } catch (err: any) {
       setFormError(err.response?.data?.message || "Failed to publish notice. Please try again.")
@@ -277,11 +284,10 @@ export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: Create
                       Select Class <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={selectedClass?.id ?? ""}
+                      value={selectedClassId}
                       onChange={(e) => {
+                        setSelectedClassId(e.target.value)
                         setSelectedId("")
-                        const cls = classes.find((c) => c.id === e.target.value)
-                        if (cls) setSelectedId(cls.id)
                       }}
                       className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 cursor-pointer bg-white"
                     >
@@ -298,7 +304,7 @@ export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: Create
                     <select
                       value={selectedId}
                       onChange={(e) => setSelectedId(e.target.value)}
-                      disabled={sectionsList.length === 0}
+                      disabled={!selectedClassId || sectionsList.length === 0}
                       className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 cursor-pointer bg-white disabled:opacity-50"
                     >
                       <option value="">-- Section --</option>
@@ -360,7 +366,7 @@ export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: Create
                 </div>
               </div>
 
-              {/* Attachment zone */}
+              {/* Attachment zone (commented out for now)
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 mb-2">
                   <Upload className="h-4 w-4 text-[#3A71FF]" /> Attachments
@@ -371,6 +377,7 @@ export default function CreateNoticeModal({ isOpen, onClose, onSuccess }: Create
                   <p className="text-xs text-gray-400">PDFs, Images, Documents</p>
                 </div>
               </div>
+              */}
 
               {formError && (
                 <p className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">⚠ {formError}</p>

@@ -7,6 +7,7 @@ import NoticesTabs from "../../../components/Admin/Communication/Notices/Notices
 import NoticesTimeline from "../../../components/Admin/Communication/Notices/NoticesTimeline"
 import NoticesCalendar from "../../../components/Admin/Communication/Notices/NoticesCalendar"
 import CreateNoticeModal from "../../../components/Admin/Communication/Notices/CreateNoticeModal"
+import ConfirmDeleteModal from "../../../components/Admin/Communication/Notices/ConfirmDeleteModal"
 import type { Notice } from "../../../types/notice"
 
 const API_BASE = "http://localhost:5000"
@@ -19,6 +20,11 @@ export default function Notices() {
   const [notices, setNotices]   = useState<Notice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError]         = useState<string | null>(null)
+
+  // Custom Confirmation Modal States
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [noticeToDelete, setNoticeToDelete]       = useState<Notice | null>(null)
+  const [isDeleting, setIsDeleting]               = useState(false)
 
   // ── Fetch notices from admin API ─────────────────────────────────────────
   const fetchNotices = useCallback(async (category: string) => {
@@ -47,18 +53,32 @@ export default function Notices() {
     fetchNotices(activeTab)
   }, [activeTab, fetchNotices])
 
-  // ── Delete a notice ──────────────────────────────────────────────────────
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this notice? This action cannot be undone.")) return
+  // ── Trigger delete confirmation modal ────────────────────────────────────
+  const handleDelete = (id: string) => {
+    const notice = notices.find((n) => n.id === id)
+    if (notice) {
+      setNoticeToDelete(notice)
+      setIsDeleteModalOpen(true)
+    }
+  }
+
+  // ── Confirm delete notice ────────────────────────────────────────────────
+  const handleConfirmDelete = async () => {
+    if (!noticeToDelete) return
     try {
+      setIsDeleting(true)
       const token = localStorage.getItem("token")
-      await axios.delete(`${API_BASE}/api/admin/notices/${id}`, {
+      await axios.delete(`${API_BASE}/api/admin/notices/${noticeToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-      // Optimistic update — remove from local state immediately
-      setNotices((prev) => prev.filter((n) => n.id !== id))
+      // Update local state immediately
+      setNotices((prev) => prev.filter((n) => n.id !== noticeToDelete.id))
+      setIsDeleteModalOpen(false)
+      setNoticeToDelete(null)
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to delete notice.")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -77,7 +97,7 @@ export default function Notices() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <AdminNavbar />
 
-        <main className={`flex-1 p-6 ${isModalOpen ? "overflow-hidden" : "overflow-auto"}`}>
+        <main className={`flex-1 p-6 ${isModalOpen || isDeleteModalOpen ? "overflow-hidden" : "overflow-auto"}`}>
           <div className="flex flex-col gap-6 max-w-7xl mx-auto">
             {/* Header */}
             <NoticesHeader onAddNoticeClick={() => setIsModalOpen(true)} />
@@ -114,6 +134,18 @@ export default function Notices() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => fetchNotices(activeTab)}
+      />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setNoticeToDelete(null)
+        }}
+        onConfirm={handleConfirmDelete}
+        title={noticeToDelete?.title || ""}
+        isDeleting={isDeleting}
       />
     </div>
   )

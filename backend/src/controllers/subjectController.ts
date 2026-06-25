@@ -1,82 +1,23 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 
-// Helper to resolve a teacher by name
-async function resolveTeacherByName(teacherName: string): Promise<{ id: string | null; name: string }> {
-  if (!teacherName || !teacherName.trim()) return { id: null, name: "Unassigned" };
-  const nameStr = teacherName.trim();
-  const parts = nameStr.split(/\s+/);
-  const firstNamePart = parts[0] || "";
-  const lastNamePart = parts.slice(1).join(" ") || "";
+function formatClassSection(className: string, sectionName: string): string {
+  const match = className.match(/\d+/);
+  const classDigits = match ? match[0] : className;
 
-  // Search case-insensitively in existing Teacher table
-  const teacher = await prisma.teacher.findFirst({
-    where: {
-      OR: [
-        {
-          firstName: { contains: firstNamePart, mode: "insensitive" },
-          ...(lastNamePart ? { lastName: { contains: lastNamePart, mode: "insensitive" } } : {}),
-        },
-        {
-          lastName: { contains: firstNamePart, mode: "insensitive" },
-        },
-      ],
-    },
-    select: { id: true, firstName: true, lastName: true },
-  });
-
-  if (teacher) {
-    return {
-      id: teacher.id,
-      name: `${teacher.firstName} ${teacher.lastName}`.trim(),
-    };
+  if (!sectionName) {
+    return classDigits;
   }
 
-  // If not found in database, return the name entered as-is
-  return { id: null, name: nameStr };
+  let cleanSection = sectionName.trim();
+  if (cleanSection.toLowerCase().startsWith("section ")) {
+    cleanSection = cleanSection.substring(8).trim();
+  } else if (cleanSection.toLowerCase().startsWith("sec ")) {
+    cleanSection = cleanSection.substring(4).trim();
+  }
+  return `${classDigits}${cleanSection}`;
 }
 
-// Helper to find or create academic year, class
-async function getOrCreateClass(classVal: string) {
-  const nameStr = classVal.trim();
-  
-  // 1. Get current or first academic year
-  let academicYear = await prisma.academicYear.findFirst({
-    where: { isCurrent: true },
-  });
-
-  if (!academicYear) {
-    academicYear = await prisma.academicYear.findFirst();
-  }
-
-  if (!academicYear) {
-    academicYear = await prisma.academicYear.create({
-      data: {
-        name: "2026-2027",
-        isCurrent: true,
-      },
-    });
-  }
-
-  // 2. Find or create Class in existing Class table
-  let academicClass = await prisma.class.findFirst({
-    where: {
-      name: { equals: nameStr, mode: "insensitive" },
-      academicYearId: academicYear.id,
-    },
-  });
-
-  if (!academicClass) {
-    academicClass = await prisma.class.create({
-      data: {
-        name: nameStr,
-        academicYearId: academicYear.id,
-      },
-    });
-  }
-
-  return academicClass;
-}
 
 // 1. GET ALL SUBJECTS (with filters, search, pagination, and live stats)
 export const getAllSubjects = async (req: Request, res: Response) => {
@@ -91,82 +32,106 @@ export const getAllSubjects = async (req: Request, res: Response) => {
 
     const currentPage = Math.max(1, Number(page));
     const pageSize = Math.max(1, Number(limit));
-    const skip = (currentPage - 1) * pageSize;
 
-    // Build the query where clause
-    const whereClause: any = {
-      AND: [] as any[],
-    };
-
-    // Filter by Class ID (which contains classId in classId field)
-    if (classId && classId !== "All Classes") {
-      whereClause.AND.push({
-        classId: String(classId),
-      });
-    }
-
-    // Filter by Type (Theory or Lab)
-    if (type && type !== "All Type") {
-      whereClause.AND.push({
-        type: { equals: String(type), mode: "insensitive" },
-      });
-    }
-
-    // Search query (case-insensitive across name, code, class name, teacher name)
-    if (search) {
-      const searchStr = String(search).trim();
-      whereClause.AND.push({
-        OR: [
-          { name: { contains: searchStr, mode: "insensitive" } },
-          { code: { contains: searchStr, mode: "insensitive" } },
-          { className: { contains: searchStr, mode: "insensitive" } },
-          { teacherName: { contains: searchStr, mode: "insensitive" } },
-        ],
-      });
-    }
-
-    // If AND is empty, clean it up
-    if (whereClause.AND.length === 0) {
-      delete whereClause.AND;
-    }
-
-    // Query dynamic subjects table
-    const [subjects, totalMatching, totalInDb, totalTheory, totalLab] = await Promise.all([
-      // Paginated subjects
-      prisma.dynamicSubject.findMany({
-        where: whereClause,
-        skip,
-        take: pageSize,
-        orderBy: {
-          name: "asc",
+    // Fetch all Subjects with their class and teaching assignments
+    const subjects = await prisma.subject.findMany({
+      include: {
+        class: true,
+        teachingAssignments: {
+          include: {
+            section: true,
+            teacher: true,
+          },
         },
-      }),
-      // Total matching current search/filters
-      prisma.dynamicSubject.count({ where: whereClause }),
-      // Global stats counts
-      prisma.dynamicSubject.count(),
-      prisma.dynamicSubject.count({ where: { type: { equals: "Theory", mode: "insensitive" } } }),
-      prisma.dynamicSubject.count({ where: { type: { equals: "Lab", mode: "insensitive" } } }),
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    // Group assignments by Subject to keep one row per Subject in the table
+    const rows: any[] = [];
+    for (const subj of subjects) {
+      const classesList: string[] = [];
+      const teachersList: string[] = [];
+      const sectionIds: string[] = [];
+      let teacherId = "unassigned";
+
+      if (subj.teachingAssignments.length === 0) {
+        classesList.push(formatClassSection(subj.class.name, ""));
+        teachersList.push("Unassigned");
+      } else {
+        const uniqueTeachers = new Set<string>();
+        for (const ta of subj.teachingAssignments) {
+          classesList.push(formatClassSection(subj.class.name, ta.section.name));
+          const tName = `${ta.teacher.firstName} ${ta.teacher.lastName}`.trim() || ta.teacher.email || "Unnamed Teacher";
+          uniqueTeachers.add(tName);
+          sectionIds.push(ta.section.id);
+          teacherId = ta.teacher.id;
+        }
+        teachersList.push(...Array.from(uniqueTeachers));
+      }
+
+      rows.push({
+        id: subj.id,
+        subjectId: subj.id,
+        name: subj.name,
+        code: subj.code,
+        classId: subj.classId,
+        className: subj.class.name,
+        classes: classesList,
+        sectionIds,
+        teacherId,
+        teacherName: teachersList.join(", "),
+        teachers: teachersList,
+        type: subj.type,
+      });
+    }
+
+    // Apply Filter and Search in JavaScript
+    let filteredRows = rows;
+
+    // Class ID filter
+    if (classId && classId !== "All Classes") {
+      filteredRows = filteredRows.filter((row) => row.classId === classId);
+    }
+
+    // Type filter (Theory / Lab)
+    if (type && type !== "All Type") {
+      filteredRows = filteredRows.filter(
+        (row) => row.type.toLowerCase() === String(type).toLowerCase()
+      );
+    }
+
+    // Search query matches name, code, class, sections list, teachers, or type
+    if (search) {
+      const searchStr = String(search).toLowerCase().trim();
+      filteredRows = filteredRows.filter(
+        (row) =>
+          row.name.toLowerCase().includes(searchStr) ||
+          row.code.toLowerCase().includes(searchStr) ||
+          row.className.toLowerCase().includes(searchStr) ||
+          row.teachers.some((t: string) => t.toLowerCase().includes(searchStr)) ||
+          row.classes.some((c: string) => c.toLowerCase().includes(searchStr)) ||
+          row.type.toLowerCase().includes(searchStr)
+      );
+    }
+
+    // Global Stats Counts (from unique subjects)
+    const [totalInDb, totalTheory, totalLab] = await Promise.all([
+      prisma.subject.count(),
+      prisma.subject.count({ where: { type: { equals: "Theory", mode: "insensitive" } } }),
+      prisma.subject.count({ where: { type: { equals: "Lab", mode: "insensitive" } } }),
     ]);
 
-    // Format output to match frontend table layout requirements
-    const formattedData = subjects.map((subj) => ({
-      id: subj.id,
-      name: subj.name,
-      code: subj.code,
-      classId: subj.classId,
-      className: subj.className,
-      classes: subj.section ? [`${subj.className} - ${subj.section}`] : [subj.className],
-      section: subj.section || "",
-      teacherId: subj.teacherId,
-      teacherName: subj.teacherName || "Unassigned",
-      teachers: [subj.teacherName || "Unassigned"],
-      type: subj.type,
-    }));
+    // Paginate matching rows
+    const totalMatching = filteredRows.length;
+    const skip = (currentPage - 1) * pageSize;
+    const paginatedData = filteredRows.slice(skip, skip + pageSize);
 
     return res.status(200).json({
       success: true,
-      data: formattedData,
+      data: paginatedData,
       pagination: {
         page: currentPage,
         limit: pageSize,
@@ -189,74 +154,70 @@ export const getAllSubjects = async (req: Request, res: Response) => {
   }
 };
 
-// 2. CREATE SUBJECT (supports assigning to multiple classes simultaneously)
-export const createSubject = async (req: any, res: Response) => {
+// 2. CREATE SUBJECT (supports assigning to class, multiple sections and teacher)
+export const createSubject = async (req: Request, res: Response) => {
   try {
-    const { name, code, type = "Theory", teacherName = "", classSections = [] } = req.body;
+    const { name, code, type = "Theory", classId, sectionIds = [], teacherId = "" } = req.body;
 
-    if (!name || !code) {
-      return res.status(400).json({ success: false, message: "Subject name and code are required." });
-    }
-
-    if (!classSections || !Array.isArray(classSections) || classSections.length === 0) {
-      return res.status(400).json({ success: false, message: "At least one class assignment is required." });
-    }
-
-    // Resolve teacher ID and Name
-    const teacherResult = await resolveTeacherByName(teacherName);
-
-    const createdSubjects = [];
-
-    // Loop through each class & section, verify/create class, and create the dynamic subject record
-    for (const item of classSections) {
-      const { classVal, section } = item;
-      if (!classVal || !classVal.trim()) continue;
-
-      const academicClass = await getOrCreateClass(classVal);
-
-      // Check if subject already exists for this specific class and section
-      const existing = await prisma.dynamicSubject.findFirst({
-        where: {
-          code: code.toUpperCase(),
-          classId: academicClass.id,
-          section: section ? section.trim() : null,
-        },
+    if (!name || !code || !classId) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject name, code, and class assignment are required.",
       });
+    }
 
-      if (existing) {
-        // If it exists, update it instead of failing
-        const updated = await prisma.dynamicSubject.update({
-          where: { id: existing.id },
+    // Check if the class exists first
+    const parentClass = await prisma.class.findUnique({
+      where: { id: classId },
+    });
+    if (!parentClass) {
+      return res.status(404).json({ success: false, message: "Class not found." });
+    }
+
+    // Check if subject code already exists globally
+    const existingSubjectCode = await prisma.subject.findFirst({
+      where: {
+        code: {
+          equals: code.toUpperCase().trim(),
+          mode: "insensitive"
+        }
+      }
+    });
+
+    if (existingSubjectCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject with this code already exists.",
+      });
+    }
+
+    // Create new subject
+    const subject = await prisma.subject.create({
+      data: {
+        name,
+        code: code.toUpperCase().trim(),
+        type,
+        classId,
+      },
+    });
+
+    // Create assignments for all selected sections if teacherId is provided and not 'unassigned'
+    if (Array.isArray(sectionIds) && sectionIds.length > 0 && teacherId && teacherId !== "unassigned") {
+      for (const sectionId of sectionIds) {
+        await prisma.teacherSectionSubject.create({
           data: {
-            name,
-            type,
-            teacherId: teacherResult.id,
-            teacherName: teacherResult.name,
+            teacherId,
+            sectionId,
+            subjectId: subject.id,
           },
         });
-        createdSubjects.push(updated);
-      } else {
-        // Create new subject
-        const newSubject = await prisma.dynamicSubject.create({
-          data: {
-            name,
-            code: code.toUpperCase(),
-            type,
-            classId: academicClass.id,
-            className: academicClass.name,
-            section: section ? section.trim() : null,
-            teacherId: teacherResult.id,
-            teacherName: teacherResult.name,
-          },
-        });
-        createdSubjects.push(newSubject);
       }
     }
 
     return res.status(201).json({
       success: true,
-      message: `Successfully created/updated ${createdSubjects.length} subjects.`,
-      data: createdSubjects,
+      message: "Subject created successfully.",
+      data: subject,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -267,50 +228,115 @@ export const createSubject = async (req: any, res: Response) => {
   }
 };
 
-// 3. UPDATE SUBJECT (updates a single subject entry)
+// 3. UPDATE SUBJECT (updates subject details or assignment details)
 export const updateSubject = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { name, code, type, teacherName, classVal, section } = req.body;
+    const { name, code, type, classId, sectionIds = [], teacherId = "" } = req.body;
 
-    const existingSubject = await prisma.dynamicSubject.findUnique({
-      where: { id: String(id) },
+    if (!name || !code || !classId) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject name, code, and class assignment are required.",
+      });
+    }
+
+    // Find the subject record
+    let subjectId = "";
+    const tss = await prisma.teacherSectionSubject.findUnique({
+      where: { id },
     });
 
-    if (!existingSubject) {
-      return res.status(404).json({ success: false, message: "Subject not found" });
+    if (tss) {
+      subjectId = tss.subjectId;
+    } else {
+      const subject = await prisma.subject.findUnique({
+        where: { id },
+      });
+      if (!subject) {
+        return res.status(404).json({ success: false, message: "Subject not found." });
+      }
+      subjectId = subject.id;
     }
 
-    const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
-    if (code !== undefined) updateData.code = code.toUpperCase();
-    if (type !== undefined) updateData.type = type;
-
-    if (teacherName !== undefined) {
-      const teacherResult = await resolveTeacherByName(teacherName);
-      updateData.teacherId = teacherResult.id;
-      updateData.teacherName = teacherResult.name;
-    }
-
-    if (classVal !== undefined) {
-      const academicClass = await getOrCreateClass(classVal);
-      updateData.classId = academicClass.id;
-      updateData.className = academicClass.name;
-    }
-
-    if (section !== undefined) {
-      updateData.section = section ? section.trim() : null;
-    }
-
-    const updated = await prisma.dynamicSubject.update({
-      where: { id: String(id) },
-      data: updateData,
+    // Check if subject code already exists globally on ANOTHER subject
+    const existingSubjectCode = await prisma.subject.findFirst({
+      where: {
+        code: {
+          equals: code.toUpperCase().trim(),
+          mode: "insensitive"
+        },
+        id: {
+          not: subjectId
+        }
+      }
     });
+
+    if (existingSubjectCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject with this code already exists.",
+      });
+    }
+
+    // Update parent subject
+    await prisma.subject.update({
+      where: { id: subjectId },
+      data: {
+        name,
+        code: code.toUpperCase().trim(),
+        type,
+        classId,
+      },
+    });
+
+    // Handle teaching assignments
+    if (teacherId && teacherId !== "unassigned" && Array.isArray(sectionIds) && sectionIds.length > 0) {
+      // Get all current assignments for this subject
+      const currentAssignments = await prisma.teacherSectionSubject.findMany({
+        where: { subjectId },
+      });
+
+      // Delete assignments for sections that are no longer selected
+      const toDelete = currentAssignments.filter(a => !sectionIds.includes(a.sectionId));
+      for (const tssDel of toDelete) {
+        await prisma.teacherSectionSubject.delete({
+          where: { id: tssDel.id }
+        });
+      }
+
+      // Upsert/Create assignments for selected sections
+      for (const secId of sectionIds) {
+        const existing = currentAssignments.find(a => a.sectionId === secId);
+        if (existing) {
+          // Update teacher if changed
+          if (existing.teacherId !== teacherId) {
+            await prisma.teacherSectionSubject.update({
+              where: { id: existing.id },
+              data: { teacherId },
+            });
+          }
+        } else {
+          // Create new assignment
+          await prisma.teacherSectionSubject.create({
+            data: {
+              subjectId,
+              sectionId: secId,
+              teacherId,
+            },
+          });
+        }
+      }
+    } else {
+      // If teacher is unassigned or no sections are selected, remove all teaching assignments for this subject
+      await prisma.teacherSectionSubject.deleteMany({
+        where: { subjectId },
+      });
+    }
 
     return res.status(200).json({
       success: true,
       message: "Subject updated successfully",
-      data: updated,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -321,7 +347,7 @@ export const updateSubject = async (req: Request, res: Response) => {
   }
 };
 
-// 4. BULK DELETE SUBJECTS
+// 4. BULK DELETE SUBJECTS / ASSIGNMENTS
 export const bulkDeleteSubjects = async (req: Request, res: Response) => {
   try {
     const { ids } = req.body;
@@ -330,17 +356,44 @@ export const bulkDeleteSubjects = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "Invalid or empty subject IDs list." });
     }
 
-    // Perform deletion
-    const deleteResult = await prisma.dynamicSubject.deleteMany({
-      where: {
-        id: { in: ids },
-      },
-    });
+    for (const id of ids) {
+      const tss = await prisma.teacherSectionSubject.findUnique({
+        where: { id },
+      });
+
+      if (tss) {
+        // Delete the assignment
+        await prisma.teacherSectionSubject.delete({
+          where: { id },
+        });
+
+        // Cleanup: If parent Subject has no other assignments left, delete it too
+        const remainingCount = await prisma.teacherSectionSubject.count({
+          where: { subjectId: tss.subjectId },
+        });
+
+        if (remainingCount === 0) {
+          await prisma.subject.delete({
+            where: { id: tss.subjectId },
+          });
+        }
+      } else {
+        // Delete the Subject directly
+        const subject = await prisma.subject.findUnique({
+          where: { id },
+        });
+
+        if (subject) {
+          await prisma.subject.delete({
+            where: { id },
+          });
+        }
+      }
+    }
 
     return res.status(200).json({
       success: true,
-      message: `Successfully deleted ${deleteResult.count} subjects.`,
-      count: deleteResult.count,
+      message: `Successfully deleted selected subjects/assignments.`,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -351,14 +404,10 @@ export const bulkDeleteSubjects = async (req: Request, res: Response) => {
   }
 };
 
-// 5. GET ALL DYNAMIC CLASSES (for filtering)
+// 5. GET ALL CLASSES (for dynamic filters & dropdown options)
 export const getClasses = async (req: Request, res: Response) => {
   try {
     const classes = await prisma.class.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
       orderBy: {
         name: "asc",
       },
@@ -373,6 +422,135 @@ export const getClasses = async (req: Request, res: Response) => {
       success: false,
       message: "Error fetching classes",
       error: error.message,
+    });
+  }
+};
+
+// 6. GET SECTIONS FOR A CLASS
+export const getSectionsByClass = async (req: Request, res: Response) => {
+  try {
+    const classId = req.params.classId as string;
+
+    const sections = await prisma.section.findMany({
+      where: {
+        classId: classId,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: sections,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching sections for class",
+      error: error.message,
+    });
+  }
+};
+
+// 7. GET ALL TEACHERS (for dynamic dropdown)
+export const getTeachers = async (req: Request, res: Response) => {
+  try {
+    const teachers = await prisma.teacher.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+      },
+      orderBy: {
+        firstName: "asc",
+      },
+    });
+
+    const formattedTeachers = teachers.map((t) => ({
+      id: t.id,
+      name: `${t.firstName} ${t.lastName}`.trim() || t.email || "Unnamed Teacher",
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formattedTeachers,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching teachers",
+      error: error.message,
+    });
+  }
+};
+
+// 8. GET SINGLE SUBJECT BY ID (with all assigned sections & teacher)
+export const getSubjectById = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+
+    const tss = await prisma.teacherSectionSubject.findUnique({
+      where: { id },
+      include: {
+        subject: {
+          include: {
+            teachingAssignments: true
+          }
+        }
+      }
+    });
+
+    let subject;
+    let selectedTeacherId = "unassigned";
+
+    if (tss) {
+      subject = tss.subject;
+      selectedTeacherId = tss.teacherId;
+    } else {
+      subject = await prisma.subject.findUnique({
+        where: { id },
+        include: {
+          teachingAssignments: true
+        }
+      });
+    }
+
+    if (!subject) {
+      return res.status(404).json({
+        success: false,
+        message: "Subject not found."
+      });
+    }
+
+    const sectionIds = subject.teachingAssignments.map(ta => ta.sectionId);
+    
+    // Fallback to first assignment's teacher if we queried directly via Subject ID
+    if (!tss && subject.teachingAssignments.length > 0) {
+      const firstAssignment = subject.teachingAssignments[0];
+      if (firstAssignment) {
+        selectedTeacherId = firstAssignment.teacherId;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: subject.id,
+        name: subject.name,
+        code: subject.code,
+        type: subject.type,
+        classId: subject.classId,
+        sectionIds,
+        teacherId: selectedTeacherId
+      }
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving subject details",
+      error: error.message
     });
   }
 };

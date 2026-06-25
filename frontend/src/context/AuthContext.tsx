@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, useEffect, type ReactNode } from "react";
 import axios from "axios";
 
 export interface StudentProfile {
@@ -50,10 +50,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [teacherData, setTeacherData] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // const logout = () => {
-  //   localStorage.clear();
-  //   window.location.href = "/login";
-  // };
+  const logout = () => {
+    localStorage.clear();
+    window.location.href = "/student/dashboard";
+  };
 
   useEffect(() => {
     const hydrateSession = async () => {
@@ -110,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sectionName: globalSectionName,
         sectionId: globalSectionId,
         loading, 
+        logout,
       }}
     >
       {children}

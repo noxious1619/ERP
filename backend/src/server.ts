@@ -15,6 +15,8 @@ import staffRoutes from './routes/staffRoutes.js';
 import parentRoutes from './routes/parentRoutes.js';
 import examRoutes from './routes/examRoutes.js';
 import adminNoticeRoutes from './routes/adminNoticeRoutes.js';
+import adminSubjectRoutes from './routes/adminSubjectRoutes.js';
+
 
 dotenv.config();
 
@@ -40,6 +42,8 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/admin', adminNoticeRoutes);
+app.use('/api/admin/subjects', adminSubjectRoutes);
+
 
 
 // Health Check

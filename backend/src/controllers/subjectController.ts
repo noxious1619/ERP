@@ -154,10 +154,53 @@ export const getAllSubjects = async (req: Request, res: Response) => {
   }
 };
 
-// 2. CREATE SUBJECT (supports assigning to class, multiple sections and teacher)
+async function getOrCreateDummyTeacher() {
+  const dummyEmail = "unassigned@erp.com";
+  const dummyEmployeeId = "TCH_UNASSIGNED";
+
+  // Check if teacher exists
+  let teacher = await prisma.teacher.findUnique({
+    where: { employeeId: dummyEmployeeId },
+  });
+
+  if (!teacher) {
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { email: dummyEmail },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: "Unassigned Teacher",
+          email: dummyEmail,
+          passwordHash: "",
+          role: "TEACHER",
+          isActive: false,
+        },
+      });
+    }
+
+    teacher = await prisma.teacher.create({
+      data: {
+        firstName: "Unassigned",
+        lastName: "",
+        employeeId: dummyEmployeeId,
+        joiningDate: new Date(),
+        userId: user.id,
+        email: dummyEmail,
+        status: "INACTIVE",
+      },
+    });
+  }
+
+  return teacher;
+}
+
+// 2. CREATE SUBJECT (supports assigning to class and sections)
 export const createSubject = async (req: Request, res: Response) => {
   try {
-    const { name, code, type = "Theory", classId, sectionIds = [], teacherId = "" } = req.body;
+    const { name, code, type = "Theory", classId, sectionIds = [] } = req.body;
 
     if (!name || !code || !classId) {
       return res.status(400).json({
@@ -201,12 +244,13 @@ export const createSubject = async (req: Request, res: Response) => {
       },
     });
 
-    // Create assignments for all selected sections if teacherId is provided and not 'unassigned'
-    if (Array.isArray(sectionIds) && sectionIds.length > 0 && teacherId && teacherId !== "unassigned") {
+    // Create assignments for all selected sections under dummy teacher
+    if (Array.isArray(sectionIds) && sectionIds.length > 0) {
+      const dummyTeacher = await getOrCreateDummyTeacher();
       for (const sectionId of sectionIds) {
         await prisma.teacherSectionSubject.create({
           data: {
-            teacherId,
+            teacherId: dummyTeacher.id,
             sectionId,
             subjectId: subject.id,
           },
@@ -228,11 +272,11 @@ export const createSubject = async (req: Request, res: Response) => {
   }
 };
 
-// 3. UPDATE SUBJECT (updates subject details or assignment details)
+// 3. UPDATE SUBJECT (updates subject details and section assignments)
 export const updateSubject = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { name, code, type, classId, sectionIds = [], teacherId = "" } = req.body;
+    const { name, code, type, classId, sectionIds = [] } = req.body;
 
     if (!name || !code || !classId) {
       return res.status(400).json({
@@ -290,48 +334,43 @@ export const updateSubject = async (req: Request, res: Response) => {
       },
     });
 
-    // Handle teaching assignments
-    if (teacherId && teacherId !== "unassigned" && Array.isArray(sectionIds) && sectionIds.length > 0) {
-      // Get all current assignments for this subject
-      const currentAssignments = await prisma.teacherSectionSubject.findMany({
-        where: { subjectId },
+    // Update teaching assignments for sections under dummy teacher
+    const dummyTeacher = await getOrCreateDummyTeacher();
+
+    // Get all current assignments for this subject
+    const currentAssignments = await prisma.teacherSectionSubject.findMany({
+      where: { subjectId },
+    });
+
+    // Delete assignments for sections that are no longer selected
+    const toDelete = currentAssignments.filter(a => !sectionIds.includes(a.sectionId));
+    for (const tssDel of toDelete) {
+      await prisma.teacherSectionSubject.delete({
+        where: { id: tssDel.id }
       });
+    }
 
-      // Delete assignments for sections that are no longer selected
-      const toDelete = currentAssignments.filter(a => !sectionIds.includes(a.sectionId));
-      for (const tssDel of toDelete) {
-        await prisma.teacherSectionSubject.delete({
-          where: { id: tssDel.id }
-        });
-      }
-
-      // Upsert/Create assignments for selected sections
-      for (const secId of sectionIds) {
-        const existing = currentAssignments.find(a => a.sectionId === secId);
-        if (existing) {
-          // Update teacher if changed
-          if (existing.teacherId !== teacherId) {
-            await prisma.teacherSectionSubject.update({
-              where: { id: existing.id },
-              data: { teacherId },
-            });
-          }
-        } else {
-          // Create new assignment
-          await prisma.teacherSectionSubject.create({
-            data: {
-              subjectId,
-              sectionId: secId,
-              teacherId,
-            },
+    // Create/update assignments for selected sections
+    for (const secId of sectionIds) {
+      const existing = currentAssignments.find(a => a.sectionId === secId);
+      if (existing) {
+        // Ensure the teacher is the dummy teacher
+        if (existing.teacherId !== dummyTeacher.id) {
+          await prisma.teacherSectionSubject.update({
+            where: { id: existing.id },
+            data: { teacherId: dummyTeacher.id },
           });
         }
+      } else {
+        // Create new assignment
+        await prisma.teacherSectionSubject.create({
+          data: {
+            subjectId,
+            sectionId: secId,
+            teacherId: dummyTeacher.id,
+          },
+        });
       }
-    } else {
-      // If teacher is unassigned or no sections are selected, remove all teaching assignments for this subject
-      await prisma.teacherSectionSubject.deleteMany({
-        where: { subjectId },
-      });
     }
 
     return res.status(200).json({
@@ -503,11 +542,9 @@ export const getSubjectById = async (req: Request, res: Response) => {
     });
 
     let subject;
-    let selectedTeacherId = "unassigned";
 
     if (tss) {
       subject = tss.subject;
-      selectedTeacherId = tss.teacherId;
     } else {
       subject = await prisma.subject.findUnique({
         where: { id },
@@ -525,14 +562,6 @@ export const getSubjectById = async (req: Request, res: Response) => {
     }
 
     const sectionIds = subject.teachingAssignments.map(ta => ta.sectionId);
-    
-    // Fallback to first assignment's teacher if we queried directly via Subject ID
-    if (!tss && subject.teachingAssignments.length > 0) {
-      const firstAssignment = subject.teachingAssignments[0];
-      if (firstAssignment) {
-        selectedTeacherId = firstAssignment.teacherId;
-      }
-    }
 
     return res.status(200).json({
       success: true,
@@ -542,8 +571,7 @@ export const getSubjectById = async (req: Request, res: Response) => {
         code: subject.code,
         type: subject.type,
         classId: subject.classId,
-        sectionIds,
-        teacherId: selectedTeacherId
+        sectionIds
       }
     });
   } catch (error: any) {

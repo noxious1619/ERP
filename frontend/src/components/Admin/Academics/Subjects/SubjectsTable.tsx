@@ -61,7 +61,6 @@ export default function SubjectsTable({
             <th className="px-4 py-4 text-left font-semibold text-gray-900 sticky top-0 bg-gray-50 z-10 border-b border-gray-200">Sub Name</th>
             <th className="px-4 py-4 text-left font-semibold text-gray-900 sticky top-0 bg-gray-50 z-10 border-b border-gray-200">Sub Code</th>
             <th className="px-4 py-4 text-left font-semibold text-gray-900 sticky top-0 bg-gray-50 z-10 border-b border-gray-200">Classes/Sections</th>
-            <th className="px-4 py-4 text-left font-semibold text-gray-900 sticky top-0 bg-gray-50 z-10 border-b border-gray-200">Assigned Teachers</th>
             <th className="px-4 py-4 text-left font-semibold text-gray-900 sticky top-0 bg-gray-50 z-10 border-b border-gray-200">Type</th>
             <th className="px-6 py-4 text-right sticky top-0 bg-gray-50 z-10 border-b border-gray-200">
               <div className="flex items-center justify-end gap-3.5">
@@ -99,7 +98,7 @@ export default function SubjectsTable({
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={7} className="px-6 py-12 text-center text-gray-500 font-medium">
+              <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium">
                 <div className="flex items-center justify-center gap-2">
                   <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
                   Loading subjects...
@@ -108,7 +107,7 @@ export default function SubjectsTable({
             </tr>
           ) : subjects.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-12 text-center text-gray-400 font-medium">
+              <td colSpan={6} className="px-6 py-12 text-center text-gray-400 font-medium">
                 No subjects found matching your filters.
               </td>
             </tr>
@@ -143,9 +142,6 @@ export default function SubjectsTable({
                         </span>
                       ))}
                     </div>
-                  </td>
-                  <td className="px-4 py-5 text-gray-700 leading-relaxed max-w-[240px]">
-                    {subject.teachers.join(", ")}
                   </td>
                   <td className="px-4 py-5">
                     <TypeBadge type={subject.type} />

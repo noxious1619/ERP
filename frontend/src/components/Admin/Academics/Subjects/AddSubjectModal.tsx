@@ -21,11 +21,9 @@ export default function AddSubjectModal({
   const [subjectCode, setSubjectCode] = useState("")
   const [classVal, setClassVal] = useState("")
   const [selectedSections, setSelectedSections] = useState<string[]>([])
-  const [teachers, setTeachers] = useState("")
   const [subjectType, setSubjectType] = useState<"Theory" | "Lab">("Theory")
 
   // Dynamic Options
-  const [teachersList, setTeachersList] = useState<any[]>([])
   const [sectionsList, setSectionsList] = useState<any[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -45,23 +43,9 @@ export default function AddSubjectModal({
     }
   }, [isOpen])
 
-  // Fetch teachers and prepopulate on open
+  // Fetch sections and prepopulate details on open
   useEffect(() => {
     if (!isOpen) return
-
-    const fetchTeachers = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        const res = await axios.get("http://localhost:5000/api/admin/subjects/teachers", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (res.data.success) {
-          setTeachersList(res.data.data)
-        }
-      } catch (err) {
-        console.error("Error fetching teachers:", err)
-      }
-    }
 
     const fetchSections = async (classId: string) => {
       try {
@@ -90,7 +74,6 @@ export default function AddSubjectModal({
           setSubjectType(detail.type)
           setClassVal(detail.classId)
           setSelectedSections(detail.sectionIds || [])
-          setTeachers(detail.teacherId || "unassigned")
           if (detail.classId) {
             fetchSections(detail.classId)
           }
@@ -100,20 +83,16 @@ export default function AddSubjectModal({
       }
     }
 
-    fetchTeachers()
     setError(null)
 
-    // Prepopulate fields if in edit mode
     if (isEditMode && subjectToEdit) {
       fetchSubjectDetails(subjectToEdit.id)
     } else {
-      // Clear fields if in add mode
       setSubjectName("")
       setSubjectCode("")
       setSubjectType("Theory")
       setClassVal("")
       setSelectedSections([])
-      setTeachers("")
       setSectionsList([])
     }
   }, [isOpen, isEditMode, subjectToEdit])
@@ -146,8 +125,8 @@ export default function AddSubjectModal({
     e.preventDefault()
     setError(null)
 
-    if (!subjectName.trim() || !subjectCode.trim() || !classVal || selectedSections.length === 0 || !teachers) {
-      setError("All fields are required. Please select a class, at least one section, and teacher (or 'Unassigned').")
+    if (!subjectName.trim() || !subjectCode.trim() || !classVal || selectedSections.length === 0) {
+      setError("All fields are required. Please select a class and at least one section.")
       return
     }
 
@@ -160,7 +139,6 @@ export default function AddSubjectModal({
         type: subjectType,
         classId: classVal,
         sectionIds: selectedSections,
-        teacherId: teachers,
       }
 
       if (isEditMode && subjectToEdit) {
@@ -315,30 +293,6 @@ export default function AddSubjectModal({
                   })}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Assigned Teachers Field */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Assigned Teacher</label>
-            <div className="relative">
-              <select
-                value={teachers}
-                onChange={(e) => {
-                  setTeachers(e.target.value)
-                  setError(null)
-                }}
-                className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 pr-10 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer font-medium"
-              >
-                <option value="">Select Teacher</option>
-                <option value="unassigned">Unassigned</option>
-                {teachersList.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
             </div>
           </div>
 

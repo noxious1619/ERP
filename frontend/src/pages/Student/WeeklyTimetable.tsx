@@ -1,18 +1,28 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import useAuth from "../../hooks/useAuth"; // ✅ 1. Bring in auth hook
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import TimetableHeader from "../../components/Student/Timetable/Header";
 import WeeklyTimetableGrid from "../../components/Student/Timetable/WeeklyTimetableGrid";
 import type { TimetableEntry } from "../../types";
 
 const WeeklyTimetable = () => {
+  // ✅ 2. Extract studentData to get the dynamic section ID
+  const { studentData, loading: authLoading } = useAuth();
+
   const [scheduleData, setScheduleData] = useState<TimetableEntry[]>([]);
+  // Catch the new label for the UI and PDF generator
+  const [sectionLabel, setSectionLabel] = useState<string>("Class Timetable");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const targetSectionId = "b7ffe974-a889-408e-886f-7a8109501ee2";
+  // ✅ 3. Make the target ID dynamic based on the logged-in student
+  const targetSectionId = studentData?.sectionId;
 
   useEffect(() => {
+    // Wait until we actually have the sectionId from the auth hook
+    if (!targetSectionId) return;
+
     const fetchWeeklySchedule = async () => {
       try {
         setLoading(true);
@@ -20,14 +30,23 @@ const WeeklyTimetable = () => {
         
         const token = localStorage.getItem("token");
 
-        const response = await axios.get(`http://localhost:5000/api/academic/timetable/section/${targetSectionId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
+        // ✅ 4. FIXED PATH: Added /weekly to match your Express router
+        const response = await axios.get(
+          `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`, 
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        });
+        );
 
         if (response.data.success) {
+          console.log("Loaded weekly timetable data:", response.data.data);
           setScheduleData(response.data.data);
+          // Set the label from the backend response
+          if (response.data.sectionLabel) {
+            setSectionLabel(response.data.sectionLabel);
+          }
         } else {
           setError(response.data.message || "Failed to load database timetable elements.");
         }
@@ -41,13 +60,26 @@ const WeeklyTimetable = () => {
     fetchWeeklySchedule();
   }, [targetSectionId]);
 
+  // Provide a smooth loading state while Auth hydrates
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FE] text-slate-400 font-semibold text-xs tracking-wider uppercase">
+        Verifying secure profile session...
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-[#F8F9FE]">
       <Navbar />
       <div className="flex flex-1 flex-col h-screen min-w-0">
         {/* Sticky Header */}
         <div className="px-10 pt-8 py-4 shrink-0 bg-[#F5F6FA]">
-          <TimetableHeader />
+          {/* Pass the data down to the header for the PDF button */}
+          <TimetableHeader 
+            sectionLabel={sectionLabel} 
+            scheduleData={scheduleData} 
+          />
         </div>
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

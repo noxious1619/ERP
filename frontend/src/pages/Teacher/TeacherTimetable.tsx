@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import useAuth from "../../hooks/useAuth";
 import axios from "axios";
 import TeacherNavbar from "../../components/Teacher/Dashboard/Navbar";
 import CalendarSection from "../../components/Student/Dashboard/Calendar";
@@ -37,7 +38,6 @@ interface ClassDailyItem {
   duration?: string;
 }
 
-// Full week entry shape from getWeeklyTimetableBySection
 interface WeeklyTimetableEntry {
   id: string;
   day: string;
@@ -48,32 +48,32 @@ interface WeeklyTimetableEntry {
   room: string | null;
   color: string | null;
   subject?: { id: string; name: string; code: string } | null;
-  teacher?: { id: string; name: string } | null;
+  teacher?: { id: string; firstName: string; lastName: string } | null;
+  displayTeacherName?: string | null;
 }
 
-// Full week entry shape from getTeacherMySubjectWeekly
 interface MySubjectWeeklyEntry {
   id: string;
   day: string;
-  startTime: string;
-  isBreak: boolean;
-  breakLabel?: string;
-  code: string;
-  subject: string; // class name
-  professor?: string; // subject name
+  time: string; // Used in your custom teacher controller
+  endTime: string;
   room: string;
   color: string;
+  subject: string; 
+  code: string;
+  sectionLabel: string;
 }
 
 const TeacherTimetablePage = () => {
   const [filterMode, setFilterMode] = useState<TeacherFilterMode>("class");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  
+  // ✅ Extract teacherData from auth context
+  const { teacherData } = useAuth(); 
 
   // ─── Sections from teacher profile ───────────────────────────────────────
   const [teacherSections, setTeacherSections] = useState<TeacherSection[]>([]);
-  const [selectedSection, setSelectedSection] = useState<TeacherSection | null>(
-    null,
-  );
+  const [selectedSection, setSelectedSection] = useState<TeacherSection | null>(null);
   const [teacherName, setTeacherName] = useState("");
 
   // ─── Class-wise daily data (left schedule cards) ──────────────────────────
@@ -82,9 +82,7 @@ const TeacherTimetablePage = () => {
   const [classError, setClassError] = useState<string | null>(null);
 
   // ─── Class-wise FULL WEEK data (for right panel calendar filter) ──────────
-  const [classWeeklyData, setClassWeeklyData] = useState<
-    WeeklyTimetableEntry[]
-  >([]);
+  const [classWeeklyData, setClassWeeklyData] = useState<WeeklyTimetableEntry[]>([]);
   const [classWeeklyLoading, setClassWeeklyLoading] = useState(false);
 
   // ─── My Subject daily data (left schedule cards) ─────────────────────────
@@ -93,35 +91,42 @@ const TeacherTimetablePage = () => {
   const [mySubjectError, setMySubjectError] = useState<string | null>(null);
 
   // ─── My Subject FULL WEEK data (for right panel calendar filter) ──────────
-  const [mySubjectWeeklyData, setMySubjectWeeklyData] = useState<
-    MySubjectWeeklyEntry[]
-  >([]);
+  const [mySubjectWeeklyData, setMySubjectWeeklyData] = useState<MySubjectWeeklyEntry[]>([]);
   const [mySubjectWeeklyLoading, setMySubjectWeeklyLoading] = useState(false);
+  
   const ACTIVE_DAY = getCurrentAPIDay();
 
-  // ─── 1. Fetch teacher profile ─────────────────────────────────────────────
+  // ─── 1. Initialize Profile State from useAuth (NO API CALL NEEDED) ────────
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(
-          "http://localhost:5000/api/teachers/me",
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        if (response.data.success) {
-          const data = response.data.data;
-          setTeacherSections(data.sections);
-          setTeacherName(`${data.firstName} ${data.lastName}`.trim());
-          if (data.sections.length > 0) setSelectedSection(data.sections[0]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch teacher profile", err);
-      }
-    };
-    fetchProfile();
-  }, []);
+    if (teacherData && teacherData.teachingAssignments) {
+      // Set Teacher Name
+      setTeacherName(`${teacherData.firstName} ${teacherData.lastName}`.trim());
 
-  // ─── 2. Fetch class-wise DAILY (left cards) when section changes ──────────
+      // Extract sections from teaching assignments safely
+      const mappedSections = teacherData.teachingAssignments.map((assignment: any) => ({
+        id: assignment.section.id,
+        name: assignment.section.name,
+        academicClass: {
+          id: assignment.section.academicClass.id,
+          name: assignment.section.academicClass.name,
+        }
+      }));
+
+      // Remove duplicates (in case teacher teaches 2 subjects in the same section)
+      const uniqueSections = Array.from(
+        new Map(mappedSections.map((item: TeacherSection) => [item.id, item])).values()
+      ) as TeacherSection[];
+
+      setTeacherSections(uniqueSections);
+      
+      // Auto-select the first section if one isn't selected yet
+      if (uniqueSections.length > 0 && !selectedSection) {
+        setSelectedSection(uniqueSections[0]);
+      }
+    }
+  }, [teacherData]);
+
+  // ─── 2. Fetch class-wise DAILY (left cards) ───────────────────────────────
   useEffect(() => {
     if (!selectedSection || filterMode !== "class") return;
     const fetchClassDaily = async () => {
@@ -130,26 +135,24 @@ const TeacherTimetablePage = () => {
         setClassError(null);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `http://localhost:5000/api/academic/timetable/section/${selectedSection.id}/daily`,
+          `http://localhost:5000/api/timetable/section/${selectedSection.id}/daily`,
           {
             params: { day: ACTIVE_DAY },
             headers: { Authorization: `Bearer ${token}` },
-          },
+          }
         );
         if (response.data.success) setClassItems(response.data.data);
         else setClassError("Failed to load timetable.");
       } catch (err: any) {
-        setClassError(
-          err.response?.data?.message || "Error connecting to server.",
-        );
+        setClassError(err.response?.data?.message || "Error connecting to server.");
       } finally {
         setClassLoading(false);
       }
     };
     fetchClassDaily();
-  }, [selectedSection, filterMode]);
+  }, [selectedSection, filterMode, ACTIVE_DAY]);
 
-  // ─── 3. Fetch class-wise FULL WEEK (right panel) when section changes ─────
+  // ─── 3. Fetch class-wise FULL WEEK (right panel) ──────────────────────────
   useEffect(() => {
     if (!selectedSection) return;
     const fetchClassWeekly = async () => {
@@ -157,8 +160,8 @@ const TeacherTimetablePage = () => {
         setClassWeeklyLoading(true);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `http://localhost:5000/api/academic/timetable/section/${selectedSection.id}`,
-          { headers: { Authorization: `Bearer ${token}` } },
+          `http://localhost:5000/api/timetable/section/${selectedSection.id}/weekly`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.success) setClassWeeklyData(response.data.data);
       } catch (err) {
@@ -172,42 +175,40 @@ const TeacherTimetablePage = () => {
 
   // ─── 4. Fetch My Subject DAILY (left cards) ───────────────────────────────
   useEffect(() => {
-    if (filterMode !== "mySubject") return;
+    if (filterMode !== "mySubject" || !teacherData?.id) return;
     const fetchMySubjectDaily = async () => {
       try {
         setMySubjectLoading(true);
         setMySubjectError(null);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/academic/timetable/teacher/my-subject",
+          `http://localhost:5000/api/timetable/teacher/${teacherData.id}/daily`,
           {
             params: { day: ACTIVE_DAY },
             headers: { Authorization: `Bearer ${token}` },
-          },
+          }
         );
         if (response.data.success) setMySubjectItems(response.data.data);
         else setMySubjectError("Failed to load timetable.");
       } catch (err: any) {
-        setMySubjectError(
-          err.response?.data?.message || "Error connecting to server.",
-        );
+        setMySubjectError(err.response?.data?.message || "Error connecting to server.");
       } finally {
         setMySubjectLoading(false);
       }
     };
     fetchMySubjectDaily();
-  }, [filterMode]);
+  }, [filterMode, teacherData?.id, ACTIVE_DAY]);
 
   // ─── 5. Fetch My Subject FULL WEEK (right panel) ─────────────────────────
   useEffect(() => {
-    if (filterMode !== "mySubject") return;
+    if (filterMode !== "mySubject" || !teacherData?.id) return;
     const fetchMySubjectWeekly = async () => {
       try {
         setMySubjectWeeklyLoading(true);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/academic/timetable/teacher/my-subject/weekly",
-          { headers: { Authorization: `Bearer ${token}` } },
+          `http://localhost:5000/api/timetable/teacher/${teacherData.id}/weekly`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         if (response.data.success) setMySubjectWeeklyData(response.data.data);
       } catch (err) {
@@ -217,7 +218,7 @@ const TeacherTimetablePage = () => {
       }
     };
     fetchMySubjectWeekly();
-  }, [filterMode]);
+  }, [filterMode, teacherData?.id]);
 
   const sectionLabel = selectedSection
     ? `${selectedSection.academicClass.name} - ${selectedSection.name}`
@@ -263,13 +264,10 @@ const TeacherTimetablePage = () => {
             <TeacherDateScheduleCard
               filterMode={filterMode}
               selectedDate={selectedDate}
-              // Class mode — pass full week data, card filters by selected date
               classWeeklyData={classWeeklyData}
               classWeeklyLoading={classWeeklyLoading}
-              // My Subject mode — pass full week data, card filters by selected date
               mySubjectWeeklyData={mySubjectWeeklyData}
               mySubjectWeeklyLoading={mySubjectWeeklyLoading}
-              // PDF download props
               teacherName={teacherName}
               sectionLabel={sectionLabel}
             />

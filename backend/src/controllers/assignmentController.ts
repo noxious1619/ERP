@@ -79,6 +79,11 @@ export const getStudentAssignments = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const status = req.query.status as string; 
+    const skip = (page - 1) * limit;
+
     const student = await prisma.student.findUnique({
       where: { userId },
       select: { id: true, sectionId: true, section: { select: { classId: true } } }
@@ -88,27 +93,68 @@ export const getStudentAssignments = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: "Student record not found" });
     }
 
-    // 2. Fetch assignments matching Class + (Specific Section OR null)
-    const assignments = await prisma.assignment.findMany({
-      where: {
-        classId: student.section.classId,
-        OR: [
-          { sectionId: null },             
-          { sectionId: student.sectionId }
-        ]
-      },
-      include: {
-        subject: { select: { name: true } },
-        teacher: { select: { firstName: true, lastName: true } },
-        submissions: {
-          where: { studentId: student.id },
-          select: { status: true, score: true }
-        }
-      },
-      orderBy: { dueDate: 'asc' } 
-    });
+    const baseWhere: any = {
+      classId: student.section.classId,
+      OR: [
+        { sectionId: null },             
+        { sectionId: student.sectionId }
+      ]
+    };
+
+    // Logical evaluation using relation queries (some / none) and deadlines
+    if (status === 'COMPLETED') {
+      // Completed means a submission record successfully exists for this student
+      baseWhere.submissions = {
+        some: { studentId: student.id }
+      };
+    } else if (status === 'PENDING') {
+      // Pending means no submission record exists yet AND the deadline is in the future
+      baseWhere.submissions = {
+        none: { studentId: student.id }
+      };
+      baseWhere.dueDate = {
+        gte: new Date() 
+      };
+    } else if (status === 'OVERDUE') {
+      // Overdue means no submission record exists yet AND the deadline has passed
+      baseWhere.submissions = {
+        none: { studentId: student.id }
+      };
+      baseWhere.dueDate = {
+        lt: new Date() 
+      };
+    }
+
+    const [totalRecords, assignments] = await Promise.all([
+      prisma.assignment.count({ where: baseWhere }),
+      prisma.assignment.findMany({
+        where: baseWhere,
+        skip: skip,   
+        take: limit,  
+        include: {
+          subject: { select: { name: true } },
+          teacher: { select: { firstName: true, lastName: true } },
+          submissions: {
+            where: { studentId: student.id },
+            select: { status: true, marksObtained: true } 
+          }
+        },
+        orderBy: { dueDate: 'asc' } 
+      })
+    ]);
+
     const normalizedFeed = normalizeAssignmentsForStudent(assignments as any);
-    res.status(200).json({ success: true, data: normalizedFeed });
+    
+    res.status(200).json({ 
+      success: true, 
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalRecords / limit),
+        totalRecords: totalRecords,
+        limit: limit
+      },
+      data: normalizedFeed 
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -31,7 +31,7 @@ interface AuthContextType {
   sectionName: string | null;
   sectionId: string | null;
   loading: boolean;
-  logout: () => void;
+  // logout: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       } catch (err: any) {
         console.error("❌ useAuth: Session restoration failed:", err.response?.data?.message || err.message);
-        logout();
+        // logout();
       } finally {
         setLoading(false);
       }

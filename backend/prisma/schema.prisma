@@ -40,7 +40,6 @@ model User {
   attendanceMarked Attendance[]    @relation("MarkedBy")
   notices          Notice[]
   noticeViews      NoticeView[]
-  timetables       Timetable[]
   createdExams     ScheduledExam[]
 }
 
@@ -128,6 +127,7 @@ model Teacher {
   updatedAt         DateTime     @updatedAt
   assignments       Assignment[]
   gradedSubmissions Submission[] @relation("Grader")
+  timetables        Timetable[]  
 }
 
 model Staff {
@@ -241,7 +241,7 @@ model Timetable {
   startTime  String // "08:00" (stored in 24h format)
   endTime    String // "08:45"
   room       String? // "Room 402B" or "Lab 3"
-  color      String? // "bg-blue-100 text-blue-800" (for UI theme)
+  color      String? 
   isBreak    Boolean   @default(false)
   breakLabel String? // e.g., "Coffee Break & Social"
 
@@ -253,7 +253,7 @@ model Timetable {
   subject   Subject? @relation(fields: [subjectId], references: [id])
 
   teacherId String?
-  teacher   User?   @relation(fields: [teacherId], references: [id])
+  teacher   Teacher?   @relation(fields: [teacherId], references: [id])
 
   @@unique([sectionId, day, period])
   @@unique([teacherId, day, period])

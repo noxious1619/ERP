@@ -17,22 +17,21 @@ const DAY_COLUMNS: Record<DayOfWeek, number> = {
 };
 
 const DAYS_HEADER = [
-  { day: "Monday", date: "16" },
-  { day: "Tuesday", date: "17" },
-  { day: "Wednesday", date: "18" },
-  { day: "Thursday", date: "19" },
-  { day: "Friday", date: "20" },
-  { day: "Saturday", date: "21" },
+  { day: "Monday"},
+  { day: "Tuesday"},
+  { day: "Wednesday"},
+  { day: "Thursday"},
+  { day: "Friday"},
+  { day: "Saturday"},
 ];
 
 const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({
   entries,
 }) => {
-  // DYNAMIC SLOT CALCULATION: Extract all startTimes across your database data and sort them chronologically
+  // DYNAMIC SLOT CALCULATION: Extract ALL startTimes to build the Y-axis accurately
   const dynamicTimeSlots = useMemo(() => {
-    const times = entries
-      .filter((e) => !e.isBreak || e.startTime === "12:00") // keep 12:00 break for lunch label, exclude all other breaks
-      .map((e) => e.startTime);
+    // ⚡ FIX: We map all start times, including breaks, so the grid adapts perfectly to the DB
+    const times = entries.map((e) => e.startTime);
     return Array.from(new Set(times)).sort((a, b) => a.localeCompare(b));
   }, [entries]);
 
@@ -47,9 +46,6 @@ const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({
           >
             <span className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#666B78]">
               {item.day}
-            </span>
-            <span className="text-[16px] font-bold leading-[18px] text-[#2B2F38]">
-              {item.date}
             </span>
           </div>
         ))}
@@ -81,16 +77,9 @@ const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({
             ),
           )}
 
-          {/* Lunch Break */}
-          {/* <div className="absolute left-0 top-[310px] z-10 flex w-full items-center justify-center">
-            <div className="bg-[#F3F5FA] px-6 text-[11px] font-bold uppercase tracking-[4px]  text-gray-600">
-              Institutional Lunch Break
-            </div>
-          </div> */}
-
           {/* Cards */}
-          {entries.map((item) => {
-            const columnIndex = DAY_COLUMNS[item.day];
+          {entries.map((item: any) => {
+            const columnIndex = DAY_COLUMNS[item.day as DayOfWeek];
             const rowIndex = dynamicTimeSlots.indexOf(item.startTime);
 
             if (rowIndex === -1) return null;
@@ -106,13 +95,17 @@ const WeeklyTimetableGrid: React.FC<WeeklyTimetableGridProps> = ({
                 }}
               >
                 {item.isBreak ? (
-                  // Keeps layout spacing intact, showing an empty block when it's a break
-                  <div className="w-full h-[116px]" />
+                  // ⚡ FIX: Render a styled placeholder for the break block
+                  <div className="flex h-[116px] w-full items-center justify-center rounded-[20px] border-2 border-dashed border-[#D1D5E4] bg-[#F8F9FE]">
+                    <span className="px-2 text-center text-[11px] font-bold uppercase tracking-[2px] text-slate-400">
+                      {item.breakLabel || "BREAK"}
+                    </span>
+                  </div>
                 ) : (
                   <WeeklyClassCard
                     code={item.subject?.code || "N/A"}
                     subject={item.subject?.name || "No Subject"}
-                    teacher={item.teacher?.name || "Staff"}
+                    teacher={item.displayTeacherName || "Staff"}
                     location={item.room || "TBD"}
                     accentColor={item.color || "#0060AE"}
                   />

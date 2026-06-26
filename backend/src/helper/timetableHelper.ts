@@ -31,7 +31,7 @@ export const normalizeTimetable = (
       professor: item.isBreak 
         ? null 
         : item.teacher 
-          ? `${item.teacher.name || `${item.teacher.firstName || ''} ${item.teacher.lastName || ''}`}`.trim() 
+          ? `${item.teacher.firstName || ''} ${item.teacher.lastName || ''}`.trim() 
           : null
     };
   });

@@ -19,6 +19,9 @@ enum Role {
   STUDENT
   FINANCE
   PARENT
+  PRINCIPAL    // NEW
+  ACCOUNTANT   // NEW  
+  FRONT_DESK   // NEW
 }
 
 model User {
@@ -130,13 +133,27 @@ model Teacher {
   gradedSubmissions Submission[] @relation("Grader")
 }
 
+// Replace Staff model
 model Staff {
-  id          String   @id @default(uuid())
-  employeeId  String   @unique
-  department  String
-  designation String
-  joiningDate DateTime
-
+  id           String    @id @default(uuid())
+  employeeId   String    @unique
+  firstName    String
+  lastName     String
+  gender       String?
+  dateOfBirth  DateTime?
+  phone        String?
+  email        String?   @unique
+  address      String?
+  city         String?
+  state        String?
+  bloodGroup   String?
+  department   String?
+  designation  String
+  joiningDate  DateTime
+  status       String    @default("ACTIVE")
+  bio          String?
+  qualification String?
+  experience    Int?
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
 
@@ -185,7 +202,8 @@ model Section {
   name          String
   classId       String
   academicClass Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
-
+  capacity      Int     @default(50)
+  homeRoom      String?
   classTeacherId String?  @unique
   classTeacher   Teacher? @relation("ClassTeacher", fields: [classTeacherId], references: [id])
 

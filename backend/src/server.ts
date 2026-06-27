@@ -14,6 +14,8 @@ import teacherRoutes from './routes/teacherRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import parentRoutes from './routes/parentRoutes.js';
 import examRoutes from './routes/examRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+
 
 dotenv.config();
 
@@ -38,6 +40,7 @@ app.use('/api/grades', gradeRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/exams', examRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 // Health Check

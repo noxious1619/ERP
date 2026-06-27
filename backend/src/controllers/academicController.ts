@@ -60,10 +60,11 @@ export const createClass = async (req: any, res: Response) => {
 // Create a Section linked to a Class
 export const createSection = async (req: any, res: Response) => {
   try {
-    const { name, classId } = req.body;
+    const { name, classId, capacity, homeRoom } = req.body;
 
     const newSection = await prisma.section.create({
-      data: { name, classId },
+      data: { name, classId ,  capacity: capacity ? Number(capacity) : 50, // NEW
+        homeRoom: homeRoom || null   },
     });
 
     logActivity(req.user.id, 'CREATE', 'Section', newSection.id, null, newSection);
@@ -671,3 +672,244 @@ export const getDailyTimetableBySection = async (
   }
 };
  
+
+// GET /api/academic/classes?yearId=
+export const getClassesByYear = async (req: Request, res: Response) => {
+  try {
+    const { yearId } = req.query;
+
+    if (!yearId || typeof yearId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'yearId query parameter is required.'
+      });
+    }
+
+    const classes = await prisma.class.findMany({
+      where: { academicYearId: yearId },
+      orderBy: { name: 'asc' }
+    });
+
+    return res.status(200).json({ success: true, data: classes });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch classes.',
+      error: error.message
+    });
+  }
+};
+
+// GET /api/academic/sections?classId=
+export const getSectionsByClass = async (req: Request, res: Response) => {
+  try {
+    const { classId } = req.query;
+
+    if (!classId || typeof classId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'classId query parameter is required.'
+      });
+    }
+
+    const sections = await prisma.section.findMany({
+      where: { classId },
+     include:{
+    academicClass:{
+        select:{
+            id:true,
+            name:true
+        }
+    },
+    classTeacher:{
+        select:{
+            firstName:true,
+            lastName:true
+        }
+    },
+    _count:{
+        select:{
+            students:true
+        }
+    }
+},
+      orderBy: { name: 'asc' }
+    });
+
+    // Shape the response cleanly for the frontend
+   const shaped = sections.map(section => ({
+    id: section.id,
+    name: section.name,
+
+    classId: section.classId,
+    className: section.academicClass.name,
+
+    capacity: section.capacity,
+    homeRoom: section.homeRoom,
+
+    classTeacherName: section.classTeacher
+        ? `${section.classTeacher.firstName} ${section.classTeacher.lastName}`
+        : "Not Assigned",
+
+    studentCount: section._count.students
+}));
+
+    return res.status(200).json({ success: true, data: shaped });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch sections.',
+      error: error.message
+    });
+  }
+};
+
+// PATCH /api/academic/sections/:id
+export const updateSection = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const { name, homeRoom, capacity } = req.body
+
+    const existing = await prisma.section.findUnique({ where: { id } })
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "Section not found." })
+    }
+
+    const updated = await prisma.section.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(homeRoom !== undefined && { homeRoom: homeRoom || null }),
+        ...(capacity !== undefined && { capacity: Number(capacity) }),
+      }
+    })
+
+    return res.status(200).json({ success: true, data: updated })
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// DELETE /api/academic/sections/:id
+export const deleteSection = async (req: Request, res: Response) => {
+  try {
+  const id = req.params.id as string
+
+    const section = await prisma.section.findUnique({
+      where: { id },
+      include: { _count: { select: { students: true } } }
+    })
+
+    if (!section) {
+      return res.status(404).json({ success: false, message: "Section not found." })
+    }
+
+    if (section._count.students > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete section. ${section._count.students} student(s) are enrolled. Please reassign them first.`
+      })
+    }
+
+    await prisma.section.delete({ where: { id } })
+
+    return res.status(200).json({ success: true, message: "Section deleted successfully." })
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// DELETE /api/academic/classes/:id
+export const deleteClass = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+
+    const cls = await prisma.class.findUnique({
+      where: { id },
+      include: {
+        sections: {
+          include: {
+            _count: { select: { students: true } }
+          }
+        },
+        subjects: { select: { id: true } },
+        scheduledExams: { select: { id: true } },
+        assignments: { select: { id: true } },
+        assessmentComponents: { select: { id: true } },
+        feeComponents: { select: { id: true } }
+      }
+    })
+
+    if (!cls) {
+      return res.status(404).json({ success: false, message: "Class not found." })
+    }
+
+    // Build guard checks
+    const totalStudents = cls.sections.reduce((sum, s) => sum + s._count.students, 0)
+    const hasSubjects = cls.subjects.length > 0
+    const hasExams = cls.scheduledExams.length > 0
+    const hasAssignments = cls.assignments.length > 0
+    const hasFeeComponents = cls.feeComponents.length > 0
+
+    const reasons: string[] = []
+    if (totalStudents > 0) reasons.push(`${totalStudents} enrolled student(s)`)
+    if (hasSubjects) reasons.push(`${cls.subjects.length} subject(s)`)
+    if (hasExams) reasons.push(`${cls.scheduledExams.length} scheduled exam(s)`)
+    if (hasAssignments) reasons.push(`${cls.assignments.length} assignment(s)`)
+    if (hasFeeComponents) reasons.push(`${cls.feeComponents.length} fee component(s)`)
+
+    if (reasons.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete "${cls.name}". It has ${reasons.join(", ")}. Please clear all data first.`
+      })
+    }
+
+    // Safe to delete — cascade handles sections + TeacherSectionSubject
+    await prisma.class.delete({ where: { id } })
+
+    return res.status(200).json({ success: true, message: "Class deleted successfully." })
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+
+// GET /api/academic/subjects
+export const getSubjects = async (req: Request, res: Response) => {
+  try {
+    const subjects = await prisma.subject.findMany({
+      include: {
+        class: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    const shaped = subjects.map(subject => ({
+      id: subject.id,
+      name: subject.name,
+      code: subject.code,
+      classId: subject.classId,
+      className: subject.class.name,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: shaped,
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch subjects.",
+      error: error.message,
+    });
+  }
+};

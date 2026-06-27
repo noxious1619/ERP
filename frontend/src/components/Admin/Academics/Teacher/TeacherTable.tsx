@@ -1,27 +1,30 @@
 "use client";
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
-export type StatusType = "Active" | "On Leave";
-export type StaffType = {
+
+export type TeacherRowType = {
   id: string;
   employeeId: string;
   name: string;
-  role: string;
-  department: string;
-  joiningDate: string;
+  subject: string;
+  sections: string[];
+  qualification: string;
   contact: string;
-  status: StatusType;
+  status: string;
 };
 
-function StatusBadge({ status }: { status: StatusType }) {
-  const styles: Record<StatusType, string> = {
+type StatusType = "Active" | "On Leave";
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
     Active: "bg-green-100 text-green-700",
     "On Leave": "bg-yellow-100 text-yellow-700",
   };
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs font-medium ${styles[status]}`}
+      className={`rounded-full px-3 py-1 text-xs font-medium ${styles[status] ?? "bg-gray-100 text-gray-700"}`}
     >
       {status}
     </span>
@@ -31,40 +34,40 @@ function StatusBadge({ status }: { status: StatusType }) {
 const HEADERS = [
   "Employee ID",
   "Name",
-  "Role",
-  "Department",
-  "Joining Date",
+  "Subject",
+  "Sections",
+  "Qualification",
   "Contact",
   "Status",
 ];
 
-interface StaffTableProps {
-  staffList: StaffType[];
+interface TeacherTableProps {
+  teacherList: TeacherRowType[];
   loading?: boolean;
-  onEdit: (staff: StaffType) => void;
-  onDelete: (staff: StaffType) => void;
+  onEdit: (teacher: TeacherRowType) => void;
+  onDelete: (teacher: TeacherRowType) => void;
 }
 
-export default function StaffTable({
-  staffList,
+export default function TeacherTable({
+  teacherList,
   loading,
   onEdit,
   onDelete,
-}: StaffTableProps) {
+}: TeacherTableProps) {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string[]>([]);
 
   const allSelected =
-    staffList.length > 0 && selected.length === staffList.length;
+    teacherList.length > 0 && selected.length === teacherList.length;
   const toggleAll = () =>
-    setSelected(allSelected ? [] : staffList.map((s) => s.id));
+    setSelected(allSelected ? [] : teacherList.map((t) => t.id));
   const toggleOne = (id: string) =>
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
 
-  const selectedStaff = staffList.filter((s) => selected.includes(s.id));
-  const canAct = selectedStaff.length === 1;
+  const selectedTeachers = teacherList.filter((t) => selected.includes(t.id));
+  const canAct = selectedTeachers.length === 1;
 
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -90,11 +93,9 @@ export default function StaffTable({
             <th className="px-4 py-4 text-right">
               <div className="flex items-center justify-end gap-2">
                 <button
-                  onClick={() => canAct && onEdit(selectedStaff[0])}
+                  onClick={() => canAct && onEdit(selectedTeachers[0])}
                   disabled={!canAct}
-                  title={
-                    canAct ? "Edit staff" : "Select one staff member to edit"
-                  }
+                  title={canAct ? "Edit teacher" : "Select one teacher to edit"}
                   className={`p-1.5 rounded-lg transition-colors ${
                     canAct
                       ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
@@ -104,12 +105,10 @@ export default function StaffTable({
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => canAct && onDelete(selectedStaff[0])}
+                  onClick={() => canAct && onDelete(selectedTeachers[0])}
                   disabled={!canAct}
                   title={
-                    canAct
-                      ? "Delete staff"
-                      : "Select one staff member to delete"
+                    canAct ? "Delete teacher" : "Select one teacher to delete"
                   }
                   className={`p-1.5 rounded-lg transition-colors ${
                     canAct
@@ -138,40 +137,56 @@ export default function StaffTable({
                 ))}
               </tr>
             ))
-          ) : staffList.length > 0 ? (
-            staffList.map((staff) => (
+          ) : teacherList.length > 0 ? (
+            teacherList.map((teacher) => (
               <tr
-                key={staff.id}
+                key={teacher.id}
                 className={`border-b border-gray-50 hover:bg-gray-50/50 ${
-                  selected.includes(staff.id) ? "bg-blue-50/30" : ""
+                  selected.includes(teacher.id) ? "bg-blue-50/30" : ""
                 }`}
               >
                 <td className="px-4 py-4">
                   <input
                     type="checkbox"
-                    checked={selected.includes(staff.id)}
-                    onChange={() => toggleOne(staff.id)}
+                    checked={selected.includes(teacher.id)}
+                    onChange={() => toggleOne(teacher.id)}
                     className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
                   />
                 </td>
-                <td className="px-4 py-4 text-gray-600">{staff.employeeId}</td>
+                <td className="px-4 py-4 text-gray-600">
+                  {teacher.employeeId}
+                </td>
                 <td
                   className="px-4 py-4 font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                  onClick={() => navigate(`/admin/academics/staff/${staff.id}`)}
+                  onClick={() =>
+                    navigate(`/admin/academics/teachers/${teacher.id}`)
+                  }
                 >
-                  {staff.name}
+                  {teacher.name}
                 </td>
-                <td
-                  className="px-4 py-4 text-blue-600 hover:underline cursor-pointer"
-                  onClick={() => navigate(`/admin/academics/staff/${staff.id}`)}
-                >
-                  {staff.role}
-                </td>
-                <td className="px-4 py-4 text-gray-600">{staff.department}</td>
-                <td className="px-4 py-4 text-gray-600">{staff.joiningDate}</td>
-                <td className="px-4 py-4 text-gray-600">{staff.contact}</td>
+                <td className="px-4 py-4 text-gray-600">{teacher.subject}</td>
                 <td className="px-4 py-4">
-                  <StatusBadge status={staff.status} />
+                  <div className="flex flex-wrap gap-1.5">
+                    {teacher.sections.map((s, idx) => (
+                      <span
+                        key={idx}
+                        className={
+                          s !== "-"
+                            ? "bg-blue-50 text-blue-500 px-2 py-1 rounded-md text-xs font-medium"
+                            : "text-gray-600"
+                        }
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-4 py-4 text-gray-600">
+                  {teacher.qualification}
+                </td>
+                <td className="px-4 py-4 text-gray-600">{teacher.contact}</td>
+                <td className="px-4 py-4">
+                  <StatusBadge status={teacher.status} />
                 </td>
                 <td className="px-4 py-4" />
               </tr>
@@ -182,7 +197,7 @@ export default function StaffTable({
                 colSpan={9}
                 className="px-4 py-8 text-center text-sm text-gray-500"
               >
-                No staff members found matching your search or filters.
+                No teachers found matching your search or filters.
               </td>
             </tr>
           )}

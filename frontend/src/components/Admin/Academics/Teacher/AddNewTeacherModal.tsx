@@ -1,42 +1,74 @@
-import {  X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import useAuth from "../../../../hooks/useAuth";
-interface AddNewStaffModalProps {
+import { X, Plus } from "lucide-react";
+import TeacherAssignmentCard, {
+  type SubjectOption,
+  type SectionOption,
+  type TeacherAssignment,
+} from "./Teacherassignmentcard";
+
+interface AddNewTeacherModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
-export default function AddNewStaffModal({
+
+const EMPTY_ASSIGNMENT = (): TeacherAssignment => ({
+  subjectId: "",
+  classId: "",
+  sectionIds: [],
+  availableSections: [],
+  loading: false,
+});
+
+export default function AddNewTeacherModal({
   isOpen,
   onClose,
   onSuccess,
-}: AddNewStaffModalProps) {
+}: AddNewTeacherModalProps) {
+  // ── Personal fields ────────────────────────────────────────────────
   const [employeeId, setEmployeeId] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [role, setRole] = useState("");
-  const [subject, setSubject] = useState("");
-  const [classAssigned, setClassAssigned] = useState("");
-  const [contactNumber, setContactNumber] = useState("+91 ");
   const [email, setEmail] = useState("");
+  const [contactNumber, setContactNumber] = useState("+91 ");
   const [gender, setGender] = useState("");
+  const [bloodGroup, setBloodGroup] = useState("");
   const [dob, setDob] = useState("");
-  const [qualification, setQualification] = useState("");
-  const [bio, setBio] = useState("");
-  const [experience, setExperience] = useState("");
   const [joiningDate, setJoiningDate] = useState("");
+  const [designation, setDesignation] = useState("Teacher");
+  const [qualification, setQualification] = useState("");
+  const [specialization, setSpecialization] = useState("");
+  const [experience, setExperience] = useState("");
+  const [bio, setBio] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [stateVal, setStateVal] = useState("");
-  const [bloodGroup, setBloodGroup] = useState("");
+
+  // ── Assignment fields ──────────────────────────────────────────────
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [assignments, setAssignments] = useState<TeacherAssignment[]>([
+    EMPTY_ASSIGNMENT(),
+  ]);
+
+  // ── UI state ───────────────────────────────────────────────────────
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const submitErrorRef = useRef<HTMLDivElement>(null);
-  const [hasRequiredFieldError, setHasRequiredFieldError] = useState(false);
-  const { role: userRole } = useAuth();
-  const isSuperAdmin = userRole === "SUPER_ADMIN";
+  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Fetch subjects when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("http://localhost:5000/api/academic/subjects", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setSubjects(json.data);
+      })
+      .catch(console.error);
+  }, [isOpen]);
+
+  // Lock body scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -51,166 +83,177 @@ export default function AddNewStaffModal({
 
   if (!isOpen) return null;
 
+  // ── Helpers ────────────────────────────────────────────────────────
   const handleContactChange = (val: string) => {
-    if (!val.startsWith("+91")) {
-      setContactNumber("+91 ");
-    } else {
-      setContactNumber(val);
-    }
+    if (!val.startsWith("+91")) setContactNumber("+91 ");
+    else setContactNumber(val);
   };
 
   const resetForm = () => {
     setEmployeeId("");
     setFirstName("");
     setLastName("");
-    setRole("");
-    setSubject("");
-    setClassAssigned("");
-    setContactNumber("+91 ");
     setEmail("");
+    setContactNumber("+91 ");
     setGender("");
+    setBloodGroup("");
     setDob("");
     setJoiningDate("");
+    setDesignation("Teacher");
     setQualification("");
+    setSpecialization("");
     setExperience("");
+    setBio("");
     setAddress("");
     setCity("");
     setStateVal("");
-    setBloodGroup("");
-    setBio("");
+    setAssignments([EMPTY_ASSIGNMENT()]);
     setErrors({});
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    let missingRequiredField = false;
+    let hasMissing = false;
 
     if (!employeeId.trim()) {
       newErrors.employeeId = "Employee ID is required";
-      missingRequiredField = true;
+      hasMissing = true;
     }
-
     if (!firstName.trim()) {
       newErrors.firstName = "First Name is required";
-      missingRequiredField = true;
+      hasMissing = true;
     }
-
     if (!lastName.trim()) {
       newErrors.lastName = "Last Name is required";
-      missingRequiredField = true;
+      hasMissing = true;
     }
-
-    if (!role) {
-      newErrors.role = "Role selection is required";
-      missingRequiredField = true;
-    }
-
     if (!joiningDate) {
       newErrors.joiningDate = "Joining Date is required";
-      missingRequiredField = true;
+      hasMissing = true;
     }
 
     const cleanPhone = contactNumber.replace(/\s|-/g, "");
-    const phoneRegex = /^\+91\d{10}$/;
+    if (!/^\+91\d{10}$/.test(cleanPhone))
+      newErrors.contactNumber = "Must start with +91 and contain 10 digits";
 
-    if (!phoneRegex.test(cleanPhone)) {
-      newErrors.contactNumber =
-        "Contact number must start with +91 and contain exactly 10 digits";
-    }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      newErrors.email = "Please enter a valid email address";
 
-    if (email.trim()) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!emailRegex.test(email.trim())) {
-        newErrors.email = "Please enter a valid email address";
-      }
-    }
-
-    setHasRequiredFieldError(missingRequiredField);
     setErrors(newErrors);
-
+    if (hasMissing) scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     return Object.keys(newErrors).length === 0;
   };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
 
-    const isValid = validateForm();
+  // ── Assignment handlers ────────────────────────────────────────────
+  const handleSubjectChange = async (index: number, subjectId: string) => {
+    const subject = subjects.find((s) => s.id === subjectId);
 
-    if (!isValid) {
-      requestAnimationFrame(() => {
-        scrollContainerRef.current?.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      });
+    setAssignments((prev) =>
+      prev.map((a, i) =>
+        i === index
+          ? {
+              ...a,
+              subjectId,
+              classId: subject?.classId ?? "",
+              sectionIds: [],
+              availableSections: [],
+              loading: !!subjectId,
+            }
+          : a,
+      ),
+    );
 
-      return;
-    }
+    if (!subjectId || !subject) return;
 
     try {
-      const isTeacher = role === "Teacher";
+      const res = await fetch(
+        `http://localhost:5000/api/academic/sections?classId=${subject.classId}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
+      const json = await res.json();
+      const sections: SectionOption[] = json.success ? json.data : [];
+      setAssignments((prev) =>
+        prev.map((a, i) =>
+          i === index
+            ? { ...a, availableSections: sections, loading: false }
+            : a,
+        ),
+      );
+    } catch {
+      setAssignments((prev) =>
+        prev.map((a, i) =>
+          i === index ? { ...a, availableSections: [], loading: false } : a,
+        ),
+      );
+    }
+  };
 
-      const endpoint = isTeacher
-        ? "http://localhost:5000/api/teachers/onboard"
-        : "http://localhost:5000/api/staff/onboard";
+  const handleSectionToggle = (index: number, sectionId: string) => {
+    setAssignments((prev) =>
+      prev.map((a, i) =>
+        i === index
+          ? {
+              ...a,
+              sectionIds: a.sectionIds.includes(sectionId)
+                ? a.sectionIds.filter((s) => s !== sectionId)
+                : [...a.sectionIds, sectionId],
+            }
+          : a,
+      ),
+    );
+  };
 
-      const body = isTeacher
-        ? {
-            firstName,
-            lastName,
-            email,
-            password: "EdaOS@123",
-            employeeId,
-            gender,
-            dateOfBirth: dob,
-            phone: contactNumber,
-            qualification,
-            bio,
-            experience: experience ? parseInt(experience) : undefined,
-            joiningDate,
-            address,
-            city,
-            state: stateVal,
-            bloodGroup,
-          }
-        : {
-            firstName,
-            lastName,
-            email,
-            password: "EdaOS@123",
-            employeeId,
-            role,
-            gender,
-            dateOfBirth: dob,
-            qualification,
-            experience: experience ? parseInt(experience, 10) : undefined,
-            phone: contactNumber,
-            joiningDate,
-            address,
-            city,
-            state: stateVal,
-            bloodGroup,
-            bio,
-          };
+  const addAssignment = () =>
+    setAssignments((prev) => [...prev, EMPTY_ASSIGNMENT()]);
 
-      const res = await fetch(endpoint, {
+  const removeAssignment = (index: number) =>
+    setAssignments((prev) => prev.filter((_, i) => i !== index));
+
+  // ── Submit ─────────────────────────────────────────────────────────
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    const validAssignments = assignments
+      .filter((a) => a.subjectId && a.sectionIds.length > 0)
+      .map((a) => ({ subjectId: a.subjectId, sectionIds: a.sectionIds }));
+
+    try {
+      const res = await fetch("http://localhost:5000/api/teachers/onboard", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password: "EdaOS@123",
+          employeeId,
+          gender,
+          dateOfBirth: dob,
+          phone: contactNumber,
+          qualification,
+          specialization,
+          bio,
+          experience: experience ? parseInt(experience) : undefined,
+          joiningDate,
+          designation,
+          address,
+          city,
+          state: stateVal,
+          bloodGroup,
+          ...(validAssignments.length > 0 && { assignments: validAssignments }),
+        }),
       });
-
       const json = await res.json();
-
-      if (!json.success) {
-        throw new Error(json.message);
-      }
+      if (!json.success) throw new Error(json.message);
 
       resetForm();
       setSuccess(true);
-
       setTimeout(() => {
         setSuccess(false);
         onClose();
@@ -218,26 +261,17 @@ export default function AddNewStaffModal({
       }, 2000);
     } catch (err: any) {
       setErrors({ submit: err.message });
-
-      requestAnimationFrame(() => {
-        submitErrorRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      });
     }
   };
 
+  // ── Render ─────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overflow-y-auto overscroll-none">
       <div className="absolute inset-0" onClick={onClose} />
-
       <div className="relative w-full max-w-4xl rounded-[28px] bg-[#f8fafd] shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 p-6 bg-white rounded-t-[28px]">
-          <h2 className="text-xl font-bold text-[#0a1c3a] font-sans">
-            Add New Staff
-          </h2>
+          <h2 className="text-xl font-bold text-[#0a1c3a]">Add New Teacher</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
@@ -246,14 +280,13 @@ export default function AddNewStaffModal({
           </button>
         </div>
 
-        {/* Scrollable Content Form */}
         <div
-          ref={scrollContainerRef}
+          ref={scrollRef}
           className="p-6 overflow-y-auto flex-1 overscroll-none"
         >
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {/* Validation summary — shows when form submitted with errors */}
-            {hasRequiredFieldError && !errors.submit && !success && (
+            {/* Validation banner */}
+            {Object.keys(errors).length > 0 && !errors.submit && !success && (
               <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 flex items-center gap-2">
                 <svg
                   className="h-4 w-4 shrink-0"
@@ -271,7 +304,8 @@ export default function AddNewStaffModal({
                 Please fill in all required fields before submitting.
               </div>
             )}
-            {/* Basic Info Row */}
+
+            {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
@@ -297,7 +331,7 @@ export default function AddNewStaffModal({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Employee First Name *
+                  First Name *
                 </label>
                 <input
                   type="text"
@@ -319,7 +353,7 @@ export default function AddNewStaffModal({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Employee Last Name *
+                  Last Name *
                 </label>
                 <input
                   type="text"
@@ -341,31 +375,19 @@ export default function AddNewStaffModal({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Role *
+                  Designation
                 </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition-all appearance-none cursor-pointer ${
-                    errors.role
-                      ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
-                      : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  }`}
-                >
-                  <option value="">Select Role</option>
-                  {isSuperAdmin && <option value="Admin">Admin</option>}
-                  <option value="Finance">Finance</option>
-                  <option value="Principal">Principal</option>
-                  <option value="Accountant">Accountant</option>
-                  <option value="Front Desk">Front Desk</option>
-                </select>
-                {errors.role && (
-                  <span className="text-red-500 text-xs">{errors.role}</span>
-                )}
+                <input
+                  type="text"
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                  placeholder="e.g. High School Teacher"
+                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
               </div>
             </div>
 
-            {/* Contact & Demographics Row */}
+            {/* Contact Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
@@ -375,8 +397,7 @@ export default function AddNewStaffModal({
                   type="text"
                   value={contactNumber}
                   onChange={(e) => handleContactChange(e.target.value)}
-                  placeholder="Enter Contact Number"
-                  className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
+                  className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition-all ${
                     errors.contactNumber
                       ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
                       : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -397,7 +418,7 @@ export default function AddNewStaffModal({
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter Email Address"
+                  placeholder="Enter Email"
                   className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
                     errors.email
                       ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
@@ -435,20 +456,19 @@ export default function AddNewStaffModal({
                   className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">Select Blood Group</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
+                  {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(
+                    (bg) => (
+                      <option key={bg} value={bg}>
+                        {bg}
+                      </option>
+                    ),
+                  )}
                 </select>
               </div>
             </div>
 
-            {/* Dates & Academics Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Dates Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
                   Date of Birth
@@ -460,7 +480,6 @@ export default function AddNewStaffModal({
                   className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
-
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
                   Joining Date *
@@ -481,36 +500,10 @@ export default function AddNewStaffModal({
                   </span>
                 )}
               </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Subject Assigned (if applicable)
-                </label>
-                <input
-                  type="text"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Enter Subject"
-                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Class Assigned (if applicable)
-                </label>
-                <input
-                  type="text"
-                  value={classAssigned}
-                  onChange={(e) => setClassAssigned(e.target.value)}
-                  placeholder="Enter Class"
-                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
             </div>
 
             {/* Professional Info */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
                   Qualification
@@ -523,22 +516,67 @@ export default function AddNewStaffModal({
                   className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
-
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Experience
+                  Specialization
                 </label>
                 <input
                   type="text"
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
+                  placeholder="e.g. Mathematics"
+                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">
+                  Experience (years)
+                </label>
+                <input
+                  type="number"
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
-                  placeholder="e.g. 5 years"
+                  placeholder="e.g. 5"
                   className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
             </div>
 
-            {/* Geographical Info */}
+            {/* Teaching Assignments */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-[#0a1c3a]">
+                  Teaching Assignments
+                  <span className="ml-1.5 text-gray-400 font-normal">
+                    (optional)
+                  </span>
+                </h3>
+              </div>
+
+              {assignments.map((assignment, index) => (
+                <TeacherAssignmentCard
+                  key={index}
+                  index={index}
+                  assignment={assignment}
+                  subjects={subjects}
+                  canRemove={assignments.length > 1}
+                  onSubjectChange={handleSubjectChange}
+                  onSectionToggle={handleSectionToggle}
+                  onRemove={removeAssignment}
+                />
+              ))}
+
+              <button
+                type="button"
+                onClick={addAssignment}
+                className="flex items-center gap-2 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors self-start px-1"
+              >
+                <Plus className="h-4 w-4" />
+                Add Another Subject
+              </button>
+            </div>
+
+            {/* Address */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
@@ -552,7 +590,6 @@ export default function AddNewStaffModal({
                   className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                 />
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[#0a1c3a]">
@@ -566,7 +603,6 @@ export default function AddNewStaffModal({
                     className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
-
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[#0a1c3a]">
                     State
@@ -596,41 +632,11 @@ export default function AddNewStaffModal({
               />
             </div>
 
-            {/* Error message */}
             {errors.submit && (
-              <div
-                ref={submitErrorRef}
-                className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600"
-              >
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
                 {errors.submit}
               </div>
             )}
-
-            {/* Photo Attachment (Static visual component) */}
-            {/* <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[#0a1c3a]">
-                Add Photo
-              </label>
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
-                <Upload className="mb-2 h-8 w-8 text-gray-400" />
-                <p className="text-sm text-gray-500 mb-1">
-                  PDFs, Images, or Links
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="text-blue-600 font-medium cursor-pointer hover:underline">
-                    Click to upload
-                  </span>{" "}
-                  or drag and drop
-                </p>
-              </div>
-              <button
-                type="button"
-                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-[#4285F4] hover:text-blue-600"
-              >
-                <LinkIcon className="h-4 w-4" />
-                Add Link
-              </button>
-            </div> */}
 
             {/* Footer */}
             <div className="border-t border-gray-100 pt-5 flex gap-4 mt-3">
@@ -650,7 +656,7 @@ export default function AddNewStaffModal({
                     />
                   </svg>
                   <span className="text-sm font-semibold text-green-700">
-                    Staff member added successfully!
+                    Teacher added successfully!
                   </span>
                 </div>
               ) : (
@@ -658,15 +664,15 @@ export default function AddNewStaffModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 rounded-2xl border border-gray-200 bg-white py-3.5 text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 cursor-pointer text-center"
+                    className="flex-1 rounded-2xl border border-gray-200 bg-white py-3.5 text-sm font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-700 cursor-pointer text-center transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-2xl bg-[#4285F4] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-600 cursor-pointer shadow-sm text-center"
+                    className="flex-1 rounded-2xl bg-[#4285F4] py-3.5 text-sm font-semibold text-white hover:bg-blue-600 cursor-pointer shadow-sm text-center transition-colors"
                   >
-                    Add New Staff
+                    Add New Teacher
                   </button>
                 </>
               )}

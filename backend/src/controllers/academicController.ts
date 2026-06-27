@@ -2,13 +2,12 @@ import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { logActivity } from '../lib/auditService.js';
 import { normalizeTimetable } from '../helper/timetableHelper.js';
-import { isCurrentPeriodActive , getDuration } from '../helper/activePeriod.helper.js'; 
+import { isCurrentPeriodActive, getDuration } from '../helper/activePeriod.helper.js';
 
 export const createAcademicYear = async (req: any, res: Response) => {
   try {
     const { name, isCurrent } = req.body;
 
-    // 1. If this is set to current, unset any other current year
     if (isCurrent) {
       await prisma.academicYear.updateMany({
         where: { isCurrent: true },
@@ -16,18 +15,13 @@ export const createAcademicYear = async (req: any, res: Response) => {
       });
     }
 
-    // 2. Create the new year
     const newYear = await prisma.academicYear.create({
       data: { name, isCurrent: isCurrent || false },
     });
 
-    // 3. Log the action (Module 2 integration!)
     logActivity(req.user.id, 'CREATE', 'AcademicYear', newYear.id, null, newYear);
 
-    res.status(201).json({
-      success: true,
-      data: newYear
-    });
+    res.status(201).json({ success: true, data: newYear });
   } catch (error) {
     res.status(500).json({ message: "Error creating academic year", error });
   }
@@ -40,7 +34,6 @@ export const getAcademicYears = async (req: Request, res: Response) => {
   res.json(years);
 };
 
-// Create a Class
 export const createClass = async (req: any, res: Response) => {
   try {
     const { name, academicYearId } = req.body;
@@ -57,14 +50,17 @@ export const createClass = async (req: any, res: Response) => {
   }
 };
 
-// Create a Section linked to a Class
 export const createSection = async (req: any, res: Response) => {
   try {
     const { name, classId, capacity, homeRoom } = req.body;
 
     const newSection = await prisma.section.create({
-      data: { name, classId ,  capacity: capacity ? Number(capacity) : 50, // NEW
-        homeRoom: homeRoom || null   },
+      data: {
+        name,
+        classId,
+        capacity: capacity ? Number(capacity) : 50,
+        homeRoom: homeRoom || null
+      },
     });
 
     logActivity(req.user.id, 'CREATE', 'Section', newSection.id, null, newSection);
@@ -77,9 +73,8 @@ export const createSection = async (req: any, res: Response) => {
 
 export const createSubject = async (req: any, res: Response) => {
   try {
-    const { name, code, classId ,icon  } = req.body;
+    const { name, code, classId, icon } = req.body;
 
-    // 1. Check if the class exists first
     const parentClass = await prisma.class.findUnique({
       where: { id: classId }
     });
@@ -88,23 +83,18 @@ export const createSubject = async (req: any, res: Response) => {
       return res.status(404).json({ message: "Class not found" });
     }
 
-    // 2. Create the Subject
     const newSubject = await prisma.subject.create({
-      data: { 
-        name, 
-        code: code.toUpperCase(), // Standardize codes like 'MATH101'
-        classId ,
-        icon: icon || null // Optional field for subject icon
+      data: {
+        name,
+        code: code.toUpperCase(),
+        classId,
+        icon: icon || null
       },
     });
 
-    // 3. Log the action
     logActivity(req.user.id, 'CREATE', 'Subject', newSubject.id, null, newSubject);
 
-    res.status(201).json({
-      success: true,
-      data: newSubject
-    });
+    res.status(201).json({ success: true, data: newSubject });
   } catch (error) {
     res.status(500).json({ message: "Error creating subject", error });
   }
@@ -112,18 +102,9 @@ export const createSubject = async (req: any, res: Response) => {
 
 export const createTimetableEntry = async (req: Request, res: Response) => {
   try {
-    const { 
-      day, 
-      period, 
-      startTime, 
-      endTime, 
-      room, 
-      color, 
-      isBreak, 
-      breakLabel, 
-      sectionId, 
-      subjectId, 
-      teacherId 
+    const {
+      day, period, startTime, endTime, room, color,
+      isBreak, breakLabel, sectionId, subjectId, teacherId
     } = req.body;
 
     const formattedDay = day.toUpperCase();
@@ -133,36 +114,35 @@ export const createTimetableEntry = async (req: Request, res: Response) => {
     if (!treatAsBreak) {
       if (teacherId) {
         const teacherConflict = await prisma.timetable.findFirst({
-          where: { 
-            day: formattedDay as any, 
-            period: periodNumber, 
-            teacherId 
+          where: {
+            day: formattedDay as any,
+            period: periodNumber,
+            teacherId
           }
         });
         if (teacherConflict) {
-          return res.status(400).json({ 
-            success: false, 
-            message: "Teacher is already assigned to another section at this time." 
+          return res.status(400).json({
+            success: false,
+            message: "Teacher is already assigned to another section at this time."
           });
         }
       }
     }
 
     const sectionConflict = await prisma.timetable.findFirst({
-      where: { 
-        day: formattedDay as any, 
-        period: periodNumber, 
-        sectionId 
+      where: {
+        day: formattedDay as any,
+        period: periodNumber,
+        sectionId
       }
     });
     if (sectionConflict) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "This section already has a scheduled block for this period." 
+      return res.status(400).json({
+        success: false,
+        message: "This section already has a scheduled block for this period."
       });
     }
 
-    // 3. Create database entry with proper dynamic column typing
     const entry = await prisma.timetable.create({
       data: {
         day: formattedDay as any,
@@ -182,10 +162,10 @@ export const createTimetableEntry = async (req: Request, res: Response) => {
     return res.status(201).json({ success: true, data: entry });
 
   } catch (error: any) {
-    return res.status(500).json({ 
-      success: false, 
-      message: "Error creating timetable entry", 
-      error: error.message 
+    return res.status(500).json({
+      success: false,
+      message: "Error creating timetable entry",
+      error: error.message
     });
   }
 };
@@ -201,30 +181,19 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
       });
     }
 
-    // Wrap everything in a transaction for clean atomicity
     const result = await prisma.$transaction(async (tx) => {
       const createdEntries = [];
 
       for (const entry of entries) {
         const {
-          day,
-          period,
-          startTime,
-          endTime,
-          room,
-          color,
-          isBreak,
-          breakLabel,
-          sectionId,
-          subjectId,
-          teacherId
+          day, period, startTime, endTime, room, color,
+          isBreak, breakLabel, sectionId, subjectId, teacherId
         } = entry;
 
         const formattedDay = day.toUpperCase();
         const periodNumber = Number(period);
         const treatAsBreak = Boolean(isBreak);
 
-        // 1. Conflict check for Teacher (Skip if it's a structural break)
         if (!treatAsBreak && teacherId) {
           const teacherConflict = await tx.timetable.findFirst({
             where: {
@@ -238,7 +207,6 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
           }
         }
 
-        // 2. Conflict check for Section
         const sectionConflict = await tx.timetable.findFirst({
           where: {
             day: formattedDay as any,
@@ -250,7 +218,6 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
           throw new Error(`Conflict: Section already has a class scheduled at ${formattedDay}, Period ${periodNumber}.`);
         }
 
-        // 3. Stage the record creation
         const newEntry = await tx.timetable.create({
           data: {
             day: formattedDay as any,
@@ -292,7 +259,6 @@ export const getWeeklyTimetableBySection = async (req: Request, res: Response) =
   try {
     const { sectionId } = req.params;
 
-    // 1. Validation check
     if (!sectionId) {
       return res.status(400).json({
         success: false,
@@ -300,34 +266,15 @@ export const getWeeklyTimetableBySection = async (req: Request, res: Response) =
       });
     }
 
-    // 2. Query all rows matching the section with relational data joined
     const weeklySchedule = await prisma.timetable.findMany({
-      where: {
-        sectionId: sectionId
-      },
+      where: { sectionId },
       include: {
-        subject: {
-          select: {
-            id: true,
-            name: true,
-            code: true
-          }
-        },
-        teacher: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
+        subject: { select: { id: true, name: true, code: true } },
+        teacher: { select: { id: true, name: true } }
       },
-      // Chronological sort by day and start time to keep output clean
-      orderBy: [
-        { day: "asc" },
-        { startTime: "asc" }
-      ]
+      orderBy: [{ day: "asc" }, { startTime: "asc" }]
     });
 
-    // 3. Return the unified array payload
     return res.status(200).json({
       success: true,
       count: weeklySchedule.length,
@@ -343,121 +290,72 @@ export const getWeeklyTimetableBySection = async (req: Request, res: Response) =
   }
 };
 
-export const getStudentTimetable = async (
-  req: Request,
-  res: Response
-) => {
+export const getStudentTimetable = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { day } = req.query;
-    if ( !day || typeof day !== 'string'){
+
+    if (!day || typeof day !== 'string') {
       return res.status(400).json({
         success: false,
-        message:
-          'Valid day parameter is required.'
+        message: 'Valid day parameter is required.'
       });
     }
 
     if (day.trim().toLowerCase() === 'sunday') {
-      return res.status(200).json({
-        success: true,
-        message: 'Today is Sunday',
-        data: [] 
-      });
+      return res.status(200).json({ success: true, message: 'Today is Sunday', data: [] });
     }
-    const studentProfile =
-      await prisma.student.findUnique({
-        where: {
-          userId
-        },
-        select: {
-          sectionId: true
-        }
-      });
+
+    const studentProfile = await prisma.student.findUnique({
+      where: { userId },
+      select: { sectionId: true }
+    });
+
     if (!studentProfile) {
-      return res.status(404).json({
-        success: false,
-        message:
-          'Student profile not found.'
-      });
+      return res.status(404).json({ success: false, message: 'Student profile not found.' });
     }
 
     if (!studentProfile.sectionId) {
-      return res.status(400).json({
-        success: false,
-        message:
-          'Student is not assigned to any section.'
-      });
+      return res.status(400).json({ success: false, message: 'Student is not assigned to any section.' });
     }
 
     const timetableRows = await prisma.timetable.findMany({
-        where: {
-          sectionId:
-            studentProfile.sectionId,
-          day:
-            day.toUpperCase() as any
-        },
-        include: {
-          subject: {
-            select: {
-              name: true
-            }
-          },
-          teacher: {
-            select: {
-              name: true,
-            }
-          }
-        },
-        orderBy: {
-          period: 'asc'
-        }
-      });
-
-    // Normalize response
-    const normalizedSchedule =
-      normalizeTimetable(
-        timetableRows,
-        day
-      );
-    return res.status(200).json({
-      success: true,
-      data: normalizedSchedule
+      where: {
+        sectionId: studentProfile.sectionId,
+        day: day.toUpperCase() as any
+      },
+      include: {
+        subject: { select: { name: true } },
+        teacher: { select: { name: true } }
+      },
+      orderBy: { period: 'asc' }
     });
+
+    const normalizedSchedule = normalizeTimetable(timetableRows, day);
+
+    return res.status(200).json({ success: true, data: normalizedSchedule });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message:
-        'Failed to fetch timetable.',
+      message: 'Failed to fetch timetable.',
       error: error.message
     });
   }
 };
 
-export const getTeacherMySubjectTimetable = async (
-  req: Request,
-  res: Response
-) => {
+export const getTeacherMySubjectTimetable = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { day } = req.query;
- 
+
     if (!day || typeof day !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "Valid day parameter is required.",
-      });
+      return res.status(400).json({ success: false, message: "Valid day parameter is required." });
     }
- 
+
     const formattedDay = day.toUpperCase() as any;
- 
-    // 1. Fetch teacher's own periods for the day
+
     const teacherPeriods = await prisma.timetable.findMany({
-      where: {
-        teacherId: userId,
-        day: formattedDay,
-        isBreak: false,
-      },
+      where: { teacherId: userId, day: formattedDay, isBreak: false },
       include: {
         subject: { select: { name: true, code: true } },
         section: {
@@ -469,68 +367,52 @@ export const getTeacherMySubjectTimetable = async (
       },
       orderBy: { period: "asc" },
     });
- 
+
     if (teacherPeriods.length === 0) {
       return res.status(200).json({ success: true, data: [] });
     }
- 
-    // 2. Get the sectionId from the first result to fetch breaks
-    // All periods for one teacher are likely in the same section
-    // Use distinct startTimes to avoid duplicate breaks if multi-section
-   if (teacherPeriods.length === 0) {
-  return res.status(200).json({ success: true, data: [] });
-}
 
-const sectionId = teacherPeriods[0].sectionId; // safe — length checked above
+    const breakRows = await prisma.timetable.findMany({
+      where: { day: formattedDay, isBreak: true },
+      distinct: ['startTime'],
+      orderBy: { period: 'asc' },
+    });
 
-const breakRows = await prisma.timetable.findMany({
-  where: {
-    day: formattedDay,
-    isBreak: true,
-  },
-  distinct: ['startTime'],  // one break per unique time
-  orderBy: { period: 'asc' },
-});
-    // 3. Normalize teacher periods
     const normalizedPeriods = teacherPeriods.map((row) => ({
-      id: row.id,
-      time: row.startTime,
-      isActive: isCurrentPeriodActive(row.startTime, row.endTime, day),
-      isBreak: false,
+      id:         row.id,
+      time:       row.startTime,
+      isActive:   isCurrentPeriodActive(row.startTime, row.endTime, day),
+      isBreak:    false,
       breakLabel: null,
-      room: row.room || "Campus Hall",
-      color: row.color || null,
-      subject: `${row.section.academicClass.name} - ${row.section.name}`,
-      professor: row.subject?.name || "No Subject",
-      duration: getDuration(row.startTime, row.endTime),
-      _sortTime: row.startTime, // internal sort key
+      room:       row.room || "Campus Hall",
+      color:      row.color || null,
+      subject:    `${row.section.academicClass.name} - ${row.section.name}`,
+      professor:  row.subject?.name || "No Subject",
+      duration:   getDuration(row.startTime, row.endTime),
+      _sortTime:  row.startTime,
     }));
- 
-    // 4. Normalize break rows
+
     const normalizedBreaks = breakRows.map((row) => ({
-      id: row.id,
-      time: row.startTime,
-      isActive: false,
-      isBreak: true,
+      id:         row.id,
+      time:       row.startTime,
+      isActive:   false,
+      isBreak:    true,
       breakLabel: row.breakLabel || "Institutional Break",
-      room: null,
-      color: null,
-      subject: null,
-      professor: null,
-      duration: undefined,
-      _sortTime: row.startTime,
+      room:       null,
+      color:      null,
+      subject:    null,
+      professor:  null,
+      duration:   undefined,
+      _sortTime:  row.startTime,
     }));
- 
-    // 5. Merge and sort chronologically by startTime
-    const merged = [...normalizedPeriods, ...normalizedBreaks].sort((a, b) =>
-      a._sortTime.localeCompare(b._sortTime)
-    );
- 
-    // 6. Strip internal sort key before sending
+
+    const merged = [...normalizedPeriods, ...normalizedBreaks]
+      .sort((a, b) => a._sortTime.localeCompare(b._sortTime));
+
     const response = merged.map(({ _sortTime, ...rest }) => rest);
- 
+
     return res.status(200).json({ success: true, data: response });
- 
+
   } catch (error: any) {
     return res.status(500).json({
       success: false,
@@ -539,18 +421,13 @@ const breakRows = await prisma.timetable.findMany({
     });
   }
 };
- 
 
 export const getTeacherMySubjectWeekly = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
 
-    // 1. Fetch teacher's own periods for the full week
     const timetableRows = await prisma.timetable.findMany({
-      where: {
-        teacherId: userId,
-        isBreak: false,
-      },
+      where: { teacherId: userId, isBreak: false },
       include: {
         subject: { select: { name: true, code: true } },
         section: {
@@ -567,41 +444,37 @@ export const getTeacherMySubjectWeekly = async (req: Request, res: Response) => 
       return res.status(200).json({ success: true, data: [] });
     }
 
-    // 2. Fetch school-wide breaks (distinct startTime per day)
     const breakRows = await prisma.timetable.findMany({
       where: { isBreak: true },
-      distinct: ["startTime", "day"],  // one break per time slot per day
+      distinct: ["startTime", "day"],
       orderBy: [{ day: "asc" }, { period: "asc" }],
     });
 
-    // 3. Normalize teaching periods
     const normalizedPeriods = timetableRows.map((row) => ({
-      id: row.id,
-      day: row.day,
+      id:        row.id,
+      day:       row.day,
       startTime: row.startTime,
-      isBreak: false,
-      code: row.subject?.name?.toUpperCase() || "N/A",
-      subject: `${row.section.academicClass.name} - ${row.section.name}`,
-      teacher: "",
-      room: row.room || "TBD",
-      color: row.color || "BLUE",
+      isBreak:   false,
+      code:      row.subject?.name?.toUpperCase() || "N/A",
+      subject:   `${row.section.academicClass.name} - ${row.section.name}`,
+      teacher:   "",
+      room:      row.room || "TBD",
+      color:     row.color || "BLUE",
     }));
 
-    // 4. Normalize break rows
     const normalizedBreaks = breakRows.map((row) => ({
-      id: row.id,
-      day: row.day,
-      startTime: row.startTime,
-      isBreak: true,
+      id:         row.id,
+      day:        row.day,
+      startTime:  row.startTime,
+      isBreak:    true,
       breakLabel: row.breakLabel || "Break",
-      code: "",
-      subject: row.breakLabel || "Break",
-      teacher: "",
-      room: "",
-      color: "",
+      code:       "",
+      subject:    row.breakLabel || "Break",
+      teacher:    "",
+      room:       "",
+      color:      "",
     }));
 
-    // 5. Merge all
     const merged = [...normalizedPeriods, ...normalizedBreaks];
 
     return res.status(200).json({ success: true, data: merged });
@@ -615,54 +488,35 @@ export const getTeacherMySubjectWeekly = async (req: Request, res: Response) => 
   }
 };
 
-export const getDailyTimetableBySection = async (
-  req: Request,
-  res: Response
-) => {
+export const getDailyTimetableBySection = async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
     const { day } = req.query;
- 
+
     if (!sectionId) {
-      return res.status(400).json({
-        success: false,
-        message: "sectionId is required.",
-      });
+      return res.status(400).json({ success: false, message: "sectionId is required." });
     }
- 
+
     if (!day || typeof day !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "Valid day parameter is required.",
-      });
+      return res.status(400).json({ success: false, message: "Valid day parameter is required." });
     }
- 
+
     if (day.trim().toLowerCase() === "sunday") {
-      return res.status(200).json({
-        success: true,
-        data: [],
-      });
+      return res.status(200).json({ success: true, data: [] });
     }
- 
+
     const timetableRows = await prisma.timetable.findMany({
-      where: {
-        sectionId,
-        day: day.toUpperCase() as any,
-      },
+      where: { sectionId, day: day.toUpperCase() as any },
       include: {
         subject: { select: { name: true, code: true } },
         teacher: { select: { id: true, name: true } },
       },
       orderBy: { period: "asc" },
     });
- 
-    // Reuse same normalizeTimetable helper used for student
+
     const normalizedSchedule = normalizeTimetable(timetableRows, day);
- 
-    return res.status(200).json({
-      success: true,
-      data: normalizedSchedule,
-    });
+
+    return res.status(200).json({ success: true, data: normalizedSchedule });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
@@ -671,9 +525,7 @@ export const getDailyTimetableBySection = async (
     });
   }
 };
- 
 
-// GET /api/academic/classes?yearId=
 export const getClassesByYear = async (req: Request, res: Response) => {
   try {
     const { yearId } = req.query;
@@ -700,7 +552,6 @@ export const getClassesByYear = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/academic/sections?classId=
 export const getSectionsByClass = async (req: Request, res: Response) => {
   try {
     const { classId } = req.query;
@@ -714,45 +565,26 @@ export const getSectionsByClass = async (req: Request, res: Response) => {
 
     const sections = await prisma.section.findMany({
       where: { classId },
-     include:{
-    academicClass:{
-        select:{
-            id:true,
-            name:true
-        }
-    },
-    classTeacher:{
-        select:{
-            firstName:true,
-            lastName:true
-        }
-    },
-    _count:{
-        select:{
-            students:true
-        }
-    }
-},
+      include: {
+        academicClass: { select: { id: true, name: true } },
+        classTeacher:  { select: { firstName: true, lastName: true } },
+        _count:        { select: { students: true } }
+      },
       orderBy: { name: 'asc' }
     });
 
-    // Shape the response cleanly for the frontend
-   const shaped = sections.map(section => ({
-    id: section.id,
-    name: section.name,
-
-    classId: section.classId,
-    className: section.academicClass.name,
-
-    capacity: section.capacity,
-    homeRoom: section.homeRoom,
-
-    classTeacherName: section.classTeacher
+    const shaped = sections.map(section => ({
+      id:               section.id,
+      name:             section.name,
+      classId:          section.classId,
+      className:        section.academicClass.name,
+      capacity:         section.capacity,
+      homeRoom:         section.homeRoom,
+      classTeacherName: section.classTeacher
         ? `${section.classTeacher.firstName} ${section.classTeacher.lastName}`
         : "Not Assigned",
-
-    studentCount: section._count.students
-}));
+      studentCount: section._count.students
+    }));
 
     return res.status(200).json({ success: true, data: shaped });
   } catch (error: any) {
@@ -764,146 +596,125 @@ export const getSectionsByClass = async (req: Request, res: Response) => {
   }
 };
 
-// PATCH /api/academic/sections/:id
 export const updateSection = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id as string
-    const { name, homeRoom, capacity } = req.body
+    const id = req.params.id as string;
+    const { name, homeRoom, capacity } = req.body;
 
-    const existing = await prisma.section.findUnique({ where: { id } })
+    const existing = await prisma.section.findUnique({ where: { id } });
     if (!existing) {
-      return res.status(404).json({ success: false, message: "Section not found." })
+      return res.status(404).json({ success: false, message: "Section not found." });
     }
 
     const updated = await prisma.section.update({
       where: { id },
       data: {
-        ...(name !== undefined && { name }),
+        ...(name     !== undefined && { name }),
         ...(homeRoom !== undefined && { homeRoom: homeRoom || null }),
         ...(capacity !== undefined && { capacity: Number(capacity) }),
       }
-    })
+    });
 
-    return res.status(200).json({ success: true, data: updated })
+    return res.status(200).json({ success: true, data: updated });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message })
+    return res.status(500).json({ success: false, message: error.message });
   }
-}
+};
 
-// DELETE /api/academic/sections/:id
 export const deleteSection = async (req: Request, res: Response) => {
   try {
-  const id = req.params.id as string
+    const id = req.params.id as string;
 
     const section = await prisma.section.findUnique({
       where: { id },
       include: { _count: { select: { students: true } } }
-    })
+    });
 
     if (!section) {
-      return res.status(404).json({ success: false, message: "Section not found." })
+      return res.status(404).json({ success: false, message: "Section not found." });
     }
 
     if (section._count.students > 0) {
       return res.status(400).json({
         success: false,
         message: `Cannot delete section. ${section._count.students} student(s) are enrolled. Please reassign them first.`
-      })
+      });
     }
 
-    await prisma.section.delete({ where: { id } })
+    await prisma.section.delete({ where: { id } });
 
-    return res.status(200).json({ success: true, message: "Section deleted successfully." })
+    return res.status(200).json({ success: true, message: "Section deleted successfully." });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message })
+    return res.status(500).json({ success: false, message: error.message });
   }
-}
+};
 
-// DELETE /api/academic/classes/:id
 export const deleteClass = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id as string
+    const id = req.params.id as string;
 
     const cls = await prisma.class.findUnique({
       where: { id },
       include: {
-        sections: {
-          include: {
-            _count: { select: { students: true } }
-          }
-        },
-        subjects: { select: { id: true } },
-        scheduledExams: { select: { id: true } },
-        assignments: { select: { id: true } },
+        sections:             { include: { _count: { select: { students: true } } } },
+        subjects:             { select: { id: true } },
+        scheduledExams:       { select: { id: true } },
+        assignments:          { select: { id: true } },
         assessmentComponents: { select: { id: true } },
-        feeComponents: { select: { id: true } }
+        feeComponents:        { select: { id: true } }
       }
-    })
+    });
 
     if (!cls) {
-      return res.status(404).json({ success: false, message: "Class not found." })
+      return res.status(404).json({ success: false, message: "Class not found." });
     }
 
-    // Build guard checks
-    const totalStudents = cls.sections.reduce((sum, s) => sum + s._count.students, 0)
-    const hasSubjects = cls.subjects.length > 0
-    const hasExams = cls.scheduledExams.length > 0
-    const hasAssignments = cls.assignments.length > 0
-    const hasFeeComponents = cls.feeComponents.length > 0
+    const totalStudents  = cls.sections.reduce((sum, s) => sum + s._count.students, 0);
+    const hasSubjects    = cls.subjects.length > 0;
+    const hasExams       = cls.scheduledExams.length > 0;
+    const hasAssignments = cls.assignments.length > 0;
+    const hasFeeComponents = cls.feeComponents.length > 0;
 
-    const reasons: string[] = []
-    if (totalStudents > 0) reasons.push(`${totalStudents} enrolled student(s)`)
-    if (hasSubjects) reasons.push(`${cls.subjects.length} subject(s)`)
-    if (hasExams) reasons.push(`${cls.scheduledExams.length} scheduled exam(s)`)
-    if (hasAssignments) reasons.push(`${cls.assignments.length} assignment(s)`)
-    if (hasFeeComponents) reasons.push(`${cls.feeComponents.length} fee component(s)`)
+    const reasons: string[] = [];
+    if (totalStudents  > 0) reasons.push(`${totalStudents} enrolled student(s)`);
+    if (hasSubjects)        reasons.push(`${cls.subjects.length} subject(s)`);
+    if (hasExams)           reasons.push(`${cls.scheduledExams.length} scheduled exam(s)`);
+    if (hasAssignments)     reasons.push(`${cls.assignments.length} assignment(s)`);
+    if (hasFeeComponents)   reasons.push(`${cls.feeComponents.length} fee component(s)`);
 
     if (reasons.length > 0) {
       return res.status(400).json({
         success: false,
         message: `Cannot delete "${cls.name}". It has ${reasons.join(", ")}. Please clear all data first.`
-      })
+      });
     }
 
-    // Safe to delete — cascade handles sections + TeacherSectionSubject
-    await prisma.class.delete({ where: { id } })
+    await prisma.class.delete({ where: { id } });
 
-    return res.status(200).json({ success: true, message: "Class deleted successfully." })
+    return res.status(200).json({ success: true, message: "Class deleted successfully." });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message })
+    return res.status(500).json({ success: false, message: error.message });
   }
-}
+};
 
-
-// GET /api/academic/subjects
 export const getSubjects = async (req: Request, res: Response) => {
   try {
     const subjects = await prisma.subject.findMany({
       include: {
-        class: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        class: { select: { id: true, name: true } },
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: { name: "asc" },
     });
 
     const shaped = subjects.map(subject => ({
-      id: subject.id,
-      name: subject.name,
-      code: subject.code,
-      classId: subject.classId,
+      id:        subject.id,
+      name:      subject.name,
+      code:      subject.code,
+      classId:   subject.classId,
       className: subject.class.name,
     }));
 
-    return res.status(200).json({
-      success: true,
-      data: shaped,
-    });
+    return res.status(200).json({ success: true, data: shaped });
 
   } catch (error: any) {
     return res.status(500).json({

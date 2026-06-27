@@ -82,7 +82,7 @@ const AttendanceTracker = () => {
           setMonthlyTrends(trendResponse.data.monthlyOverview);
         }
         if (heatmapResponse.data.success){
-          console.log("Heatmap Data:", heatmapResponse.data.heatmapMap);
+          // console.log("Heatmap Data:", heatmapResponse.data.heatmapMap);
           setHeatmapData(heatmapResponse.data.heatmapMap);
         }
       } catch (err: any) {

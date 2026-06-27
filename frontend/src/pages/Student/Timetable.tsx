@@ -17,8 +17,8 @@ interface TimetableEntry {
   breakLabel: string | null;
   room: string | null;
   color: string | null;
-  subject?: { id: string; name: string; code: string } | null;
-  teacher?: { id: string; name: string } | null;
+  subject?: string | null; 
+  displayTeacherName?: string | null; 
 }
 
 const Timetable = () => {
@@ -29,12 +29,11 @@ const Timetable = () => {
   const [timetableLoading, setTimetableLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 3. Extract the real, dynamic section ID assigned to Dishant Pandey!
+  // 3. Extract the real, dynamic section ID
   const targetSectionId = studentData?.sectionId;
 
   // Single Fetch Sequence: Grab records automatically whenever targetSectionId maps in
   useEffect(() => {
-    // Prevent execution if global auth hydration is still processing
     if (!targetSectionId) return;
 
     const fetchWeeklyData = async () => {
@@ -44,13 +43,14 @@ const Timetable = () => {
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
-          `http://localhost:5000/api/academic/timetable/section/${targetSectionId}`,
+          `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         if (response.data.success) {
+          console.log("Fetched Timetable Data:", response.data.data);
           setScheduleData(response.data.data);
         } else {
           setError("Failed to load timetable dataset.");
@@ -63,7 +63,7 @@ const Timetable = () => {
     };
 
     fetchWeeklyData();
-  }, [targetSectionId]); // Listens tightly for when targetSectionId lands
+  }, [targetSectionId]); 
 
   // 4. Return a clean loading block during cold starts/refreshes to prevent component race-conditions
   if (authLoading) {
@@ -87,17 +87,21 @@ const Timetable = () => {
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex items-start gap-6">
             
-            {/* LEFT - Main Weekly Timetable Grid */}
             <div className="flex-1 min-w-0">
-              <TimetableSchedule />
+              <TimetableSchedule 
+                selectedDate={selectedDate} 
+                scheduleData={scheduleData} 
+                isLoading={timetableLoading} 
+                error={error} 
+              />
             </div>
             
             {/* RIGHT - Sidebar Frame */}
             <div className="w-90 shrink-0 bg-gray-100 px-5 py-6 rounded-[32px]">
               <CalendarSection 
                 variant="timetable" 
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
+                selectedDate={selectedDate}  
+                onDateSelect={setSelectedDate}  
               />
               
               <DateScheduleCard 
@@ -116,4 +120,3 @@ const Timetable = () => {
 };
 
 export default Timetable;
-

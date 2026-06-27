@@ -1,0 +1,49 @@
+/* ==============================================
+   Admin Notices Calendar — extra tile styles
+   These augment the base calendar.css rules
+   without touching any student/teacher styles.
+================================================ */
+
+/* Make tiles relative so dots can be positioned */
+.notices-admin-calendar .react-calendar__tile {
+  position: relative;
+  overflow: visible;
+}
+
+/* Scheduled notice dates — green text */
+.react-calendar__tile.notice-scheduled {
+  color: #10b981 !important; /* emerald-500 */
+  font-weight: 700 !important;
+  background: #f0fdf4 !important; /* very light green tint */
+}
+
+.react-calendar__tile.notice-scheduled:enabled:hover {
+  background: #d1fae5 !important;
+}
+
+/* When a scheduled date is also selected */
+.react-calendar__tile.notice-scheduled.selected-simple {
+  background: #3f69ff !important;
+  color: white !important;
+}
+
+/* Dot indicators — rendered via tileContent */
+.notices-calendar__dot {
+  display: block;
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.notices-calendar__dot--today {
+  background-color: #3b82f6; /* blue */
+}
+
+.notices-calendar__dot--scheduled {
+  background-color: #10b981; /* emerald */
+}

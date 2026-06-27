@@ -29,12 +29,15 @@ interface WeeklyTimetableEntry {
 interface MySubjectWeeklyEntry {
   id: string;
   day: string;
-  startTime: string;
-  isBreak: boolean;
-  subject: string; // class name
-  code: string; // subject name uppercased
+  startTime?: string;
+  time?: string; // Backend uses time for teacher schedule
+  isBreak?: boolean;
+  breakLabel?: string;
+  subject: string; 
+  code?: string; 
   room: string;
   color: string;
+  sectionLabel?: string; // Backend passes the flat section label
 }
 
 interface DateScheduleCardProps {
@@ -51,7 +54,7 @@ interface DateScheduleCardProps {
   sectionLabel?: string;
 }
 
-// ─── Day helpers (same as student DateScheduleCard) ───────────────────────────
+// ─── Day helpers ───────────────────────────
 const DAY_ENUM_MAP = [
   "SUNDAY",
   "MONDAY",
@@ -104,11 +107,20 @@ const DateScheduleCard = ({
   // ─── Filter full week data by selected date's day ─────────────────────────
   const classFilteredItems = classWeeklyData
     .filter((item) => item.day?.toUpperCase() === targetDayEnum)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    .sort((a, b) => {
+      const timeA = a.startTime || "00:00";
+      const timeB = b.startTime || "00:00";
+      return timeA.localeCompare(timeB);
+    });
 
   const mySubjectFilteredItems = mySubjectWeeklyData
     .filter((item) => item.day?.toUpperCase() === targetDayEnum)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    .sort((a, b) => {
+      // Safely fall back to whichever time key the API provided
+      const timeA = a.startTime || a.time || "00:00";
+      const timeB = b.startTime || b.time || "00:00";
+      return timeA.localeCompare(timeB);
+    });
 
   const hasData =
     filterMode === "class"
@@ -140,11 +152,11 @@ const DateScheduleCard = ({
         filterMode: "mySubject",
         day: targetDayEnum,
         items: mySubjectFilteredItems.map((item) => ({
-          time: item.startTime,
+          time: item.startTime || item.time || "TBD",
           isBreak: item.isBreak,
-          breakLabel: null,
-          subject: item.subject,
-          professor: item.code,
+          breakLabel: item.breakLabel || null,
+          subject: item.sectionLabel || item.subject,
+          professor: item.subject, // Map the actual subject name here
           room: item.room,
         })),
       });
@@ -206,17 +218,18 @@ const DateScheduleCard = ({
             >
               <div className="flex flex-1 flex-col justify-center">
                 <h4 className="text-[18px] font-medium text-[#1F1F1F]">
-                         {item.isBreak ? (item as any).breakLabel || "Break" : item.subject}
+                  {item.isBreak ? item.breakLabel || "Break" : item.sectionLabel || item.subject}
                 </h4>
-                {item.code && (
+                {item.subject && !item.isBreak && (
                   <p className="mt-0.5 text-[12px] font-medium text-[#8A8A8A]">
-                    {item.code}
+                    {item.subject}
                   </p>
                 )}
               </div>
               <div className="flex flex-col items-end justify-center">
                 <span className="text-[11px] font-medium tracking-[1px] text-[#8A8A8A]">
-                  {item.startTime}
+                  {/* Safely display whichever time key exists */}
+                  {item.startTime || item.time}
                 </span>
               </div>
             </div>

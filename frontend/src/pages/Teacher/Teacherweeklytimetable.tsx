@@ -1,39 +1,48 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import TeacherNavbar from "../../components/Teacher/Dashboard/Navbar";
 import TeacherTimetableHeader, {
   type TeacherFilterMode,
   type TeacherSection,
 } from "../../components/Teacher/Timetable/TeacherTimetableHeader";
 import TeacherWeeklyTimetableGrid from "../../components/Teacher/Timetable/Teacherweeklytimetablegrid";
+import useAuth from "../../hooks/useAuth"; // ✅ Added auth hook
 
 const TeacherWeeklyTimetablePage = () => {
   const [filterMode, setFilterMode] = useState<TeacherFilterMode>("class");
+  
+  const { teacherData } = useAuth();
 
   // ─── Sections from teacher profile ───────────────────────────────────────
   const [teacherSections, setTeacherSections] = useState<TeacherSection[]>([]);
   const [selectedSection, setSelectedSection] = useState<TeacherSection | null>(null);
 
-  // Fetch teacher profile to get assigned sections — same as daily page
+  // ─── Auto-populate dropdown from Auth Context (No API call needed) ─────
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(
-          "http://localhost:5000/api/teachers/me",
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (response.data.success) {
-          const sections: TeacherSection[] = response.data.data.sections;
-          setTeacherSections(sections);
-          if (sections.length > 0) setSelectedSection(sections[0]);
+    if (teacherData && teacherData.teachingAssignments) {
+      
+      // Map the nested sections exactly how the header wants them
+      const mappedSections = teacherData.teachingAssignments.map((assignment: any) => ({
+        id: assignment.section.id,
+        name: assignment.section.name,
+        academicClass: {
+          id: assignment.section.academicClass.id,
+          name: assignment.section.academicClass.name,
         }
-      } catch (err) {
-        console.error("Failed to fetch teacher profile", err);
+      }));
+
+      // Remove any duplicate sections
+      const uniqueSections = Array.from(
+        new Map(mappedSections.map((item: TeacherSection) => [item.id, item])).values()
+      ) as TeacherSection[];
+
+      setTeacherSections(uniqueSections);
+      
+      // Auto-select the first section if one isn't selected
+      if (uniqueSections.length > 0 && !selectedSection) {
+        setSelectedSection(uniqueSections[0]);
       }
-    };
-    fetchProfile();
-  }, []);
+    }
+  }, [teacherData]);
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FE]">

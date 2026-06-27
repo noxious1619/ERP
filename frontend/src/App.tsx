@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-
 // ==========================================
 // STUDENT IMPORTS
 // ==========================================
@@ -41,12 +40,21 @@ import AdminDatesheet from "./pages/Admin/Academics/Exams/Datesheet";
 import AdminAttendance from "./pages/Admin/Academics/Attendence";
 import Teacherdatesheet from "./pages/Teacher/Teacherdatesheet";
 import Teacherdashboard from "./pages/Teacher/Teacherdashboard";
+import AdminProfilePage from "./pages/Admin/AdminProfilePage";
+import AcademicYears from "./pages/Admin/Academics/Academicyears";
+import AdminTeachersPage from "./pages/Admin/Academics/Teacher";
+import AdminTeacherProfilePage from "./pages/Admin/TeacherProfile";
+import DashboardAdmin from "./pages/Admin/Dashboard/Dashboard";
+
 const App = () => {
   return (
     <AuthProvider>
       <Routes>
         {/* Default Route */}
-        <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+        <Route
+          path="/"
+          element={<Navigate to="/student/dashboard" replace />}
+        />
 
         {/* ========================================== */}
         {/* STUDENT ROUTES                             */}
@@ -69,39 +77,59 @@ const App = () => {
         {/* ========================================== */}
         <Route path="/teacher/notices" element={<TeacherNoticeBoard />} />
         <Route path="/teacher/timetable" element={<TeacherTimetablePage />} />
-        <Route path="/teacher/timetable/weekly" element={<TeacherWeeklytimetable />} />
+        <Route
+          path="/teacher/timetable/weekly"
+          element={<TeacherWeeklytimetable />}
+        />
         <Route path="/teacher/profile" element={<TeacherProfile />} />
         <Route path="/teacher/attendance" element={<AttendanceManagement />} />
         <Route path="/teacher/homework" element={<TeacherHomework />} />
-        <Route path="/teacher/homework/:id" element={<TeacherHomeworkDetail />} />
-        <Route path="/teacher/homework/submission/:submissionId" element={<TeacherSubmissionView />} />
+        <Route
+          path="/teacher/homework/:id"
+          element={<TeacherHomeworkDetail />}
+        />
+        <Route
+          path="/teacher/homework/submission/:submissionId"
+          element={<TeacherSubmissionView />}
+        />
 
         {/* ========================================== */}
         {/* ADMIN ROUTES                               */}
         {/* ========================================== */}
-        <Route path="/admin/academics" element={<Academics />} />
-<Route path="/admin/academics/staff" element={<Staff />} />
-<Route
-  path="/admin/academics/staff/profile"
-  element={<StaffProfile />}
-/>
-<Route path="/admin/academics/classes" element={<Classes />} />
-<Route path="/admin/academics/subjects" element={<Subjects />} />
-<Route path="/admin/academics/timetable" element={<AdminTimetable />} />
-<Route path="/admin/dashboard" element={<AdminDashboard />} />
-<Route
-  path="/admin/communication/notices"
-  element={<AdminNotices />}
-/>
-<Route
-  path="/admin/academics/exams/datesheet"
-  element={<AdminDatesheet />}
-/>
-<Route
-  path="/admin/academics/attendance"
-  element={<AdminAttendance />}
-/>
-
+        <Route path="/admin/dashboard" element={<DashboardAdmin />} />
+        <Route path="/admin/academics/students" element={<Academics />} />
+        <Route path="/admin/academics/staff" element={<Staff />} />
+        <Route
+          path="/admin/academics/staff/profile"
+          element={<StaffProfile />}
+        />
+        <Route
+          path="/admin/academics/academic-years"
+          element={<AcademicYears />}
+        />
+        <Route path="/admin/academics/classes" element={<Classes />} />
+        <Route path="/admin/academics/subjects" element={<Subjects />} />
+        <Route path="/admin/academics/timetable" element={<AdminTimetable />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/communication/notices" element={<AdminNotices />} />
+        <Route
+          path="/admin/academics/exams/datesheet"
+          element={<AdminDatesheet />}
+        />
+        <Route
+          path="/admin/academics/attendance"
+          element={<AdminAttendance />}
+        />
+        <Route path="/admin/profile" element={<AdminProfilePage />} />
+        <Route path="/admin/academics/staff/:id" element={<StaffProfile />} />
+        <Route
+          path="/admin/academics/teachers"
+          element={<AdminTeachersPage />}
+        />
+        <Route
+          path="/admin/academics/teachers/:id"
+          element={<AdminTeacherProfilePage />}
+        />
 
         {/* Catch-all 404 Route */}
         <Route

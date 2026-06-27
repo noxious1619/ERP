@@ -41,6 +41,8 @@ const NAV: NavItem[] = [
     children: [
       { label: "Students", href: "/admin/academics/students" },
       { label: "Staff", href: "/admin/academics/staff" },
+      { label: "Teachers", href: "/admin/academics/teachers" },
+      { label: "Academic Years", href: "/admin/academics/academic-years" },
       { label: "Classes & Sections", href: "/admin/academics/classes" },
       { label: "Subjects", href: "/admin/academics/subjects" },
       { label: "Timetable", href: "/admin/academics/timetable" },
@@ -103,7 +105,9 @@ export default function AdminSidebar() {
       ),
   );
 
-  const [openSubSections, setOpenSubSections] = useState<Record<string, boolean>>({
+  const [openSubSections, setOpenSubSections] = useState<
+    Record<string, boolean>
+  >({
     Exams: true, // Exams section default open as shown in mockup
   });
 
@@ -126,7 +130,10 @@ export default function AdminSidebar() {
               if (sub.href === path) {
                 setActiveParent(item.label);
                 setActiveChild(sub.label);
-                setOpenSubSections((prev) => ({ ...prev, [child.label]: true }));
+                setOpenSubSections((prev) => ({
+                  ...prev,
+                  [child.label]: true,
+                }));
               }
             });
           }
@@ -248,7 +255,8 @@ export default function AdminSidebar() {
               {hasChildren && !collapsed && isOpen && (
                 <ul className="ml-[1.65rem] mt-0.5 border-l border-gray-200 py-0.5 flex flex-col gap-0.5">
                   {item.children.map((child) => {
-                    const hasSubChildren = child.children && child.children.length > 0;
+                    const hasSubChildren =
+                      child.children && child.children.length > 0;
                     const isSubOpen = openSubSections[child.label] ?? false;
 
                     if (hasSubChildren) {

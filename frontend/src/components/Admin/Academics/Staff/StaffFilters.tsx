@@ -1,35 +1,34 @@
-"use client"
-
-import { useState, useRef, useEffect } from "react"
-import { ChevronDown } from "lucide-react"
+"use client";
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
+import useAuth from "../../../../hooks/useAuth";
 
 interface FilterSelectProps {
-  label: string
-  options: string[]
-  onChange?: (val: string) => void
+  label: string;
+  options: string[];
+  onChange?: (val: string) => void;
 }
 
 function FilterSelect({ label, options, onChange }: FilterSelectProps) {
-  const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState("")
-  const ref = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
+        setOpen(false);
       }
     }
-
-    document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [])
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   const choose = (opt: string) => {
-    setSelected(opt === "All" ? "" : opt)
-    setOpen(false)
-    if (onChange) onChange(opt === "All" ? "" : opt)
-  }
+    setSelected(opt === "All" ? "" : opt);
+    setOpen(false);
+    if (onChange) onChange(opt === "All" ? "" : opt);
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -40,9 +39,7 @@ function FilterSelect({ label, options, onChange }: FilterSelectProps) {
       >
         <span>{selected || label}</span>
         <ChevronDown
-          className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-150 ${
-            open ? "rotate-180" : ""
-          }`}
+          className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -67,7 +64,7 @@ function FilterSelect({ label, options, onChange }: FilterSelectProps) {
         </ul>
       )}
     </div>
-  )
+  );
 }
 
 interface StaffFiltersProps {
@@ -75,11 +72,29 @@ interface StaffFiltersProps {
   onStatusChange: (val: string) => void;
 }
 
-export default function StaffFilters({ onRoleChange, onStatusChange }: StaffFiltersProps) {
+export default function StaffFilters({
+  onRoleChange,
+  onStatusChange,
+}: StaffFiltersProps) {
+  const { role } = useAuth();
+  const isSuperAdmin = role === "SUPER_ADMIN";
+
+  const roleOptions = isSuperAdmin
+    ? ["All", "Admin", "Finance", "Principal", "Accountant", "Front Desk"]
+    : ["All", "Finance", "Principal", "Accountant", "Front Desk"];
+
   return (
     <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <FilterSelect label="All Role" options={["All", "Principal", "Teacher", "Accountant", "Front Desk"]} onChange={onRoleChange} />
-      <FilterSelect label="All Status" options={["All", "Active", "On Leave"]} onChange={onStatusChange} />
+      <FilterSelect
+        label="All Role"
+        options={roleOptions}
+        onChange={onRoleChange}
+      />
+      <FilterSelect
+        label="All Status"
+        options={["All", "Active", "On Leave"]}
+        onChange={onStatusChange}
+      />
     </div>
-  )
+  );
 }

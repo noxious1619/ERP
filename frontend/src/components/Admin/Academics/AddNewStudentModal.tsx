@@ -18,7 +18,7 @@ export default function AddNewStudentModal({ isOpen, onClose }: AddNewStudentMod
           <h2 className="text-xl font-semibold text-gray-900">Add New Student</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer "
           >
             <X className="h-5 w-5" />
           </button>
@@ -115,7 +115,7 @@ export default function AddNewStudentModal({ isOpen, onClose }: AddNewStudentMod
               </div>
               <button 
                 type="button" 
-                className="mt-3 flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+                className="mt-3 flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
               >
                 <LinkIcon className="h-4 w-4" />
                 Add Link
@@ -128,11 +128,11 @@ export default function AddNewStudentModal({ isOpen, onClose }: AddNewStudentMod
         <div className="border-t border-gray-100 p-6 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900"
+            className="flex-1 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
           >
             Cancel
           </button>
-          <button className="flex-1 rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700">
+          <button className="flex-1 rounded-lg bg-blue-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 cursor-pointer cursor-pointer">
             Add New Student
           </button>
         </div>

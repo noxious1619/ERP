@@ -1,77 +1,138 @@
-import { useState, useEffect, useRef } from "react"
-import { X } from "lucide-react"
+import { useState, useEffect, useRef } from "react";
+import { X, CheckCircle } from "lucide-react";
 
 interface AddClassModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  yearId: string | null;
+  onSuccess: () => void;
 }
 
-export default function AddClassModal({ isOpen, onClose }: AddClassModalProps) {
-  const [classNameVal, setClassNameVal] = useState("")
+export default function AddClassModal({
+  isOpen,
+  onClose,
+  yearId,
+  onSuccess,
+}: AddClassModalProps) {
+  const [classNameVal, setClassNameVal] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const wrapperRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleScroll = (e: Event) => e.preventDefault();
+    const wrapper = wrapperRef.current;
+    if (isOpen && wrapper) {
+      wrapper.addEventListener("wheel", handleScroll, { passive: false });
+      wrapper.addEventListener("touchmove", handleScroll, { passive: false });
+    }
+    return () => {
+      if (wrapper) {
+        wrapper.removeEventListener("wheel", handleScroll);
+        wrapper.removeEventListener("touchmove", handleScroll);
+      }
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
-    } else {
-      document.body.style.overflow = ""
+      setClassNameVal("");
+      setError(null);
+      setSuccess(null);
     }
-    return () => {
-      document.body.style.overflow = ""
-    }
-  }, [isOpen])
+  }, [isOpen]);
 
-  useEffect(() => {
-    const handleScroll = (e: Event) => {
-      e.preventDefault()
-    }
+  if (!isOpen) return null;
 
-    const wrapper = wrapperRef.current
-    if (isOpen && wrapper) {
-      wrapper.addEventListener("wheel", handleScroll, { passive: false })
-      wrapper.addEventListener("touchmove", handleScroll, { passive: false })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!yearId) return;
+    if (!classNameVal.trim()) {
+      setError("Class name is required.");
+      return;
     }
 
-    return () => {
-      if (wrapper) {
-        wrapper.removeEventListener("wheel", handleScroll)
-        wrapper.removeEventListener("touchmove", handleScroll)
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/academic/classes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: classNameVal.trim(),
+          academicYearId: yearId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Failed to create class.");
+        return;
       }
+
+      setSuccess("Class added successfully!");
+      onSuccess();
+      setTimeout(() => onClose(), 1200);
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }, [isOpen])
-
-  if (!isOpen) return null
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle submission logic (static for now)
-    setClassNameVal("")
-    onClose()
-  }
+  };
 
   return (
-    <div ref={wrapperRef} className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overscroll-none">
-      {/* Backdrop click to close */}
+    <div
+      ref={wrapperRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overscroll-none"
+    >
       <div className="absolute inset-0" onClick={onClose} />
-
       <div className="relative w-full max-w-md rounded-[28px] bg-[#f8fafd] p-6 shadow-2xl z-10 flex flex-col gap-6 overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[#0a1c3a] font-sans">Add New Class</h2>
+          <h2 className="text-xl font-bold text-[#0a1c3a] font-sans">
+            Add New Class
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
           >
             <X className="h-6 w-6 stroke-[2.5]" />
           </button>
         </div>
 
-        {/* Content/Form */}
+        {success && (
+          <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Class Field */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Class</label>
+            <label className="text-sm font-semibold text-[#0a1c3a]">
+              Class <span className="text-red-400">*</span>
+            </label>
             <input
               type="text"
               value={classNameVal}
@@ -80,25 +141,24 @@ export default function AddClassModal({ isOpen, onClose }: AddClassModalProps) {
               className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
-
-          {/* Footer Actions */}
           <div className="flex gap-4 mt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-2xl border border-gray-200 bg-white py-3.5 text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 cursor-pointer"
+              className="flex-1 rounded-2xl border border-gray-200 bg-white py-3.5 text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 cursor-pointer "
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-2xl bg-[#4285F4] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-600 cursor-pointer shadow-sm"
+              disabled={loading || !!success}
+              className="flex-1 rounded-2xl bg-[#4285F4] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-600 cursor-pointer shadow-sm disabled:opacity-60 "
             >
-              Add Class
+              {loading ? "Adding..." : "Add Class"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

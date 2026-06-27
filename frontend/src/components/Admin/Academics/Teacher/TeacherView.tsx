@@ -1,31 +1,32 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
-import StaffHeader from "./StaffHeader";
-import StaffFilters from "./StaffFilters";
-import StaffStatsCards from "./StaffStatsCards";
-import StaffTable, { type StaffType } from "./StaffTable";
-import StaffPagination from "./StaffPagination";
-import AddNewStaffModal from "./AddNewStaffModal";
-import EditStaffModal from "./EditStaffModal";
+import TeacherHeader from "./TeacherHeader";
+import TeacherFilters from "./TeacherFilters";
+import TeacherStatsCards from "./TeacherStatsCards";
+import TeacherTable, { type TeacherRowType } from "./TeacherTable";
+import StaffPagination from "../Staff/StaffPagination";
+import AddNewTeacherModal from "./AddNewTeacherModal";
+import EditTeacherModal from "./EditTeacherModal";
 
 const ITEMS_PER_PAGE = 10;
 
-interface StaffMeta {
+interface TeacherMeta {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
   stats: {
-    totalStaff: number;
+    totalTeachers: number;
     newThisMonth: number;
     active: number;
     onLeave: number;
   };
 }
 
-export default function StaffView() {
-  const [staffList, setStaffList] = useState<StaffType[]>([]);
-  const [meta, setMeta] = useState<StaffMeta | null>(null);
+export default function TeacherView() {
+  const [teacherList, setTeacherList] = useState<TeacherRowType[]>([]);
+  const [meta, setMeta] = useState<TeacherMeta | null>(null);
   const [loading, setLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,20 +34,23 @@ export default function StaffView() {
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<StaffType | null>(null);
+  const [editingTeacher, setEditingTeacher] = useState<TeacherRowType | null>(
+    null,
+  );
 
-  // Delete confirmation state
-  const [deletingStaff, setDeletingStaff] = useState<StaffType | null>(null);
+  // Delete state
+  const [deletingTeacher, setDeletingTeacher] = useState<TeacherRowType | null>(
+    null,
+  );
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
-  // Filter state
+  // Filters
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchStaff = useCallback(async () => {
+  const fetchTeachers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -54,17 +58,16 @@ export default function StaffView() {
         page: String(currentPage),
         limit: String(ITEMS_PER_PAGE),
         ...(search && { search }),
-        ...(roleFilter && { role: roleFilter }),
         ...(statusFilter && { status: statusFilter }),
       });
 
-      const res = await fetch(`http://localhost:5000/api/staff?${params}`, {
+      const res = await fetch(`http://localhost:5000/api/teachers?${params}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
 
-      setStaffList(json.data);
+      setTeacherList(json.data);
       setMeta(json.meta);
     } catch (err: any) {
       setError(err.message);
@@ -72,18 +75,14 @@ export default function StaffView() {
       setLoading(false);
       setIsInitialLoad(false);
     }
-  }, [currentPage, search, roleFilter, statusFilter]);
+  }, [currentPage, search, statusFilter]);
 
   useEffect(() => {
-    fetchStaff();
-  }, [fetchStaff]);
+    fetchTeachers();
+  }, [fetchTeachers]);
 
   const handleSearch = (val: string) => {
     setSearch(val);
-    setCurrentPage(1);
-  };
-  const handleRoleChange = (val: string) => {
-    setRoleFilter(val);
     setCurrentPage(1);
   };
   const handleStatusChange = (val: string) => {
@@ -96,46 +95,43 @@ export default function StaffView() {
       page: "1",
       limit: "9999",
       ...(search && { search }),
-      ...(roleFilter && { role: roleFilter }),
       ...(statusFilter && { status: statusFilter }),
     });
-    const res = await fetch(`http://localhost:5000/api/staff?${params}`, {
+    const res = await fetch(`http://localhost:5000/api/teachers?${params}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
     const json = await res.json();
     if (!json.success) return;
 
     const headers = [
-      "Employee ID,Name,Role,Department,Joining Date,Contact,Status",
+      "Employee ID,Name,Subject,Sections,Qualification,Contact,Status",
     ];
-    const rows = (json.data as StaffType[]).map(
-      (s) =>
-        `${s.employeeId},"${s.name}","${s.role}","${s.department}","${s.joiningDate}",${s.contact},${s.status}`,
+    const rows = (json.data as TeacherRowType[]).map(
+      (t) =>
+        `${t.employeeId},"${t.name}","${t.subject}","${t.sections.join("; ")}","${t.qualification}",${t.contact},${t.status}`,
     );
     const csv = headers.concat(rows).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "Staff_List.csv");
+    link.setAttribute("download", "Teachers_List.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // ── Edit handler ────────────────────────────────────────────────────────────
-  const handleEdit = (staff: StaffType) => {
-    setEditingStaff(staff);
+  const handleEdit = (teacher: TeacherRowType) => {
+    setEditingTeacher(teacher);
     setIsEditModalOpen(true);
   };
 
-  // ── Delete handler ──────────────────────────────────────────────────────────
   const handleDeleteConfirm = async () => {
-    if (!deletingStaff) return;
+    if (!deletingTeacher) return;
     setDeleteLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:5000/api/staff/${deletingStaff.id}`,
+        `http://localhost:5000/api/teachers/${deletingTeacher.id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -147,12 +143,12 @@ export default function StaffView() {
       setDeleteSuccess(true);
       setTimeout(() => {
         setDeleteSuccess(false);
-        setDeletingStaff(null);
-        fetchStaff();
+        setDeletingTeacher(null);
+        fetchTeachers();
       }, 1500);
     } catch (err: any) {
       setError(err.message);
-      setDeletingStaff(null);
+      setDeletingTeacher(null);
     } finally {
       setDeleteLoading(false);
     }
@@ -160,18 +156,15 @@ export default function StaffView() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden gap-5 h-full">
-      <StaffHeader
+      <TeacherHeader
         totalCount={meta?.total ?? 0}
         search={search}
         onSearchChange={handleSearch}
         onAddClick={() => setIsAddModalOpen(true)}
         onExportCSV={handleExportCSV}
       />
-      <StaffFilters
-        onRoleChange={handleRoleChange}
-        onStatusChange={handleStatusChange}
-      />
-      <StaffStatsCards stats={meta?.stats ?? null} loading={loading} />
+      <TeacherFilters onStatusChange={handleStatusChange} />
+      <TeacherStatsCards stats={meta?.stats ?? null} loading={loading} />
 
       <div className="flex-1 overflow-y-auto min-h-0">
         {error ? (
@@ -179,11 +172,11 @@ export default function StaffView() {
             {error}
           </div>
         ) : (
-          <StaffTable
-            staffList={staffList}
+          <TeacherTable
+            teacherList={teacherList}
             loading={isInitialLoad}
             onEdit={handleEdit}
-            onDelete={(staff) => setDeletingStaff(staff)}
+            onDelete={(t) => setDeletingTeacher(t)}
           />
         )}
       </div>
@@ -199,12 +192,12 @@ export default function StaffView() {
         />
       )}
 
-      {/* Delete confirmation dialog */}
-      {deletingStaff && (
+      {/* Delete confirmation */}
+      {deletingTeacher && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4">
           <div
             className="absolute inset-0"
-            onClick={() => !deleteLoading && setDeletingStaff(null)}
+            onClick={() => !deleteLoading && setDeletingTeacher(null)}
           />
           <div className="relative w-full max-w-md rounded-[24px] bg-white shadow-2xl z-10 p-6 flex flex-col gap-4">
             {deleteSuccess ? (
@@ -225,32 +218,30 @@ export default function StaffView() {
                   </svg>
                 </div>
                 <p className="text-sm font-semibold text-gray-800">
-                  Staff member deleted successfully
+                  Teacher deleted successfully
                 </p>
               </div>
             ) : (
               <>
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-bold text-[#0a1c3a]">
-                    Delete Staff Member
+                    Delete Teacher
                   </h3>
                   <p className="text-sm text-gray-500">
                     Are you sure you want to delete{" "}
                     <span className="font-semibold text-gray-800">
-                      {deletingStaff.name}
+                      {deletingTeacher.name}
                     </span>
                     ? This action cannot be undone.
                   </p>
                 </div>
-
                 <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
-                  This will permanently remove the staff record and their login
-                  access.
+                  This will permanently remove the teacher, their assignments,
+                  and login access.
                 </div>
-
                 <div className="flex gap-3 pt-1">
                   <button
-                    onClick={() => setDeletingStaff(null)}
+                    onClick={() => setDeletingTeacher(null)}
                     disabled={deleteLoading}
                     className="flex-1 rounded-2xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
                   >
@@ -277,26 +268,26 @@ export default function StaffView() {
         </div>
       )}
 
-      <AddNewStaffModal
+      <AddNewTeacherModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
           setCurrentPage(1);
-          fetchStaff();
+          fetchTeachers();
         }}
       />
 
-      <EditStaffModal
+      <EditTeacherModal
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
-          setEditingStaff(null);
+          setEditingTeacher(null);
         }}
         onSuccess={() => {
           setCurrentPage(1);
-          fetchStaff();
+          fetchTeachers();
         }}
-        staffId={editingStaff?.id ?? null}
+        teacherId={editingTeacher?.id ?? null}
       />
     </div>
   );

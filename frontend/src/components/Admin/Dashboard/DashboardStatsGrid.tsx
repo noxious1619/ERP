@@ -1,4 +1,4 @@
-import { Users, UserCheck, CheckCircle2, UserPlus, BookOpen, DollarSign, TrendingUp, TrendingDown } from "lucide-react"
+import { Users, UserCheck, CheckCircle2, UserPlus, BookOpen, TrendingUp, TrendingDown } from "lucide-react"
 
 interface DashboardStatsGridProps {
   stats?: {
@@ -12,21 +12,6 @@ interface DashboardStatsGridProps {
 }
 
 export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
-  // Format pending fees nicely
-  let formattedFees = "No Data";
-  if (stats?.pendingFees !== null && stats?.pendingFees !== undefined) {
-    const fees = stats.pendingFees;
-    if (fees === 0) {
-      formattedFees = "₹0";
-    } else if (fees >= 100000) {
-      formattedFees = `₹${(fees / 100000).toFixed(1)}L`;
-    } else if (fees >= 1000) {
-      formattedFees = `₹${(fees / 1000).toFixed(1)}K`;
-    } else {
-      formattedFees = `₹${fees}`;
-    }
-  }
-
   const statItems = [
     {
       label: "Total Students",
@@ -35,6 +20,7 @@ export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
       trendType: "neutral",
       icon: Users,
       iconBg: "bg-blue-50 text-blue-500",
+      gridClass: "col-span-1 lg:col-span-4",
     },
     {
       label: "Total Staff",
@@ -43,6 +29,7 @@ export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
       trendType: "neutral",
       icon: UserCheck,
       iconBg: "bg-green-50 text-green-500",
+      gridClass: "col-span-1 lg:col-span-4",
     },
     {
       label: "Student Attendance Today",
@@ -55,6 +42,7 @@ export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
       trendType: "neutral",
       icon: CheckCircle2,
       iconBg: "bg-green-50 text-green-500",
+      gridClass: "col-span-1 lg:col-span-4",
     },
     {
       label: "New Admissions",
@@ -63,6 +51,7 @@ export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
       trendType: "neutral",
       icon: UserPlus,
       iconBg: "bg-blue-50 text-blue-500",
+      gridClass: "col-span-1 lg:col-span-6",
     },
     {
       label: "Active Classes",
@@ -71,23 +60,16 @@ export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
       trendType: "neutral",
       icon: BookOpen,
       iconBg: "bg-blue-50 text-blue-500",
-    },
-    {
-      label: "Pending Fees",
-      value: formattedFees,
-      trend: stats?.pendingFees !== null && stats?.pendingFees !== undefined ? "Current ledger" : "No outstanding",
-      trendType: "neutral",
-      icon: DollarSign,
-      iconBg: "bg-orange-50 text-orange-500",
+      gridClass: "col-span-1 sm:col-span-2 lg:col-span-6",
     }
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 mb-6">
       {statItems.map((stat, idx) => {
         const Icon = stat.icon
         return (
-          <div key={idx} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex justify-between items-start">
+          <div key={idx} className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex justify-between items-start ${stat.gridClass}`}>
             <div className="flex flex-col">
               <span className="text-gray-400 text-xs font-semibold tracking-wide uppercase mb-1">{stat.label}</span>
               <span className="text-3xl font-extrabold text-gray-900">{stat.value}</span>

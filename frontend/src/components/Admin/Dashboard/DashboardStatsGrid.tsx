@@ -1,52 +1,82 @@
 import { Users, UserCheck, CheckCircle2, UserPlus, BookOpen, DollarSign, TrendingUp, TrendingDown } from "lucide-react"
 
-export default function DashboardStatsGrid() {
-  const stats = [
+interface DashboardStatsGridProps {
+  stats?: {
+    totalStudents?: number;
+    totalStaff?: number;
+    studentAttendanceToday?: number | null;
+    newAdmissions?: number;
+    activeClasses?: number;
+    pendingFees?: number | null;
+  }
+}
+
+export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
+  // Format pending fees nicely
+  let formattedFees = "No Data";
+  if (stats?.pendingFees !== null && stats?.pendingFees !== undefined) {
+    const fees = stats.pendingFees;
+    if (fees === 0) {
+      formattedFees = "₹0";
+    } else if (fees >= 100000) {
+      formattedFees = `₹${(fees / 100000).toFixed(1)}L`;
+    } else if (fees >= 1000) {
+      formattedFees = `₹${(fees / 1000).toFixed(1)}K`;
+    } else {
+      formattedFees = `₹${fees}`;
+    }
+  }
+
+  const statItems = [
     {
       label: "Total Students",
-      value: "1,248",
-      trend: "+12.5%",
-      trendType: "up",
+      value: stats?.totalStudents !== undefined ? stats.totalStudents.toLocaleString() : "No Data",
+      trend: "Active",
+      trendType: "neutral",
       icon: Users,
       iconBg: "bg-blue-50 text-blue-500",
     },
     {
       label: "Total Staff",
-      value: "84",
-      trend: "+2 this month",
-      trendType: "up",
+      value: stats?.totalStaff !== undefined ? stats.totalStaff.toLocaleString() : "No Data",
+      trend: "Teachers & Staff",
+      trendType: "neutral",
       icon: UserCheck,
       iconBg: "bg-green-50 text-green-500",
     },
     {
       label: "Student Attendance Today",
-      value: "94%",
-      trend: "+2.1% from yesterday",
-      trendType: "up",
+      value: stats?.studentAttendanceToday !== null && stats?.studentAttendanceToday !== undefined 
+        ? `${stats.studentAttendanceToday}%` 
+        : "No Data",
+      trend: stats?.studentAttendanceToday !== null && stats?.studentAttendanceToday !== undefined 
+        ? "Present / Late" 
+        : "No logs today",
+      trendType: "neutral",
       icon: CheckCircle2,
       iconBg: "bg-green-50 text-green-500",
     },
     {
       label: "New Admissions",
-      value: "45",
-      trend: "+15 this week",
-      trendType: "up",
+      value: stats?.newAdmissions !== undefined ? stats.newAdmissions.toString() : "No Data",
+      trend: "Joined past 7d",
+      trendType: "neutral",
       icon: UserPlus,
       iconBg: "bg-blue-50 text-blue-500",
     },
     {
       label: "Active Classes",
-      value: "32",
-      trend: "All sections covered",
+      value: stats?.activeClasses !== undefined ? stats.activeClasses.toString() : "No Data",
+      trend: "Covered sections",
       trendType: "neutral",
       icon: BookOpen,
       iconBg: "bg-blue-50 text-blue-500",
     },
     {
       label: "Pending Fees",
-      value: "₹2.4L",
-      trend: "-8.2% from last week",
-      trendType: "down",
+      value: formattedFees,
+      trend: stats?.pendingFees !== null && stats?.pendingFees !== undefined ? "Current ledger" : "No outstanding",
+      trendType: "neutral",
       icon: DollarSign,
       iconBg: "bg-orange-50 text-orange-500",
     }
@@ -54,7 +84,7 @@ export default function DashboardStatsGrid() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-      {stats.map((stat, idx) => {
+      {statItems.map((stat, idx) => {
         const Icon = stat.icon
         return (
           <div key={idx} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex justify-between items-start">

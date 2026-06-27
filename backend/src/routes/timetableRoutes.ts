@@ -8,7 +8,10 @@ import {
     getWeeklyTimetableBySection,
     getDailyTeacherTimetable,
     getWeeklyTeacherTimetable,
-    getDailyTimetableBySection
+    getDailyTimetableBySection,
+    updateTimetableEntry,
+    deleteTimetableEntry,
+    updateSectionPeriods
 } from "../controllers/timetableController.js";
 
 const router = Router();
@@ -17,6 +20,12 @@ router.use(protect);
 // Timetable creation routes
 router.post('/', restrictTo('SUPER_ADMIN', 'ADMIN'), createTimetableEntry);
 router.post('/bulk', restrictTo('SUPER_ADMIN', 'ADMIN'), createWeeklyTimetable);
+
+router.route('/:id')
+  .patch(restrictTo('SUPER_ADMIN', 'ADMIN'), updateTimetableEntry)
+  .delete(restrictTo('SUPER_ADMIN', 'ADMIN'), deleteTimetableEntry);
+
+router.put('/section/:sectionId/periods', restrictTo('SUPER_ADMIN', 'ADMIN'), updateSectionPeriods);
 
 //Student Timetable retrieval routes
 router.get('/section/:sectionId/daily',restrictTo('TEACHER', 'SUPER_ADMIN', 'ADMIN', 'STUDENT'), getDailyTimetableBySection);

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma } from "../../generated/prisma/index.js";
 
 console.log("==== PRISMA DEBUG START ====");
 

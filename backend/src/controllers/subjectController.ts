@@ -496,6 +496,11 @@ export const getSectionsByClass = async (req: Request, res: Response) => {
 export const getTeachers = async (req: Request, res: Response) => {
   try {
     const teachers = await prisma.teacher.findMany({
+      where: {
+        employeeId: {
+          not: "TCH_UNASSIGNED"
+        }
+      },
       select: {
         id: true,
         firstName: true,

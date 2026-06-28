@@ -52,4 +52,10 @@ export interface GetStudentsResponse {
   success: boolean
   data: Student[]
   pagination: Pagination
+  stats?: {
+    total: number
+    active: number
+    inactive: number
+    newThisMonth: number
+  }
 }

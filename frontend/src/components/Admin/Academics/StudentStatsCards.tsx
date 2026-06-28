@@ -1,29 +1,24 @@
-import type { Student } from "../../../types/student"
-
 
 interface StudentStatsCardsProps {
-  students: Student[]
+  stats: {
+    total: number
+    active: number
+    inactive: number
+    newThisMonth: number
+  }
 }
 
-export default function StudentStatsCards({ students }: StudentStatsCardsProps) {
-  const total      = students.length
-  // "new this month" — students admitted in the current calendar month
-  const now        = new Date()
-  const newThisMonth = students.filter((s) => {
-    // createdAt isn't in the type yet; fall back to 0
-    return false
-  }).length
-
-  const stats = [
-    { label: "Total Students",  value: total },
-    { label: "New This Month",  value: newThisMonth },
-    { label: "Active",          value: total },   // until status field lands
-    { label: "On Leave",        value: 0 },
+export default function StudentStatsCards({ stats }: StudentStatsCardsProps) {
+  const statItems = [
+    { label: "Total Students",  value: stats.total },
+    { label: "New This Month",  value: stats.newThisMonth },
+    { label: "Active",          value: stats.active },
+    { label: "On Leave",        value: stats.inactive },
   ]
 
   return (
     <div className="grid grid-cols-4 gap-4">
-      {stats.map((stat) => (
+      {statItems.map((stat) => (
         <div key={stat.label} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">{stat.label}</p>
           <p className="mt-1 text-3xl font-semibold text-gray-900">{stat.value}</p>

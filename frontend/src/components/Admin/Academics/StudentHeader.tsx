@@ -41,10 +41,6 @@ export default function StudentsHeader({
           <Plus className="h-4 w-4" />
           Add Student
         </button>
-        <button className="flex h-10 items-center gap-1.5 rounded-full bg-blue-600 px-5 text-sm font-medium text-white transition-colors hover:bg-blue-700">
-          <Plus className="h-4 w-4" />
-          Features
-        </button>
       </div>
     </div>
   )

@@ -18,15 +18,17 @@ router.use(protect);
 // Admin only
 router.get(   "/",         restrictTo("SUPER_ADMIN", "ADMIN"), getAllTeachers);
 router.post(  "/onboard",  restrictTo("SUPER_ADMIN", "ADMIN"), registerTeacher);
-router.get(   "/:id",      restrictTo("SUPER_ADMIN", "ADMIN"), getTeacherById);
 router.patch( "/:id",      restrictTo("SUPER_ADMIN", "ADMIN"), updateTeacher);
 router.delete("/:id",      restrictTo("SUPER_ADMIN", "ADMIN"), deleteTeacher);
 
-// Teacher's own profile — must come before /:id
+// ── Must come BEFORE /:id ──
 router.get("/me", restrictTo("TEACHER", "ADMIN", "SUPER_ADMIN"), getMyProfile);
-
-// Teaching assignments
-router.post("/assign-subject-section", restrictTo("SUPER_ADMIN", "ADMIN"), assignTeacherToSectionSubject);
 router.get("/:id/teaching-assignments", restrictTo("TEACHER", "ADMIN", "SUPER_ADMIN"), getTeacherTeachingAssignments);
+
+// ── After /me ──
+router.get("/:id", restrictTo("SUPER_ADMIN", "ADMIN"), getTeacherById);
+
+// Teaching assignments (admin only)
+router.post("/assign-subject-section", restrictTo("SUPER_ADMIN", "ADMIN"), assignTeacherToSectionSubject);
 
 export default router;

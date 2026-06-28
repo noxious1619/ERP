@@ -74,7 +74,9 @@ const TeacherUpcomingExams = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!classId) return;
+    // subjectOnly mode: classId is empty, backend uses teacher's subject across all classes
+    // class filter mode: classId required
+    if (!subjectOnly && !classId) return;
 
     const fetchExams = async () => {
       try {
@@ -83,10 +85,14 @@ const TeacherUpcomingExams = ({
         setExamData([]);
 
         const token = localStorage.getItem("token");
+        const params: Record<string, string> = {};
+        if (classId) params.classId = classId;
+        if (subjectOnly) params.subjectOnly = "true";
+
         const response = await axios.get(
           "http://localhost:5000/api/exams/datesheet",
           {
-            params: { classId, subjectOnly: subjectOnly ? "true" : undefined },
+            params,
             headers: { Authorization: `Bearer ${token}` },
           },
         );
@@ -97,7 +103,6 @@ const TeacherUpcomingExams = ({
           if (onMetaReady && data.length > 0) {
             const firstInstruction =
               data.find((e) => e.instruction)?.instruction ?? null;
-            // Pass full exam list up so the page can use it for PDF
             onMetaReady(data[0].termName, firstInstruction, data);
           }
         } else {

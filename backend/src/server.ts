@@ -18,7 +18,7 @@ import examRoutes from './routes/examRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import adminNoticeRoutes from './routes/adminNoticeRoutes.js';
 import adminSubjectRoutes from './routes/adminSubjectRoutes.js';
-
+import examTermRoutes from './routes/examTermRoutes.js';
 
 dotenv.config();
 
@@ -47,6 +47,7 @@ app.use('/api/exams', examRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin', adminNoticeRoutes);
 app.use('/api/admin/subjects', adminSubjectRoutes);
+app.use('/api/exam-terms', examTermRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

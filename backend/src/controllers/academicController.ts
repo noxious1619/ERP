@@ -258,8 +258,9 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
 export const getWeeklyTimetableBySection = async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
+    const sectionIdStr = sectionId as string;
 
-    if (!sectionId) {
+    if (!sectionIdStr) {
       return res.status(400).json({
         success: false,
         message: "Validation Error: sectionId parameter is required."
@@ -267,7 +268,7 @@ export const getWeeklyTimetableBySection = async (req: Request, res: Response) =
     }
 
     const weeklySchedule = await prisma.timetable.findMany({
-      where: { sectionId },
+      where: { sectionId: sectionIdStr },
       include: {
         subject: { select: { id: true, name: true, code: true } },
         teacher: { select: { id: true, name: true } }
@@ -492,8 +493,9 @@ export const getDailyTimetableBySection = async (req: Request, res: Response) =>
   try {
     const { sectionId } = req.params;
     const { day } = req.query;
+    const sectionIdStr = sectionId as string;
 
-    if (!sectionId) {
+    if (!sectionIdStr) {
       return res.status(400).json({ success: false, message: "sectionId is required." });
     }
 
@@ -506,7 +508,7 @@ export const getDailyTimetableBySection = async (req: Request, res: Response) =>
     }
 
     const timetableRows = await prisma.timetable.findMany({
-      where: { sectionId, day: day.toUpperCase() as any },
+      where: { sectionId: sectionIdStr, day: day.toUpperCase() as any },
       include: {
         subject: { select: { name: true, code: true } },
         teacher: { select: { id: true, name: true } },
@@ -528,26 +530,41 @@ export const getDailyTimetableBySection = async (req: Request, res: Response) =>
 
 export const getClassesByYear = async (req: Request, res: Response) => {
   try {
-    const { yearId } = req.query;
+    let { yearId } = req.query;
 
-    if (!yearId || typeof yearId !== 'string') {
-      return res.status(400).json({
-        success: false,
-        message: 'yearId query parameter is required.'
+    if (!yearId) {
+      const currentYear = await prisma.academicYear.findFirst({
+        where: { isCurrent: true },
       });
+
+      if (!currentYear) {
+        return res.status(404).json({
+          success: false,
+          message: "No current academic year found.",
+        });
+      }
+
+      yearId = currentYear.id;
     }
 
     const classes = await prisma.class.findMany({
-      where: { academicYearId: yearId },
-      orderBy: { name: 'asc' }
+      where: {
+        academicYearId: yearId as string,
+      },
+      orderBy: {
+        name: "asc",
+      },
     });
 
-    return res.status(200).json({ success: true, data: classes });
+    return res.status(200).json({
+      success: true,
+      data: classes,
+    });
   } catch (error: any) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch classes.',
-      error: error.message
+      message: "Failed to fetch classes.",
+      error: error.message,
     });
   }
 };
@@ -699,7 +716,10 @@ export const deleteClass = async (req: Request, res: Response) => {
 
 export const getSubjects = async (req: Request, res: Response) => {
   try {
+    const { classId } = req.query as { classId?: string };
+
     const subjects = await prisma.subject.findMany({
+      ...(classId ? { where: { classId } } : {}),
       include: {
         class: { select: { id: true, name: true } },
       },

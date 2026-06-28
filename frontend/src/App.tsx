@@ -92,6 +92,10 @@ const App = () => {
           path="/teacher/homework/submission/:submissionId"
           element={<TeacherSubmissionView />}
         />
+        {/* Datesheet */}
+        <Route path="/teacher/exams" element={<Teacherdatesheet />} />
+        {/* Teacher Dashboard */}
+        <Route path="/teacher/dashboard" element={<Teacherdashboard />} />
 
         {/* ========================================== */}
         {/* ADMIN ROUTES                               */}
@@ -140,10 +144,6 @@ const App = () => {
             </div>
           }
         />
-        {/* Datesheet */}
-        <Route path="/teacher/exams" element={<Teacherdatesheet />} />
-        {/* Teacher Dashboard */}
-        <Route path="/teacher/dashboard" element={<Teacherdashboard />} />
       </Routes>
     </AuthProvider>
   );

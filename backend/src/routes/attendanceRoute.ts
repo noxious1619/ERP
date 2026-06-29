@@ -8,6 +8,7 @@ import { markBulkAttendance,
     getStudentHeatmapGrid,
     getDailyAttendance,
     saveDailyAttendance,
+    getAdminAttendanceSummary
 
 } from '../controllers/attendanceController.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -39,6 +40,11 @@ router.get('/daily',
 router.post('/daily',
     restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
     saveDailyAttendance
+);
+
+router.get('/admin-summary',
+    restrictTo('ADMIN', 'SUPER_ADMIN'),
+    getAdminAttendanceSummary
 );
 
 router.get('/attendanceData/student/:studentId/totalPercetage', 

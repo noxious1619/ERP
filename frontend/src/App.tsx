@@ -37,7 +37,7 @@ import AdminTimetable from "./pages/Admin/Academics/Timetable";
 import AdminDashboard from "./pages/Admin/Dashboard/Dashboard";
 import AdminNotices from "./pages/Admin/Communication/Notices";
 import AdminDatesheet from "./pages/Admin/Academics/Exams/Datesheet";
-import AdminAttendance from "./pages/Admin/Academics/Attendence";
+import AdminAttendance from "./pages/Admin/Academics/Attendance";
 import Teacherdatesheet from "./pages/Teacher/Teacherdatesheet";
 import Teacherdashboard from "./pages/Teacher/Teacherdashboard";
 import AdminProfilePage from "./pages/Admin/AdminProfilePage";

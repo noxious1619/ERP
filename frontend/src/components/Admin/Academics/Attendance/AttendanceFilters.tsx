@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from "react"
 import { Search, ChevronDown } from "lucide-react"
 
 interface AttendanceFiltersProps {
@@ -12,6 +11,8 @@ interface AttendanceFiltersProps {
   setSelectedClass: (val: string) => void
   selectedSection: string
   setSelectedSection: (val: string) => void
+  classes: any[]
+  sections: any[]
 }
 
 export default function AttendanceFilters({
@@ -24,7 +25,9 @@ export default function AttendanceFilters({
   selectedClass,
   setSelectedClass,
   selectedSection,
-  setSelectedSection
+  setSelectedSection,
+  classes = [],
+  sections = [],
 }: AttendanceFiltersProps) {
   return (
     <div className="flex flex-col gap-5 bg-white border border-gray-200 rounded-xl p-5 shadow-3xs">
@@ -47,7 +50,7 @@ export default function AttendanceFilters({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, employee ID, or phone..."
+            placeholder="Search by student roll no. or name..."
             className="w-full md:w-[360px] h-10 border border-gray-250 bg-white rounded-full pl-10 pr-4 text-xs font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#4285F4] focus:border-[#4285F4] transition shadow-3xs"
           />
         </div>
@@ -102,11 +105,12 @@ export default function AttendanceFilters({
                 onChange={(e) => setSelectedClass(e.target.value)}
                 className="w-full border border-gray-205 rounded-xl px-4 py-2 pr-10 text-xs font-semibold text-gray-800 bg-white focus:outline-none focus:ring-1 focus:ring-[#4285F4] focus:border-[#4285F4] shadow-3xs cursor-pointer appearance-none h-9"
               >
-                <option value="">Select Class</option>
-                <option value="Class 7">Class 7</option>
-                <option value="Class 8">Class 8</option>
-                <option value="Class 9">Class 9</option>
-                <option value="Class 10">Class 10</option>
+                <option value="">All Classes</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>
@@ -116,13 +120,15 @@ export default function AttendanceFilters({
               <select
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
-                className="w-full border border-gray-205 rounded-xl px-4 py-2 pr-10 text-xs font-semibold text-gray-800 bg-white focus:outline-none focus:ring-1 focus:ring-[#4285F4] focus:border-[#4285F4] shadow-3xs cursor-pointer appearance-none h-9"
+                disabled={!selectedClass}
+                className="w-full border border-gray-205 rounded-xl px-4 py-2 pr-10 text-xs font-semibold text-gray-800 bg-white focus:outline-none focus:ring-1 focus:ring-[#4285F4] focus:border-[#4285F4] shadow-3xs cursor-pointer appearance-none h-9 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">Select Section</option>
-                <option value="Section A">Section A</option>
-                <option value="Section B">Section B</option>
-                <option value="Section C">Section C</option>
-                <option value="Section D">Section D</option>
+                <option value="">All Sections</option>
+                {sections.map((sec) => (
+                  <option key={sec.id} value={sec.id}>
+                    {sec.name}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             </div>

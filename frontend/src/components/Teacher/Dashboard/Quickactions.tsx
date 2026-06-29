@@ -25,7 +25,7 @@ const ACTIONS: QuickAction[] = [
   },
   {
     icon: <ClipboardList size={18} className="text-red-500" />,
-    label: "Enter Marks",
+    label: "View Datesheet",
     href: "/teacher/exams",
     Bg: "bg-pink-800/5",
   },

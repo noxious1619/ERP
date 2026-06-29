@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { admitStudent, bulkAdmitStudents, getAllStudents, getStudentProfile } from "../controllers/studentController.js";
+import { admitStudent, bulkAdmitStudents, getAllStudents, getStudentProfile, updateStudent, bulkDeleteStudents } from "../controllers/studentController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { restrictTo } from '../middleware/roleMiddleware.js'; 
 import { upload } from "../middleware/uploadMiddleware.js";
@@ -30,5 +30,16 @@ router.post(
   bulkAdmitStudents
 );
 
+router.patch(
+  "/:id",
+  restrictTo("SUPER_ADMIN", "ADMIN"),
+  updateStudent
+);
+
+router.post(
+  "/bulk-delete",
+  restrictTo("SUPER_ADMIN", "ADMIN"),
+  bulkDeleteStudents
+);
 
 export default router;

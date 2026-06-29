@@ -1,7 +1,5 @@
-"use client"
-
-import { Search, Plus } from "lucide-react"
-
+"use client";
+import { Search, Plus } from "lucide-react";
 interface StaffHeaderProps {
   totalCount: number;
   search: string;
@@ -11,17 +9,15 @@ interface StaffHeaderProps {
 }
 
 export default function StaffHeader({
-  totalCount,
   search,
   onSearchChange,
   onAddClick,
-  onExportCSV
+  onExportCSV,
 }: StaffHeaderProps) {
   return (
     <div className="flex items-center justify-between">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Staff</h1>
-        <p className="mt-0.5 text-sm text-gray-500">{totalCount} staff members found</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -36,14 +32,14 @@ export default function StaffHeader({
           />
         </div>
 
-        <button 
+        <button
           onClick={onAddClick}
           className="flex h-10 items-center gap-1.5 rounded-full bg-blue-600 px-5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
           <Plus className="h-4 w-4" />
           Add Staff
         </button>
-        <button 
+        <button
           onClick={onExportCSV}
           className="flex h-10 items-center gap-1.5 rounded-full border border-blue-600 px-5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 relative bg-white"
         >
@@ -51,5 +47,5 @@ export default function StaffHeader({
         </button>
       </div>
     </div>
-  )
+  );
 }

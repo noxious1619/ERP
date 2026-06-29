@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
 
+
 const teacherSelect = {
   id:             true,
   firstName:      true,
@@ -52,165 +53,345 @@ const teacherSelect = {
 // ─── POST /api/teachers/onboard (Admin only) ──────────────────────────────────
 export const registerTeacher = async (req: Request, res: Response) => {
   const {
-    name, email, password,
-    firstName, lastName, employeeId,
-    qualification, specialization, experience,
-    joiningDate, designation, gender, dateOfBirth,
-    phone, address, city, state, bloodGroup, bio,
-    subjectId,        // optional — single subject UUID
-    sectionIds,       // optional — string[] of section UUIDs
-    classTeacherOfId, // optional — single section UUID (homeroom)
+    firstName,
+    lastName,
+    email,
+    password,
+    employeeId,
+    gender,
+    dateOfBirth,
+    phone,
+    qualification,
+    specialization,
+    bio,
+    experience,
+    joiningDate,
+    designation,
+    address,
+    city,
+    state,
+    bloodGroup,
+
+    // NEW
+    assignments = [],
+    classTeacherOfId,
   } = req.body;
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const existingUser = await tx.user.findUnique({ where: { email } });
-      if (existingUser) throw new Error("Email already registered");
+      const existingUser = await tx.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        throw new Error("Email already registered");
+      }
+
+      const [existingTeacher, existingStaff] = await Promise.all([
+        tx.teacher.findUnique({
+          where: { employeeId },
+        }),
+        tx.staff.findUnique({
+          where: { employeeId },
+        }),
+      ]);
+
+      if (existingTeacher || existingStaff) {
+        throw new Error(
+          `Employee ID "${employeeId}" is already in use. Please use a different ID.`,
+        );
+      }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await tx.user.create({
         data: {
-          name: name ?? `${firstName ?? ""} ${lastName ?? ""}`.trim(),
+          name: `${firstName ?? ""} ${lastName ?? ""}`.trim(),
           email,
           passwordHash: hashedPassword,
-          role: "TEACHER", 
+          role: "TEACHER",
         },
       });
 
       const teacher = await tx.teacher.create({
         data: {
-          firstName:      firstName ?? "",
-          lastName:       lastName ?? "",
+          firstName: firstName ?? "",
+          lastName: lastName ?? "",
           employeeId,
-          qualification:  qualification  ?? null,
+          qualification: qualification ?? null,
           specialization: specialization ?? null,
-          experience:     experience != null ? Number(experience) : null,
-          joiningDate:    new Date(joiningDate),
-          designation:    designation ?? "Teacher",
-          gender:         gender      ?? null,
-          dateOfBirth:    dateOfBirth ? new Date(dateOfBirth) : null,
-          phone:          phone       ?? null,
-          address:        address     ?? null,
-          city:           city        ?? null,
-          state:          state       ?? null,
-          bloodGroup:     bloodGroup  ?? null,
-          bio:            bio         ?? null,
-          email:          email       ?? null,
-          userId:         user.id,
+          experience:
+            experience != null ? Number(experience) : null,
+          joiningDate: new Date(joiningDate),
+          designation: designation ?? "Teacher",
+          gender: gender ?? null,
+          dateOfBirth: dateOfBirth
+            ? new Date(dateOfBirth)
+            : null,
+          phone: phone ?? null,
+          address: address ?? null,
+          city: city ?? null,
+          state: state ?? null,
+          bloodGroup: bloodGroup ?? null,
+          bio: bio ?? null,
+          email: email ?? null,
+          userId: user.id,
         },
       });
 
-  if (subjectId && Array.isArray(sectionIds) && sectionIds.length > 0) {
-  await tx.teacherSectionSubject.createMany({
-    data: sectionIds.map((sectionId: string) => ({
-      teacherId: teacher.id,
-      sectionId,
-      subjectId,
-    })),
-    skipDuplicates: true,
-  });
-}
+      // ===============================
+      // Teaching Assignments
+      // ===============================
+      if (Array.isArray(assignments) && assignments.length > 0) {
+        const teacherAssignments = assignments.flatMap(
+          (assignment: {
+            subjectId: string;
+            sectionIds: string[];
+          }) =>
+            assignment.sectionIds.map((sectionId: string) => ({
+              teacherId: teacher.id,
+              subjectId: assignment.subjectId,
+              sectionId,
+            })),
+        );
 
-if (classTeacherOfId) {
-  await tx.section.update({
-    where: { id: classTeacherOfId },
-    data:  { classTeacherId: teacher.id },
-  });
-}
+        if (teacherAssignments.length > 0) {
+          await tx.teacherSectionSubject.createMany({
+            data: teacherAssignments,
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      
+      // ===============================
+      // Class Teacher
+      // ===============================
+      if (classTeacherOfId) {
+        await tx.section.update({
+          where: {
+            id: classTeacherOfId,
+          },
+          data: {
+            classTeacherId: teacher.id,
+          },
+        });
+      }
+
       return tx.teacher.findUnique({
-        where:  { id: teacher.id },
+        where: {
+          id: teacher.id,
+        },
         select: teacherSelect,
       });
     });
 
-    res.status(201).json({
+    return res.status(201).json({
+      
       success: true,
       message: "Teacher onboarded successfully",
       data: result,
+      
     });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
+    const target =
+      error?.meta?.target?.[0] ??
+      error?.cause?.meta?.target?.[0] ??
+      "";
+
+    const code =
+      error?.code ??
+      error?.cause?.code ??
+      "";
+
+    if (code === "P2002") {
+      if (target.includes("employeeId")) {
+        return res.status(400).json({
+          success: false,
+          message: `Employee ID "${employeeId}" is already in use. Please use a different ID.`,
+        });
+      }
+
+      if (target.includes("email")) {
+        return res.status(400).json({
+          success: false,
+          message: `Email "${email}" is already registered. Please use a different email.`,
+        });
+      }
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
 // ─── PATCH /api/teachers/:id (Admin only) ────────────────────────────────────
 export const updateTeacher = async (req: Request, res: Response) => {
- const id = req.params.id as string;
+  const id = req.params.id as string;
+
   const {
-    firstName, lastName, designation, qualification,
-    specialization, experience, joiningDate, gender,
-    dateOfBirth, phone, address, city, state,
-    bloodGroup, bio, email, status,
-    subjectId,        // replaces old subject assignment
-    sectionIds,       // replaces old section assignments
-    classTeacherOfId, // replaces old homeroom (pass null to remove)
+    firstName,
+    lastName,
+    designation,
+    qualification,
+    specialization,
+    experience,
+    joiningDate,
+    gender,
+    dateOfBirth,
+    phone,
+    address,
+    city,
+    state,
+    bloodGroup,
+    bio,
+    email,
+    status,
+
+    // NEW
+    assignments = [],
+    classTeacherOfId,
   } = req.body;
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
-      // 1. Verify teacher exists
-      const existing = await tx.teacher.findUnique({ where: { id } });
-      if (!existing) throw new Error("Teacher not found");
-
-      // 2. Update scalar fields
-      await tx.teacher.update({
+      const existing = await tx.teacher.findUnique({
         where: { id },
-        data: {
-          ...(firstName      !== undefined && { firstName }),
-          ...(lastName       !== undefined && { lastName }),
-          ...(designation    !== undefined && { designation }),
-          ...(qualification  !== undefined && { qualification }),
-          ...(specialization !== undefined && { specialization }),
-          ...(experience     !== undefined && { experience: Number(experience) }),
-          ...(joiningDate    !== undefined && { joiningDate: new Date(joiningDate) }),
-          ...(gender         !== undefined && { gender }),
-          ...(dateOfBirth    !== undefined && { dateOfBirth: new Date(dateOfBirth) }),
-          ...(phone          !== undefined && { phone }),
-          ...(address        !== undefined && { address }),
-          ...(city           !== undefined && { city }),
-          ...(state          !== undefined && { state }),
-          ...(bloodGroup     !== undefined && { bloodGroup }),
-          ...(bio            !== undefined && { bio }),
-          ...(email          !== undefined && { email }),
-          ...(status         !== undefined && { status }),
+      });
+
+      if (!existing) {
+        throw new Error("Teacher not found");
+      }
+
+      // ==========================
+      // Update teacher details
+      // ==========================
+    const updateData: any = {};
+
+if (firstName !== undefined)
+  updateData.firstName = firstName;
+
+if (lastName !== undefined)
+  updateData.lastName = lastName;
+
+if (designation !== undefined)
+  updateData.designation = designation;
+
+if (qualification !== undefined)
+  updateData.qualification = qualification;
+
+if (specialization !== undefined)
+  updateData.specialization = specialization;
+
+if (experience !== undefined) {
+  updateData.experience =
+    experience === "" || experience === null
+      ? null
+      : Number(experience);
+}
+
+if (joiningDate !== undefined) {
+  updateData.joiningDate = new Date(joiningDate);
+}
+
+if (gender !== undefined)
+  updateData.gender = gender;
+
+if (dateOfBirth !== undefined) {
+  updateData.dateOfBirth =
+    dateOfBirth
+      ? new Date(dateOfBirth)
+      : null;
+}
+
+if (phone !== undefined)
+  updateData.phone = phone;
+
+if (address !== undefined)
+  updateData.address = address;
+
+if (city !== undefined)
+  updateData.city = city;
+
+if (state !== undefined)
+  updateData.state = state;
+
+if (bloodGroup !== undefined)
+  updateData.bloodGroup = bloodGroup;
+
+if (bio !== undefined)
+  updateData.bio = bio;
+
+if (email !== undefined)
+  updateData.email = email;
+
+if (status !== undefined)
+  updateData.status = status;
+
+await tx.teacher.update({
+  where: { id },
+  data: updateData,
+});
+
+      // ==========================
+      // Replace Teaching Assignments
+      // ==========================
+      await tx.teacherSectionSubject.deleteMany({
+        where: {
+          teacherId: id,
         },
       });
 
-      
-if (subjectId && Array.isArray(sectionIds) && sectionIds.length > 0) {
-  // Delete old assignments for this teacher
-  await tx.teacherSectionSubject.deleteMany({
-    where: { teacherId: id },
-  });
-  // Create new assignments
-  await tx.teacherSectionSubject.createMany({
-    data: sectionIds.map((sectionId: string) => ({
-      teacherId: id,
-      sectionId,
-      subjectId,
-    })),
-    skipDuplicates: true,
-  });
-}
+      if (Array.isArray(assignments) && assignments.length > 0) {
+        const teacherAssignments = assignments.flatMap(
+          (assignment: {
+            subjectId: string;
+            sectionIds: string[];
+          }) =>
+            assignment.sectionIds.map((sectionId: string) => ({
+              teacherId: id,
+              subjectId: assignment.subjectId,
+              sectionId,
+            }))
+        );
 
+        if (teacherAssignments.length > 0) {
+          await tx.teacherSectionSubject.createMany({
+            data: teacherAssignments,
+            skipDuplicates: true,
+          });
+        }
+      }
 
-      // 5. Re-assign homeroom: remove old, set new
+      // ==========================
+      // Class Teacher Assignment
+      // ==========================
       if (classTeacherOfId !== undefined) {
         await tx.section.updateMany({
-          where: { classTeacherId: id },
-          data:  { classTeacherId: null },
+          where: {
+            classTeacherId: id,
+          },
+          data: {
+            classTeacherId: null,
+          },
         });
+
         if (classTeacherOfId) {
           await tx.section.update({
-            where: { id: classTeacherOfId },
-            data:  { classTeacherId: id },
+            where: {
+              id: classTeacherOfId,
+            },
+            data: {
+              classTeacherId: id,
+            },
           });
         }
       }
 
       return tx.teacher.findUnique({
-        where:  { id },
+        where: { id },
         select: teacherSelect,
       });
     });
@@ -221,12 +402,16 @@ if (subjectId && Array.isArray(sectionIds) && sectionIds.length > 0) {
       data: updated,
     });
   } catch (error: any) {
-    console.error("[updateTeacher] Error:", error);
-    const status = error.message === "Teacher not found" ? 404 : 500;
-    return res.status(status).json({ success: false, message: error.message });
+    console.error("[updateTeacher]", error);
+
+    return res.status(
+      error.message === "Teacher not found" ? 404 : 500
+    ).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
-
 // ─── GET /api/teachers/me (Teacher only) ─────────────────────────────────────
 
 export const getMyProfile = async (req: Request, res: Response) => {
@@ -494,5 +679,221 @@ export const getTeacherTeachingAssignments = async (
       success: false,
       message: error.message,
     });
+  }
+};
+
+// ── GET /api/teachers ─────────────────────────────────────────────────────────
+export const getAllTeachers = async (req: Request, res: Response) => {
+  try {
+    const page         = Math.max(1, parseInt(req.query.page   as string) || 1);
+    const limit        = Math.max(1, parseInt(req.query.limit  as string) || 10);
+    const search       = (req.query.search as string)?.trim() || "";
+    const statusFilter = (req.query.status as string)?.trim() || "";
+    const skip         = (page - 1) * limit;
+
+    const searchCondition = search ? {
+      OR: [
+        { firstName:  { contains: search, mode: "insensitive" as const } },
+        { lastName:   { contains: search, mode: "insensitive" as const } },
+        { employeeId: { contains: search, mode: "insensitive" as const } },
+        { phone:      { contains: search, mode: "insensitive" as const } },
+      ],
+    } : {};
+
+    const statusCondition =
+      statusFilter === "Active"   ? { status: "ACTIVE" }   :
+      statusFilter === "On Leave" ? { status: "ON_LEAVE" } : {};
+
+    const where = { ...searchCondition, ...statusCondition };
+
+    const [teachers, total] = await Promise.all([
+      prisma.teacher.findMany({
+        where,
+        select: {
+          id:            true,
+          firstName:     true,
+          lastName:      true,
+          employeeId:    true,
+          phone:         true,
+          status:        true,
+          qualification: true,
+          designation:   true,
+          teachingAssignments: {
+            select: {
+              subject: { select: { name: true } },
+              section: {
+                select: {
+                  name: true,
+                  academicClass: { select: { name: true } },
+                },
+              },
+            },
+          },
+        },
+        orderBy: { employeeId: "asc" },
+        skip,
+        take: limit,
+      }),
+      prisma.teacher.count({ where }),
+    ]);
+
+    const normalizeStatus = (s: string) =>
+      s === "ACTIVE" ? "Active" : s === "ON_LEAVE" ? "On Leave" : s;
+
+    const data = teachers.map((t) => {
+      const subjects = [
+  ...new Set(
+    t.teachingAssignments.map(a => a.subject.name)
+  ),
+];
+      const sections = t.teachingAssignments.map(
+        (a) => `${a.section.academicClass.name}:${a.section.name}`
+      );
+      return {
+        id:            t.id,
+        employeeId:    t.employeeId,
+        name:          `${t.firstName} ${t.lastName}`.trim(),
+       subject: subjects.join(", ") || "-",
+        sections:      sections.length > 0 ? sections : ["-"],
+        qualification: t.qualification ?? "-",
+        contact:       t.phone ?? "-",
+        status:        normalizeStatus(t.status),
+      };
+    });
+
+    // Stats
+    const monthStart = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    );
+    const [totalCount, activeCount, onLeaveCount, newThisMonth] =
+      await Promise.all([
+        prisma.teacher.count(),
+        prisma.teacher.count({ where: { status: "ACTIVE" } }),
+        prisma.teacher.count({ where: { status: "ON_LEAVE" } }),
+        prisma.teacher.count({ where: { createdAt: { gte: monthStart } } }),
+      ]);
+
+    return res.status(200).json({
+      success: true,
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        stats: {
+          totalTeachers: totalCount,
+          newThisMonth,
+          active:        activeCount,
+          onLeave:       onLeaveCount,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error("[getAllTeachers] Error:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── GET /api/teachers/:id ─────────────────────────────────────────────────────
+export const getTeacherById = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+
+    const teacher = await prisma.teacher.findUnique({
+      where: { id },
+      select: {
+        id:            true,
+        firstName:     true,
+        lastName:      true,
+        employeeId:    true,
+        designation:   true,
+        gender:        true,
+        dateOfBirth:   true,
+        phone:         true,
+        address:       true,
+        city:          true,
+        state:         true,
+        bloodGroup:    true,
+        qualification: true,
+        specialization:true,
+        experience:    true,
+        bio:           true,
+        joiningDate:   true,
+        status:        true,
+        email:         true,
+        user: {
+          select: { id: true, email: true },
+        },
+        classTeacherOf: {
+          select: {
+            id:   true,
+            name: true,
+            academicClass: { select: { name: true } },
+          },
+        },
+        teachingAssignments: {
+          select: {
+            id: true,
+            subject: { select: { id: true, name: true, code: true } },
+            section: {
+              select: {
+                id:   true,
+                name: true,
+                academicClass: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher not found",
+      });
+    }
+
+    return res.status(200).json({ success: true, data: teacher });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── DELETE /api/teachers/:id ──────────────────────────────────────────────────
+export const deleteTeacher = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+
+    const existing = await prisma.teacher.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher not found",
+      });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Delete teaching assignments first (cascade may handle this
+      // but being explicit is safer)
+      await tx.teacherSectionSubject.deleteMany({ where: { teacherId: id } });
+      // Remove class teacher reference if any
+      await tx.section.updateMany({
+        where: { classTeacherId: id },
+        data:  { classTeacherId: null },
+      });
+      await tx.teacher.delete({ where: { id } });
+      await tx.user.delete({ where: { id: existing.userId } });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Teacher deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

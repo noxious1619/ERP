@@ -1,48 +1,70 @@
-"use client"
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Pencil } from "lucide-react"
-
-export type StatusType = "Active" | "On Leave"
-
+"use client";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
+export type StatusType = "Active" | "On Leave";
 export type StaffType = {
-  id: string
-  name: string
-  role: string
-  subject: string
-  assigned: string[]
-  contact: string
-  status: StatusType
-}
+  id: string;
+  employeeId: string;
+  name: string;
+  role: string;
+  department: string;
+  joiningDate: string;
+  contact: string;
+  status: StatusType;
+};
 
 function StatusBadge({ status }: { status: StatusType }) {
-
   const styles: Record<StatusType, string> = {
-    Active:     "bg-green-100 text-green-700",
+    Active: "bg-green-100 text-green-700",
     "On Leave": "bg-yellow-100 text-yellow-700",
-  }
+  };
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-medium ${styles[status]}`}>
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-medium ${styles[status]}`}
+    >
       {status}
     </span>
-  )
+  );
 }
 
-const HEADERS = ["Employee ID", "Name", "Role", "Subject", "Assigned", "Contact", "Status"]
+const HEADERS = [
+  "Employee ID",
+  "Name",
+  "Role",
+  "Department",
+  "Joining Date",
+  "Contact",
+  "Status",
+];
 
 interface StaffTableProps {
   staffList: StaffType[];
+  loading?: boolean;
+  onEdit: (staff: StaffType) => void;
+  onDelete: (staff: StaffType) => void;
 }
 
-export default function StaffTable({ staffList }: StaffTableProps) {
-  const navigate = useNavigate()
-  const [selected, setSelected] = useState<string[]>([])
+export default function StaffTable({
+  staffList,
+  loading,
+  onEdit,
+  onDelete,
+}: StaffTableProps) {
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState<string[]>([]);
 
-  const allSelected = staffList.length > 0 && selected.length === staffList.length
-  const toggleAll   = () => setSelected(allSelected ? [] : staffList.map((s) => s.id))
-  const toggleOne   = (id: string) =>
-    setSelected((prev) => prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id])
+  const allSelected =
+    staffList.length > 0 && selected.length === staffList.length;
+  const toggleAll = () =>
+    setSelected(allSelected ? [] : staffList.map((s) => s.id));
+  const toggleOne = (id: string) =>
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+
+  const selectedStaff = staffList.filter((s) => selected.includes(s.id));
+  const canAct = selectedStaff.length === 1;
 
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -58,20 +80,72 @@ export default function StaffTable({ staffList }: StaffTableProps) {
               />
             </th>
             {HEADERS.map((h) => (
-              <th key={h} className="px-4 py-4 text-left font-medium text-gray-900">
+              <th
+                key={h}
+                className="px-4 py-4 text-left font-medium text-gray-900"
+              >
                 {h}
               </th>
             ))}
             <th className="px-4 py-4 text-right">
-              <Pencil className="ml-auto h-4 w-4 text-gray-700" />
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => canAct && onEdit(selectedStaff[0])}
+                  disabled={!canAct}
+                  title={
+                    canAct ? "Edit staff" : "Select one staff member to edit"
+                  }
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    canAct
+                      ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
+                      : "text-gray-300 cursor-not-allowed"
+                  }`}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => canAct && onDelete(selectedStaff[0])}
+                  disabled={!canAct}
+                  title={
+                    canAct
+                      ? "Delete staff"
+                      : "Select one staff member to delete"
+                  }
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    canAct
+                      ? "text-red-500 hover:bg-red-50 cursor-pointer"
+                      : "text-gray-300 cursor-not-allowed"
+                  }`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </th>
           </tr>
         </thead>
 
         <tbody>
-          {staffList.length > 0 ? (
+          {loading ? (
+            [...Array(5)].map((_, i) => (
+              <tr key={i} className="border-b border-gray-50">
+                {[...Array(9)].map((_, j) => (
+                  <td key={j} className="px-4 py-4">
+                    <div
+                      className="h-4 rounded bg-gray-200 animate-pulse"
+                      style={{ width: j === 0 ? 16 : "80%" }}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : staffList.length > 0 ? (
             staffList.map((staff) => (
-              <tr key={staff.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+              <tr
+                key={staff.id}
+                className={`border-b border-gray-50 hover:bg-gray-50/50 ${
+                  selected.includes(staff.id) ? "bg-blue-50/30" : ""
+                }`}
+              >
                 <td className="px-4 py-4">
                   <input
                     type="checkbox"
@@ -80,46 +154,34 @@ export default function StaffTable({ staffList }: StaffTableProps) {
                     className="h-4 w-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
                   />
                 </td>
-                <td className="px-4 py-4 text-gray-600">{staff.id}</td>
-                <td 
+                <td className="px-4 py-4 text-gray-600">{staff.employeeId}</td>
+                <td
                   className="px-4 py-4 font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                  onClick={() => navigate("/admin/academics/staff/profile")}
+                  onClick={() => navigate(`/admin/academics/staff/${staff.id}`)}
                 >
                   {staff.name}
                 </td>
-                <td 
+                <td
                   className="px-4 py-4 text-blue-600 hover:underline cursor-pointer"
-                  onClick={() => navigate("/admin/academics/staff/profile")}
+                  onClick={() => navigate(`/admin/academics/staff/${staff.id}`)}
                 >
                   {staff.role}
                 </td>
-                <td className="px-4 py-4 text-gray-600">{staff.subject}</td>
-                <td className="px-4 py-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    {staff.assigned.map((cls, idx) => (
-                      <span
-                        key={idx}
-                        className={
-                          cls !== "-"
-                            ? "bg-blue-50 text-blue-500 px-2 py-1 rounded-md text-xs font-medium"
-                            : "text-gray-600"
-                        }
-                      >
-                        {cls}
-                      </span>
-                    ))}
-                  </div>
-                </td>
+                <td className="px-4 py-4 text-gray-600">{staff.department}</td>
+                <td className="px-4 py-4 text-gray-600">{staff.joiningDate}</td>
                 <td className="px-4 py-4 text-gray-600">{staff.contact}</td>
                 <td className="px-4 py-4">
                   <StatusBadge status={staff.status} />
                 </td>
-                <td className="px-4 py-4 text-right"></td>
+                <td className="px-4 py-4" />
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
+              <td
+                colSpan={9}
+                className="px-4 py-8 text-center text-sm text-gray-500"
+              >
                 No staff members found matching your search or filters.
               </td>
             </tr>
@@ -127,5 +189,5 @@ export default function StaffTable({ staffList }: StaffTableProps) {
         </tbody>
       </table>
     </div>
-  )
+  );
 }

@@ -81,6 +81,7 @@ export const getAllStudents = async (req: Request, res: Response) => {
       classId,
       gender,
       status,
+      year,
       page = "1",
       limit = "6",
     } = req.query;
@@ -133,13 +134,25 @@ export const getAllStudents = async (req: Request, res: Response) => {
 
         gender
           ? {
-              gender: String(gender).toUpperCase(),
+              gender: {
+                equals: String(gender),
+                mode: "insensitive",
+              },
             }
           : {},
 
         status
           ? {
               isActive: String(status).toUpperCase() === "ACTIVE",
+            }
+          : {},
+
+        year
+          ? {
+              createdAt: {
+                gte: new Date(`${year}-01-01T00:00:00.000Z`),
+                lte: new Date(`${year}-12-31T23:59:59.999Z`),
+              },
             }
           : {},
 
@@ -160,6 +173,18 @@ export const getAllStudents = async (req: Request, res: Response) => {
                 },
                 {
                   admissionNumber: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  rollNumber: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  phoneNumber: {
                     contains: String(search),
                     mode: "insensitive",
                   },
@@ -195,6 +220,20 @@ export const getAllStudents = async (req: Request, res: Response) => {
       },
     });
 
+    // Global Stats Counts
+    const [total, active, inactive, newThisMonth] = await Promise.all([
+      prisma.student.count(),
+      prisma.student.count({ where: { isActive: true } }),
+      prisma.student.count({ where: { isActive: false } }),
+      prisma.student.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
+      }),
+    ]);
+
     return res.status(200).json({
       success: true,
       data: students,
@@ -203,6 +242,12 @@ export const getAllStudents = async (req: Request, res: Response) => {
         limit: pageSize,
         total: totalStudents,
         totalPages: Math.ceil(totalStudents / pageSize),
+      },
+      stats: {
+        total,
+        active,
+        inactive,
+        newThisMonth,
       },
     });
   } catch (error: any) {
@@ -312,6 +357,138 @@ export const getStudentProfile = async (req: Request, res: Response) => {
     res.status(200).json({ success: true, data: student });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// 4. UPDATE STUDENT
+export const updateStudent = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const {
+    email,
+    password,
+    firstName,
+    lastName,
+    dateOfBirth,
+    gender,
+    address,
+    city,
+    state,
+    bloodGroup,
+    profileImage,
+    phoneNumber,
+    sectionId,
+    admissionNumber,
+    rollNumber,
+    isActive
+  } = req.body;
+
+  try {
+    const existingStudent = await prisma.student.findUnique({
+      where: { id },
+      include: { user: true }
+    });
+
+    if (!existingStudent) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // Update User table if email or name changes
+      if (email || firstName || lastName || password) {
+        const userUpdateData: any = {};
+        if (email) userUpdateData.email = email;
+        if (firstName || lastName) {
+          const fName = firstName ?? existingStudent.firstName;
+          const lName = lastName ?? existingStudent.lastName;
+          userUpdateData.name = `${fName} ${lName}`.trim();
+        }
+        if (password) {
+          userUpdateData.passwordHash = await bcrypt.hash(password, 10);
+        }
+
+        if (existingStudent.userId) {
+          await tx.user.update({
+            where: { id: existingStudent.userId },
+            data: userUpdateData
+          });
+        }
+      }
+
+      // Update Student profile
+      const updatedStudent = await tx.student.update({
+        where: { id },
+        data: {
+          ...(admissionNumber !== undefined && { admissionNumber }),
+          ...(rollNumber !== undefined && { rollNumber: rollNumber || null }),
+          ...(firstName !== undefined && { firstName }),
+          ...(lastName !== undefined && { lastName }),
+          ...(dateOfBirth !== undefined && { dateOfBirth: new Date(dateOfBirth) }),
+          ...(gender !== undefined && { gender }),
+          ...(address !== undefined && { address: address || null }),
+          ...(city !== undefined && { city: city || null }),
+          ...(state !== undefined && { state: state || null }),
+          ...(phoneNumber !== undefined && { phoneNumber: phoneNumber || null }),
+          ...(bloodGroup !== undefined && { bloodGroup: bloodGroup || null }),
+          ...(profileImage !== undefined && { profileImage: profileImage || null }),
+          ...(sectionId !== undefined && { sectionId }),
+          ...(isActive !== undefined && { isActive: !!isActive })
+        }
+      });
+
+      return updatedStudent;
+    });
+
+    return res.status(200).json({ success: true, data: result });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to update student",
+      error: error.message
+    });
+  }
+};
+
+// 5. BULK DELETE STUDENTS
+export const bulkDeleteStudents = async (req: Request, res: Response) => {
+  const { ids } = req.body;
+
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: "Invalid or empty student IDs list." });
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Find the user IDs of the target students
+      const students = await tx.student.findMany({
+        where: { id: { in: ids } },
+        select: { userId: true }
+      });
+      const userIds = students.map(s => s.userId).filter(Boolean) as string[];
+
+      // Clear dependent records first to satisfy foreign keys
+      await tx.mark.deleteMany({ where: { studentId: { in: ids } } });
+      await tx.calculatedResult.deleteMany({ where: { studentId: { in: ids } } });
+      await tx.monthlyFeeRecord.deleteMany({ where: { studentId: { in: ids } } });
+      await tx.submission.deleteMany({ where: { studentId: { in: ids } } });
+      await tx.attendance.deleteMany({ where: { studentId: { in: ids } } });
+
+      // Delete student profiles
+      await tx.student.deleteMany({ where: { id: { in: ids } } });
+
+      // Delete user accounts
+      await tx.user.deleteMany({ where: { id: { in: userIds } } });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Students deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: "Failed to delete students",
+      error: error.message
+    });
   }
 };
 

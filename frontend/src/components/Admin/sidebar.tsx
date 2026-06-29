@@ -41,6 +41,8 @@ const NAV: NavItem[] = [
     children: [
       { label: "Students", href: "/admin/academics/students" },
       { label: "Staff", href: "/admin/academics/staff" },
+      { label: "Teachers", href: "/admin/academics/teachers" },
+      { label: "Academic Years", href: "/admin/academics/academic-years" },
       { label: "Classes & Sections", href: "/admin/academics/classes" },
       { label: "Subjects", href: "/admin/academics/subjects" },
       { label: "Timetable", href: "/admin/academics/timetable" },
@@ -103,7 +105,9 @@ export default function AdminSidebar() {
       ),
   );
 
-  const [openSubSections, setOpenSubSections] = useState<Record<string, boolean>>({
+  const [openSubSections, setOpenSubSections] = useState<
+    Record<string, boolean>
+  >({
     Exams: true, // Exams section default open as shown in mockup
   });
 
@@ -126,7 +130,10 @@ export default function AdminSidebar() {
               if (sub.href === path) {
                 setActiveParent(item.label);
                 setActiveChild(sub.label);
-                setOpenSubSections((prev) => ({ ...prev, [child.label]: true }));
+                setOpenSubSections((prev) => ({
+                  ...prev,
+                  [child.label]: true,
+                }));
               }
             });
           }
@@ -209,46 +216,66 @@ export default function AdminSidebar() {
 
           return (
             <div key={item.label}>
-              <button
-                onClick={() => {
-                  setActiveParent(item.label);
-
-                  if (hasChildren) {
+              {hasChildren ? (
+                <button
+                  onClick={() => {
+                    setActiveParent(item.label);
                     toggleSection(item.label);
-                  }
-                }}
-                title={collapsed ? item.label : undefined}
-                className={[
-                  "flex w-full items-center gap-2.5 rounded-3xl px-2.5 py-2 text-sm font-medium transition-colors cursor-pointer",
-                  activeParent === item.label
-                    ? "bg-[#4285F4] text-white"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
-                ].join(" ")}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
+                  }}
+                  title={collapsed ? item.label : undefined}
+                  className={[
+                    "flex w-full items-center gap-2.5 rounded-3xl px-2.5 py-2 text-sm font-medium transition-colors cursor-pointer",
+                    activeParent === item.label
+                      ? "bg-[#4285F4] text-white"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                  ].join(" ")}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
 
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 truncate text-left">
-                      {item.label}
-                    </span>
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 truncate text-left">
+                        {item.label}
+                      </span>
 
-                    {hasChildren && (
                       <ChevronDown
                         className={[
                           "h-4 w-4 shrink-0 transition-transform duration-200",
                           isOpen ? "rotate-180" : "",
                         ].join(" ")}
                       />
-                    )}
-                  </>
-                )}
-              </button>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <a
+                  href={item.href}
+                  onClick={() => {
+                    setActiveParent(item.label);
+                  }}
+                  title={collapsed ? item.label : undefined}
+                  className={[
+                    "flex w-full items-center gap-2.5 rounded-3xl px-2.5 py-2 text-sm font-medium transition-colors cursor-pointer",
+                    activeParent === item.label
+                      ? "bg-[#4285F4] text-white"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                  ].join(" ")}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+
+                  {!collapsed && (
+                    <span className="flex-1 truncate text-left">
+                      {item.label}
+                    </span>
+                  )}
+                </a>
+              )}
 
               {hasChildren && !collapsed && isOpen && (
                 <ul className="ml-[1.65rem] mt-0.5 border-l border-gray-200 py-0.5 flex flex-col gap-0.5">
                   {item.children.map((child) => {
-                    const hasSubChildren = child.children && child.children.length > 0;
+                    const hasSubChildren =
+                      child.children && child.children.length > 0;
                     const isSubOpen = openSubSections[child.label] ?? false;
 
                     if (hasSubChildren) {

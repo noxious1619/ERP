@@ -1,8 +1,16 @@
-export default function SubjectsStats() {
+interface SubjectsStatsProps {
+  stats: {
+    total: number
+    theory: number
+    lab: number
+  }
+}
+
+export default function SubjectsStats({ stats }: SubjectsStatsProps) {
   const cards = [
-    { label: "Total Subjects", value: 6 },
-    { label: "Theory Subjects", value: 4 },
-    { label: "Lab Subjects", value: 2 }
+    { label: "Total Subjects", value: stats.total },
+    { label: "Theory Subjects", value: stats.theory },
+    { label: "Lab Subjects", value: stats.lab }
   ]
 
   return (

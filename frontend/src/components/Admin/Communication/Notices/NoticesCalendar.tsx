@@ -1,188 +1,94 @@
-import { useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import Calendar from "react-calendar"
+import "react-calendar/dist/Calendar.css"
+import "../../../../style/Student/Dashboard/calendar.css"
+import "../../../../style/Admin/Communication/noticesCalendar.css"
 
 interface NoticesCalendarProps {
   selectedDate: Date | null
   onDateSelect: (date: Date | null) => void
+  /** ISO date strings (YYYY-MM-DD) for dates that have at least one notice */
+  noticeDates?: string[]
 }
 
-export default function NoticesCalendar({ selectedDate, onDateSelect }: NoticesCalendarProps) {
-  const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+export default function NoticesCalendar({ selectedDate, onDateSelect, noticeDates = [] }: NoticesCalendarProps) {
+  const today = new Date()
 
-  // Initialize to the actual current date on first load
-  const [currentDate, setCurrentDate] = useState(new Date())
-
-  const year = currentDate.getFullYear()
-  const month = currentDate.getMonth() // 0-indexed
-
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ]
-
-  // Calculate days in the current displayed month
-  const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate()
-  const daysInMonth = getDaysInMonth(year, month)
-
-  // Calculate day starting index (0 for Monday, 6 for Sunday)
-  const getFirstDayIndex = (y: number, m: number) => {
-    const day = new Date(y, m, 1).getDay()
-    return day === 0 ? 6 : day - 1
-  }
-  const firstDayIndex = getFirstDayIndex(year, month)
-  const blankCells = Array.from({ length: firstDayIndex })
-  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-
-  // Navigation handlers
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1))
+  const isScheduled = (date: Date) => {
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+    return noticeDates.includes(key)
   }
 
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1))
+  const getTileClassName = ({ date, view }: { date: Date; view: string }) => {
+    if (view !== "month") return ""
+
+    const isSelected =
+      selectedDate !== null &&
+      date.getDate() === selectedDate.getDate() &&
+      date.getMonth() === selectedDate.getMonth() &&
+      date.getFullYear() === selectedDate.getFullYear()
+
+    const scheduled = isScheduled(date)
+
+    const classes: string[] = []
+
+    if (isSelected) classes.push("selected-simple")
+    if (scheduled) classes.push("notice-scheduled")
+
+    return classes.join(" ")
   }
 
-  // Highlight Checks
-  const isToday = (day: number) => {
-    const today = new Date()
-    return today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
-  }
-
-  const isScheduled = (day: number) => {
-    // Scheduled notices are set on 18, 20, 25 of the current month
-    const today = new Date()
-    if (month === today.getMonth() && year === today.getFullYear()) {
-      return [18, 20, 25].includes(day)
-    }
-    return false
-  }
-
-  const isSelected = (day: number) => {
-    if (!selectedDate) return false
-    return (
-      selectedDate.getDate() === day &&
-      selectedDate.getMonth() === month &&
-      selectedDate.getFullYear() === year
-    )
-  }
-
-  const handleDateClick = (day: number) => {
-    const clickedDate = new Date(year, month, day)
-    if (isSelected(day)) {
-      // Toggle selection off if clicking selected date again
-      onDateSelect(null)
-    } else {
-      onDateSelect(clickedDate)
+  const handleChange = (val: unknown) => {
+    if (val instanceof Date) {
+      // Toggle off if the same date is clicked again
+      if (
+        selectedDate &&
+        val.getDate() === selectedDate.getDate() &&
+        val.getMonth() === selectedDate.getMonth() &&
+        val.getFullYear() === selectedDate.getFullYear()
+      ) {
+        onDateSelect(null)
+      } else {
+        onDateSelect(val)
+      }
     }
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm w-full max-w-[320px] shrink-0 self-start">
-      {/* Month Header */}
-      <div className="flex items-center justify-between mb-5">
-        <h4 className="font-bold text-gray-900 text-sm">
-          {monthNames[month]} {year}
-        </h4>
-        <div className="flex items-center gap-1">
-          <button 
-            onClick={handlePrevMonth}
-            className="p-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition cursor-pointer"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button 
-            onClick={handleNextMonth}
-            className="p-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition cursor-pointer"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Weekdays Grid */}
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {WEEKDAYS.map((day) => (
-          <span key={day} className="text-[10px] font-semibold text-gray-400 text-center uppercase tracking-wider">
-            {day}
-          </span>
-        ))}
-      </div>
-
-      {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-1 text-center">
-        {/* Blank cells for start offset */}
-        {blankCells.map((_, idx) => (
-          <div key={`blank-${idx}`} className="w-8 h-8" />
-        ))}
-        
-        {/* Days of the month */}
-        {daysArray.map((day) => {
-          const todayFlag = isToday(day)
-          const scheduledFlag = isScheduled(day)
-          const selectedFlag = isSelected(day)
-
-          // 1. Today Highlight (matches blue circle in mockup)
-          if (todayFlag) {
+    <div className="rounded-3xl bg-white px-6 py-6 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.05)] w-full">
+      <Calendar
+        value={selectedDate ?? today}
+        onChange={handleChange}
+        prev2Label={null}
+        next2Label={null}
+        showNeighboringMonth={true}
+        formatShortWeekday={(_locale, date) =>
+          ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][date.getDay()]
+        }
+        tileClassName={getTileClassName}
+        tileContent={({ date, view }) => {
+          if (view !== "month") return null
+          if (isScheduled(date)) {
             return (
-              <div 
-                key={day} 
-                onClick={() => handleDateClick(day)}
-                className="flex flex-col items-center justify-center w-8 h-8 relative mx-auto cursor-pointer"
-              >
-                <div className={`w-7 h-7 rounded-full bg-[#4285F4] text-white flex items-center justify-center text-xs font-bold shadow-xs select-none hover:bg-blue-600 transition ${
-                  selectedFlag ? "ring-2 ring-blue-700 ring-offset-1" : ""
-                }`}>
-                  {day}
-                </div>
-                {/* Underneath Dot */}
-                <span className="w-1 h-1 bg-[#4285F4] rounded-full absolute bottom-[-4px]" />
-              </div>
+              <span className="notices-calendar__dot notices-calendar__dot--scheduled" />
             )
           }
-
-          // 2. Notice Scheduled (matches green text and dot in mockup)
-          if (scheduledFlag) {
-            return (
-              <div 
-                key={day} 
-                onClick={() => handleDateClick(day)}
-                className="flex flex-col items-center justify-center w-8 h-8 relative mx-auto cursor-pointer"
-              >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition ${
-                  selectedFlag 
-                    ? "ring-2 ring-[#4285F4] bg-[#4285F4]/10 text-emerald-600" 
-                    : "text-emerald-600 hover:bg-gray-50"
-                }`}>
-                  {day}
-                </div>
-                {/* Underneath Dot */}
-                <span className="w-1 h-1 bg-emerald-500 rounded-full absolute bottom-[-4px]" />
-              </div>
-            )
+          // Show dot under today as well
+          const isToday =
+            date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+          if (isToday) {
+            return <span className="notices-calendar__dot notices-calendar__dot--today" />
           }
+          return null
+        }}
+      />
 
-          // 3. Standard and Selected Day styles
-          return (
-            <div 
-              key={day} 
-              onClick={() => handleDateClick(day)}
-              className={`flex items-center justify-center w-8 h-8 mx-auto text-xs font-semibold rounded-full cursor-pointer select-none transition ${
-                selectedFlag 
-                  ? "ring-2 ring-[#4285F4] bg-blue-50/70 text-gray-900" 
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {day}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Legends & Filter Actions Footer */}
-      <div className="mt-8 pt-5 border-t border-gray-100 flex flex-col gap-2.5 text-xs font-medium text-gray-500">
+      {/* Legend + Clear Filter */}
+      <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col gap-2 text-xs font-medium text-gray-500">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#4285F4] rounded-full" />
+            <span className="w-2.5 h-2.5 bg-[#3b82f6] rounded-full" />
             <span>Today</span>
           </div>
           {selectedDate && (

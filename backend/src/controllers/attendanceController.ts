@@ -105,7 +105,7 @@ export const getDailyAttendance = async (req: Request, res: Response) => {
     }
 
     // 🚀 THE FIX: Strip any time/timezone data sent by the frontend
-    const targetDateStr = String(date).split('T')[0]; // Guarantees strictly "YYYY-MM-DD"
+    const targetDateStr = String(date).split('T')[0] as string; // Guarantees strictly "YYYY-MM-DD"
     
     // Build strict UTC boundaries
     const startOfDay = new Date(`${targetDateStr}T00:00:00.000Z`);
@@ -299,7 +299,7 @@ export const updateStudentYearlyAttendance = async (req: Request, res: Response)
 //total number of days present, total number of days absent, and the overall attendance percentage for that student within the specified year.
 export const getStudentAttendancePercentage = async (req: Request, res: Response) => {
   try {
-    const { studentId } = req.params;
+    const studentId = req.params.studentId as string;
     const { year } = req.query;
 
     if (!studentId) {
@@ -362,7 +362,7 @@ export const getStudentAttendancePercentage = async (req: Request, res: Response
 //gives a month wise breakdown of attendance of the student
 export const getStudentMonthlyTrends = async (req: Request, res: Response) => {
   try {
-    const { studentId } = req.params;
+    const studentId = req.params.studentId as string;
     const { year } = req.query;
 
     if (!studentId) {
@@ -389,16 +389,18 @@ export const getStudentMonthlyTrends = async (req: Request, res: Response) => {
 
     rawAttendanceRecords.forEach(record => {
       const monthIndex = new Date(record.date).getUTCMonth();
-      
-      monthlyBuckets[monthIndex].total += 1;
-      if (record.status === 'PRESENT') {
-        monthlyBuckets[monthIndex].present += 1;
+      const bucket = monthlyBuckets[monthIndex];
+      if (bucket) {
+        bucket.total += 1;
+        if (record.status === 'PRESENT') {
+          bucket.present += 1;
+        }
       }
     });
 
     // Construct an array of objects which plays perfectly with charting data states
     const monthlyOverview = monthNames.map((month, index) => {
-      const bucket = monthlyBuckets[index];
+      const bucket = monthlyBuckets[index]!;
       const percentage = bucket.total > 0 
         ? parseFloat(((bucket.present / bucket.total) * 100).toFixed(1))
         : 0.0;
@@ -430,7 +432,7 @@ export const getStudentMonthlyTrends = async (req: Request, res: Response) => {
 //
 export const getStudentWeeklyTrends = async (req: Request, res: Response) => {
   try {
-    const { studentId } = req.params;
+    const studentId = req.params.studentId as string;
     const { month, year } = req.query;
 
     if (!studentId) {
@@ -475,9 +477,12 @@ export const getStudentWeeklyTrends = async (req: Request, res: Response) => {
       else if (dayOfMonth <= 14) bucketIndex = 1;
       else if (dayOfMonth <= 21) bucketIndex = 2;
 
-      weeklyBuckets[bucketIndex].totalDays += 1;
-      if (record.status === 'PRESENT') {
-        weeklyBuckets[bucketIndex].present += 1;
+      const bucket = weeklyBuckets[bucketIndex];
+      if (bucket) {
+        bucket.totalDays += 1;
+        if (record.status === 'PRESENT') {
+          bucket.present += 1;
+        }
       }
     });
 
@@ -508,7 +513,7 @@ export const getStudentWeeklyTrends = async (req: Request, res: Response) => {
 
 export const getStudentHeatmapGrid = async (req: Request, res: Response) => {
   try {
-    const { studentId } = req.params;
+    const studentId = req.params.studentId as string;
     const { year } = req.query;
 
     if (!studentId) {
@@ -536,7 +541,7 @@ export const getStudentHeatmapGrid = async (req: Request, res: Response) => {
 
     rawRecords.forEach(record => {
       // Extract just the clean YYYY-MM-DD part from the date string
-      const ISOStringKey = new Date(record.date).toISOString().split('T')[0];
+      const ISOStringKey = new Date(record.date).toISOString().split('T')[0]!;
       
       // Compress the status string value down to a single character token
       heatmapMap[ISOStringKey] = record.status === 'PRESENT' ? 'P' : 'A';
@@ -555,6 +560,354 @@ export const getStudentHeatmapGrid = async (req: Request, res: Response) => {
       success: false, 
       message: "Failed to compile compressed heatmap data matrix.", 
       error: error.message 
+    });
+  }
+};
+
+// 6. GET ADMIN ATTENDANCE SUMMARY
+export const getAdminAttendanceSummary = async (req: Request, res: Response) => {
+  try {
+    const {
+      classId,
+      sectionId,
+      startDate,
+      endDate,
+      search = "",
+      page = "1",
+      limit = "6",
+    } = req.query;
+
+    const currentPage = Math.max(1, Number(page));
+    const pageSize = Math.max(1, Number(limit));
+    const skip = (currentPage - 1) * pageSize;
+
+    // Build the query date filters
+    let dateFilter: any = {};
+    if (startDate && endDate) {
+      dateFilter = {
+        date: {
+          gte: new Date(`${startDate}T00:00:00.000Z`),
+          lte: new Date(`${endDate}T23:59:59.999Z`),
+        },
+      };
+    }
+
+    // Build base where clause for students based on Class and Section
+    const studentWhereClause: any = {
+      AND: [
+        classId
+          ? {
+              section: {
+                classId: String(classId),
+              },
+            }
+          : {},
+        sectionId
+          ? {
+              sectionId: String(sectionId),
+            }
+          : {},
+        search
+          ? {
+              OR: [
+                {
+                  firstName: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  lastName: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  rollNumber: {
+                    contains: String(search),
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {},
+      ],
+    };
+
+    // Get matching students
+    const totalStudents = await prisma.student.count({
+      where: studentWhereClause,
+    });
+
+    const students = await prisma.student.findMany({
+      where: studentWhereClause,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        rollNumber: true,
+        section: {
+          select: {
+            name: true,
+            academicClass: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        attendance: {
+          where: dateFilter,
+          select: {
+            status: true,
+          },
+        },
+      },
+      orderBy: [
+        { rollNumber: "asc" },
+        { firstName: "asc" }
+      ],
+    });
+
+    // Compute attendance percentage for each student, and gather totals
+    const rows = students.map((s) => {
+      const attendanceList = s.attendance;
+      const totalDays = attendanceList.length;
+      const presentCount = attendanceList.filter((a) => a.status === "PRESENT").length;
+      const lateCount = attendanceList.filter((a) => a.status === "LATE").length;
+      const halfDayCount = attendanceList.filter((a) => a.status === "HALF_DAY").length;
+      const activePresent = presentCount + lateCount;
+      const percentage = totalDays > 0 ? parseFloat(((activePresent / totalDays) * 100).toFixed(1)) : null;
+
+      return {
+        id: s.id,
+        rollNumber: s.rollNumber ?? "—",
+        name: `${s.firstName} ${s.lastName}`,
+        className: s.section?.academicClass?.name ?? "—",
+        sectionName: s.section?.name ?? "—",
+        percentage, // number or null
+      };
+    });
+
+    // Compute the global metrics for the active set of students and date range
+    const studentIds = students.map(s => s.id);
+    const attendanceStatsWhere: any = {
+      studentId: { in: studentIds },
+      ...dateFilter
+    };
+
+    const statusCounts = await prisma.attendance.groupBy({
+      by: ['status'],
+      where: attendanceStatsWhere,
+      _count: {
+        status: true
+      }
+    });
+
+    let totalAbsent = 0;
+    let lateEntries = 0;
+    let totalPresent = 0;
+    let totalHalfDay = 0;
+
+    statusCounts.forEach(sc => {
+      if (sc.status === 'PRESENT') {
+        totalPresent = sc._count.status;
+      } else if (sc.status === 'ABSENT') {
+        totalAbsent = sc._count.status;
+      } else if (sc.status === 'LATE') {
+        lateEntries = sc._count.status;
+      } else if (sc.status === 'HALF_DAY') {
+        totalHalfDay = sc._count.status;
+      }
+    });
+
+    const totalAttendanceRecords = totalPresent + totalAbsent + lateEntries + totalHalfDay;
+    const attendanceRate = totalAttendanceRecords > 0 
+      ? `${Math.round(((totalPresent + lateEntries + totalHalfDay) / totalAttendanceRecords) * 100)}.0%` 
+      : "100.0%"; // default if no data
+
+    // Defaulters: count of students in filtered list who have attendance percentage < 75%
+    const defaultersCount = rows.filter(r => r.percentage !== null && r.percentage < 75).length;
+
+    // Apply pagination on rows
+    const paginatedRows = rows.slice(skip, skip + pageSize);
+
+    // Fetch all sections to do section-wise aggregation for charts
+    const sectionWhere: any = {};
+    if (classId) {
+      sectionWhere.classId = String(classId);
+    }
+    const allSections = await prisma.section.findMany({
+      where: sectionWhere,
+      select: {
+        id: true,
+        name: true,
+        academicClass: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    // Donut breakdown calculation
+    let presentPct = 0;
+    let absentPct = 0;
+    let latePct = 0;
+
+    if (totalAttendanceRecords > 0) {
+      presentPct = Math.round((totalPresent / totalAttendanceRecords) * 100);
+      absentPct = Math.round((totalAbsent / totalAttendanceRecords) * 100);
+      latePct = 100 - presentPct - absentPct;
+    } else {
+      presentPct = 100;
+    }
+    const avgPct = presentPct + latePct;
+
+    // Section stats (Bar chart & Defaulters)
+    const sectionChartsData = [];
+    const sectionDefaultersData = [];
+
+    // Define date range array for trends (default to the 1 week of seeded logs if dates are not specified)
+    let trendDates = [
+      new Date("2026-06-08T00:00:00.000Z"),
+      new Date("2026-06-09T00:00:00.000Z"),
+      new Date("2026-06-10T00:00:00.000Z"),
+      new Date("2026-06-11T00:00:00.000Z"),
+      new Date("2026-06-12T00:00:00.000Z"),
+      new Date("2026-06-13T00:00:00.000Z"),
+      new Date("2026-06-14T00:00:00.000Z"),
+    ];
+
+    if (startDate && endDate) {
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+      const tempDates = [];
+      const current = new Date(start);
+      let limitDays = 0;
+      while (current <= end && limitDays < 7) {
+        tempDates.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+        limitDays++;
+      }
+      if (tempDates.length > 0) {
+        trendDates = tempDates;
+      }
+    }
+
+    const trendLabels = trendDates.map(d => d.toLocaleDateString("en-US", { day: "2-digit", month: "short" }));
+    const trendSections = [];
+
+    for (const sec of allSections) {
+      // Find all students in this section
+      const secStudents = await prisma.student.findMany({
+        where: { sectionId: sec.id },
+        select: {
+          id: true,
+          attendance: {
+            where: dateFilter,
+            select: {
+              status: true,
+              date: true
+            }
+          }
+        }
+      });
+
+      let secTotal = 0;
+      let secPresent = 0;
+      let secDefaulters = 0;
+
+      secStudents.forEach(st => {
+        const total = st.attendance.length;
+        const present = st.attendance.filter(a => a.status === 'PRESENT' || a.status === 'LATE').length;
+        const pct = total > 0 ? (present / total) * 100 : null;
+        if (pct !== null && pct < 75) {
+          secDefaulters++;
+        }
+        secTotal += total;
+        secPresent += present;
+      });
+
+      const secPct = secTotal > 0 ? Math.round((secPresent / secTotal) * 100) : 100;
+      const labelName = classId ? `Sec ${sec.name}` : `${sec.academicClass?.name} - ${sec.name}`;
+
+      sectionChartsData.push({
+        name: labelName,
+        percentage: secPct
+      });
+
+      sectionDefaultersData.push({
+        name: labelName,
+        count: secDefaulters
+      });
+
+      // Compute trends for this section across the trend dates
+      const sectionDataTrends = [];
+      for (const d of trendDates) {
+        const dStart = new Date(d);
+        dStart.setUTCHours(0, 0, 0, 0);
+        const dEnd = new Date(d);
+        dEnd.setUTCHours(23, 59, 59, 999);
+
+        const dayLogs = await prisma.attendance.findMany({
+          where: {
+            sectionId: sec.id,
+            date: { gte: dStart, lte: dEnd }
+          },
+          select: {
+            status: true
+          }
+        });
+
+        const totalDayLogs = dayLogs.length;
+        const presentDayLogs = dayLogs.filter(l => l.status === 'PRESENT' || l.status === 'LATE').length;
+        const dayPct = totalDayLogs > 0 ? Math.round((presentDayLogs / totalDayLogs) * 100) : 100;
+        sectionDataTrends.push(dayPct);
+      }
+
+      trendSections.push({
+        name: labelName,
+        data: sectionDataTrends
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: paginatedRows,
+      pagination: {
+        page: currentPage,
+        limit: pageSize,
+        total: totalStudents,
+        totalPages: Math.ceil(totalStudents / pageSize),
+      },
+      stats: {
+        attendanceRate,
+        totalAbsent,
+        lateEntries,
+        defaulters: defaultersCount
+      },
+      charts: {
+        breakdown: {
+          present: presentPct,
+          absent: absentPct,
+          late: latePct,
+          average: avgPct
+        },
+        trends: {
+          labels: trendLabels,
+          sections: trendSections
+        },
+        sections: sectionChartsData,
+        defaulters: sectionDefaultersData
+      }
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch attendance summary",
+      error: error.message,
     });
   }
 };

@@ -15,6 +15,10 @@ import teacherRoutes from './routes/teacherRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import parentRoutes from './routes/parentRoutes.js';
 import examRoutes from './routes/examRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import adminNoticeRoutes from './routes/adminNoticeRoutes.js';
+import adminSubjectRoutes from './routes/adminSubjectRoutes.js';
+import examTermRoutes from './routes/examTermRoutes.js';
 
 dotenv.config();
 
@@ -40,7 +44,10 @@ app.use('/api/grades', gradeRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/exams', examRoutes);
-
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminNoticeRoutes);
+app.use('/api/admin/subjects', adminSubjectRoutes);
+app.use('/api/exam-terms', examTermRoutes);
 
 // Health Check
 app.get('/', (req, res) => {
@@ -49,4 +56,4 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
-});
+}); // live reload trigger

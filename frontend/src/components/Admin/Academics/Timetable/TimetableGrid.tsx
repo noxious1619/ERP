@@ -1,8 +1,9 @@
-import { X } from "lucide-react"
+import { User, MapPin } from "lucide-react"
 
 export type BlockType = "subject" | "assign" | "break"
 
 export interface TimetableBlock {
+  id?: string
   type: BlockType
   subject?: string
   teacher?: string
@@ -10,94 +11,59 @@ export interface TimetableBlock {
   periodNumber: number
   timeRange: string
   hasClose?: boolean
+  subjectId?: string
+  teacherId?: string
+  room?: string
+  color?: string
 }
 
 interface TimetableGridProps {
+  activeTab: "Teacher" | "Student"
+  scheduleData: any[]
+  isLoading: boolean
+  periods: { period: number; startTime: string; endTime: string }[]
   onBlockClick: (block: TimetableBlock) => void
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-const PERIOD_TIMES = [
-  { num: 1, range: "08:00 - 08:45" },
-  { num: 2, range: "08:45 - 09:30" },
-  { num: 3, range: "09:30 - 10:15" },
-  { num: 4, range: "10:30 - 11:15" },
-  { num: 5, range: "11:15 - 12:00" },
-  { num: 6, range: "12:00 - 12:45" },
-  { num: 7, range: "01:15 - 02:00" },
-  { num: 8, range: "02:00 - 02:45" }
-]
+export default function TimetableGrid({
+  activeTab,
+  scheduleData,
+  isLoading,
+  periods,
+  onBlockClick,
+}: TimetableGridProps) {
+  // Construct lookup table for weekly data based on the dynamic periods list
+  const gridData: Record<number, Record<string, any>> = {}
+  periods.forEach((p) => {
+    gridData[p.period] = {}
+    for (const day of DAYS) {
+      gridData[p.period][day] = { type: "assign" }
+    }
+  })
 
-// Grid layout mapping for quick lookup: [periodNumber][dayIndex]
-const TIMETABLE_DATA: Record<number, Record<string, { type: BlockType; subject?: string; teacher?: string; hasClose?: boolean }>> = {
-  1: {
-    Monday: { type: "subject", subject: "Mathematics", teacher: "Mrs. Priya Sharma" },
-    Tuesday: { type: "subject", subject: "English", teacher: "Ms. Sneha Reddy" },
-    Wednesday: { type: "subject", subject: "Mathematics", teacher: "Mrs. Priya Sharma" },
-    Thursday: { type: "subject", subject: "Mathematics", teacher: "Mrs. Priya Sharma" },
-    Friday: { type: "subject", subject: "Mathematics", teacher: "Mrs. Priya Sharma", hasClose: true },
-    Saturday: { type: "assign" }
-  },
-  2: {
-    Monday: { type: "subject", subject: "English", teacher: "Ms. Sneha Reddy" },
-    Tuesday: { type: "subject", subject: "Mathematics", teacher: "Mrs. Priya Sharma" },
-    Wednesday: { type: "subject", subject: "Science", teacher: "Dr. Anjali Verma" },
-    Thursday: { type: "subject", subject: "English", teacher: "Ms. Sneha Reddy" },
-    Friday: { type: "subject", subject: "English", teacher: "Ms. Sneha Reddy" },
-    Saturday: { type: "assign" }
-  },
-  3: {
-    Monday: { type: "subject", subject: "Hindi", teacher: "Mr. Suresh Rao" },
-    Tuesday: { type: "subject", subject: "Computer Science", teacher: "Mr. Ravi Kumar" },
-    Wednesday: { type: "subject", subject: "English", teacher: "Ms. Sneha Reddy" },
-    Thursday: { type: "subject", subject: "Hindi", teacher: "Mr. Suresh Rao" },
-    Friday: { type: "assign" },
-    Saturday: { type: "assign" }
-  },
-  4: {
-    Monday: { type: "subject", subject: "Mathematics", teacher: "Mrs. Priya Sharma" },
-    Tuesday: { type: "break", subject: "Short Break" },
-    Wednesday: { type: "break", subject: "Short Break" },
-    Thursday: { type: "break", subject: "Short Break" },
-    Friday: { type: "break", subject: "Short Break" },
-    Saturday: { type: "break", subject: "Short Break" }
-  },
-  5: {
-    Monday: { type: "subject", subject: "Science", teacher: "Dr. Anjali Verma" },
-    Tuesday: { type: "assign" },
-    Wednesday: { type: "assign" },
-    Thursday: { type: "assign" },
-    Friday: { type: "assign" },
-    Saturday: { type: "assign" }
-  },
-  6: {
-    Monday: { type: "assign" },
-    Tuesday: { type: "assign" },
-    Wednesday: { type: "assign" },
-    Thursday: { type: "assign" },
-    Friday: { type: "assign" },
-    Saturday: { type: "assign" }
-  },
-  7: {
-    Monday: { type: "break", subject: "Lunch Break" },
-    Tuesday: { type: "break", subject: "Lunch Break" },
-    Wednesday: { type: "break", subject: "Lunch Break" },
-    Thursday: { type: "break", subject: "Lunch Break" },
-    Friday: { type: "break", subject: "Lunch Break" },
-    Saturday: { type: "break", subject: "Lunch Break" }
-  },
-  8: {
-    Monday: { type: "assign" },
-    Tuesday: { type: "assign" },
-    Wednesday: { type: "assign" },
-    Thursday: { type: "assign" },
-    Friday: { type: "assign" },
-    Saturday: { type: "assign" }
-  }
-}
+  // Map API entries into the grid lookup
+  scheduleData.forEach((entry) => {
+    const rawDay = entry.day.toUpperCase()
+    const dayName = rawDay.charAt(0) + rawDay.slice(1).toLowerCase() // MONDAY -> Monday
+    if (gridData[entry.period] && DAYS.includes(dayName)) {
+      gridData[entry.period][dayName] = {
+        id: entry.id,
+        type: entry.isBreak ? "break" : "subject",
+        subjectName: entry.isBreak ? (entry.breakLabel || "Break") : (entry.subject?.name || "Subject"),
+        subjectCode: entry.isBreak ? "" : (entry.subject?.code || ""),
+        teacher: entry.isBreak ? undefined : (entry.displayTeacherName || "Unassigned"),
+        subjectId: entry.subjectId || entry.subject?.id,
+        teacherId: entry.teacherId || entry.teacher?.id,
+        room: entry.room || "",
+        color: entry.color || "",
+        hasClose: activeTab === "Student",
+        sectionLabel: entry.sectionLabel || "",
+      }
+    }
+  })
 
-export default function TimetableGrid({ onBlockClick }: TimetableGridProps) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full min-w-[1000px] border-collapse text-left text-sm">
@@ -115,89 +81,146 @@ export default function TimetableGrid({ onBlockClick }: TimetableGridProps) {
         </thead>
 
         <tbody>
-          {PERIOD_TIMES.map((period) => (
-            <tr key={period.num} className="border-b border-gray-200 last:border-0">
-              {/* Period details col */}
-              <td className="px-4 py-5 border-r border-gray-100 text-center bg-gray-50/10">
-                <span className="block font-bold text-gray-900">Period {period.num}</span>
-                <span className="block text-[11px] text-gray-400 font-medium mt-0.5">{period.range}</span>
+          {isLoading ? (
+            <tr>
+              <td colSpan={7} className="px-6 py-20 text-center text-gray-500 font-medium bg-white">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <span className="w-8 h-8 border-3 border-[#4285F4] border-t-transparent rounded-full animate-spin"></span>
+                  <span className="text-sm font-semibold text-gray-600">Loading timetable schedule...</span>
+                </div>
               </td>
+            </tr>
+          ) : periods.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="px-6 py-20 text-center text-gray-500 font-medium bg-white">
+                No periods configured. Click "Manage Periods" to initialize structure.
+              </td>
+            </tr>
+          ) : (
+            periods.map((period) => (
+              <tr key={period.period} className="border-b border-gray-200 last:border-0">
+                {/* Period details col */}
+                <td className="px-4 py-5 border-r border-gray-100 text-center bg-gray-50/10">
+                  <span className="block font-bold text-gray-900">Period {period.period}</span>
+                  <span className="block text-[11px] text-gray-400 font-medium mt-0.5">
+                    {period.startTime} - {period.endTime}
+                  </span>
+                </td>
 
-              {/* Day cols */}
-              {DAYS.map((day) => {
-                const cell = TIMETABLE_DATA[period.num]?.[day] || { type: "assign" }
+                {/* Day cols */}
+                {DAYS.map((day) => {
+                  const cell = gridData[period.period]?.[day] || { type: "assign" }
 
-                if (cell.type === "break") {
-                  return (
-                    <td key={day} className="p-2">
-                      <div className="bg-[#FFF8E6] border border-[#FFE7A3] rounded-xl py-3 flex items-center justify-center text-amber-700 text-xs font-bold uppercase tracking-wider select-none h-[64px]">
-                        {cell.subject}
-                      </div>
-                    </td>
-                  )
-                }
-
-                if (cell.type === "subject") {
-                  return (
-                    <td key={day} className="p-2">
-                      <div 
-                        onClick={() => onBlockClick({
-                          type: "subject",
-                          subject: cell.subject,
-                          teacher: cell.teacher,
-                          day,
-                          periodNumber: period.num,
-                          timeRange: period.range,
-                          hasClose: cell.hasClose
-                        })}
-                        className="bg-blue-50/40 border border-blue-200/80 rounded-xl p-3 flex flex-col text-left relative hover:shadow-md hover:border-[#4285F4] transition duration-200 cursor-pointer h-[64px] group"
-                      >
-                        <span className="font-bold text-gray-900 text-xs truncate max-w-[110px]">{cell.subject}</span>
-                        <span className="text-[11px] text-gray-500 truncate max-w-[110px] mt-0.5">{cell.teacher}</span>
-                        {cell.hasClose && (
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              // Optional: call a delete/remove logic, for now open standard modal
+                  if (cell.type === "break") {
+                    return (
+                      <td key={day} className="p-2">
+                        <div
+                          onClick={() => {
+                            if (activeTab === "Student") {
                               onBlockClick({
+                                id: cell.id,
+                                type: "break",
+                                day: day,
+                                periodNumber: period.period,
+                                timeRange: `${period.startTime} - ${period.endTime}`,
+                                subject: cell.subjectName,
+                                hasClose: cell.hasClose,
+                              })
+                            }
+                          }}
+                          className={`bg-[#FFF8E6] border border-[#FFE7A3] rounded-xl py-3 flex items-center justify-center text-amber-700 text-xs font-bold uppercase tracking-wider select-none h-[100px] ${
+                            activeTab === "Student" ? "hover:shadow-md hover:border-amber-400 cursor-pointer" : ""
+                          }`}
+                        >
+                          {cell.subjectName}
+                        </div>
+                      </td>
+                    )
+                  }
+
+                  if (cell.type === "subject") {
+                    const subtitleLabel = activeTab === "Student" ? (cell.teacher || "Unassigned") : (cell.sectionLabel || "Unassigned")
+                    return (
+                      <td key={day} className="p-2">
+                        <div
+                          onClick={() => {
+                            if (activeTab === "Student") {
+                              onBlockClick({
+                                id: cell.id,
                                 type: "subject",
-                                subject: cell.subject,
+                                subject: cell.subjectName,
                                 teacher: cell.teacher,
                                 day,
-                                periodNumber: period.num,
-                                timeRange: period.range,
-                                hasClose: true
+                                periodNumber: period.period,
+                                timeRange: `${period.startTime} - ${period.endTime}`,
+                                subjectId: cell.subjectId,
+                                teacherId: cell.teacherId,
+                                room: cell.room,
+                                color: cell.color,
+                                hasClose: cell.hasClose,
                               })
-                            }}
-                            className="absolute top-1.5 right-1.5 bg-blue-100/80 text-blue-500 rounded-full p-0.5 hover:bg-blue-200 transition-colors shadow-xs"
-                          >
-                            <X className="h-2.5 w-2.5" />
-                          </button>
-                        )}
-                      </div>
+                            }
+                          }}
+                          className={`bg-blue-50/40 border border-blue-200/80 rounded-xl p-3 flex flex-col justify-between text-left relative transition duration-200 h-[100px] group ${
+                            activeTab === "Student" ? "hover:shadow-md hover:border-[#4285F4] cursor-pointer" : "select-none"
+                          }`}
+                        >
+                          <div className="flex flex-col h-full justify-between overflow-hidden">
+                            <div className="flex flex-col overflow-hidden">
+                              {cell.subjectCode && (
+                                <span className="text-[10px] font-bold text-[#4285F4] uppercase tracking-[1px] leading-tight">
+                                  {cell.subjectCode}
+                                </span>
+                              )}
+                              <span className="font-bold text-gray-900 text-xs truncate max-w-[110px] leading-snug" title={cell.subjectName}>
+                                {cell.subjectName}
+                              </span>
+                            </div>
+                            <div className="flex flex-col gap-0.5 mt-auto">
+                              <div className="flex items-center gap-1.5 text-[9px] text-[#707789]" title={subtitleLabel}>
+                                <User size={10} className="shrink-0 text-[#707789]" />
+                                <span className="truncate max-w-[95px]">{subtitleLabel}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[9px] text-[#707789]" title={cell.room}>
+                                <MapPin size={10} className="shrink-0 text-[#707789]" />
+                                <span className="truncate max-w-[95px]">{cell.room ? cell.room : "-"}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    )
+                  }
+
+                  // Default "assign"
+                  return (
+                    <td key={day} className="p-2">
+                      {activeTab === "Student" ? (
+                        <div
+                          onClick={() =>
+                            onBlockClick({
+                              id: cell.id,
+                              type: "assign",
+                              day,
+                              periodNumber: period.period,
+                              timeRange: `${period.startTime} - ${period.endTime}`,
+                              room: cell.room,
+                              color: cell.color
+                            })
+                          }
+                          className="border border-dashed border-gray-300 bg-gray-50/10 hover:bg-blue-50/10 hover:border-[#4285F4] rounded-xl flex items-center justify-center transition duration-200 cursor-pointer h-[100px]"
+                        >
+                          <span className="text-gray-400 text-xs font-semibold tracking-wide">+ Assign</span>
+                        </div>
+                      ) : (
+                        <div className="border border-dashed border-gray-100 bg-gray-50/5 rounded-xl h-[100px] select-none cursor-default" />
+                      )}
                     </td>
                   )
-                }
-
-                // Default "assign"
-                return (
-                  <td key={day} className="p-2">
-                    <div
-                      onClick={() => onBlockClick({
-                        type: "assign",
-                        day,
-                        periodNumber: period.num,
-                        timeRange: period.range
-                      })}
-                      className="border border-dashed border-gray-300 bg-gray-50/10 hover:bg-blue-50/10 hover:border-[#4285F4] rounded-xl flex items-center justify-center transition duration-200 cursor-pointer h-[64px]"
-                    >
-                      <span className="text-gray-400 text-xs font-semibold tracking-wide">+ Assign</span>
-                    </div>
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
+                })}
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

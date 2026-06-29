@@ -23,21 +23,33 @@ export const createTimetableEntry = async (req: Request, res: Response) => {
     const periodNumber = Number(period);
     const treatAsBreak = Boolean(isBreak);
 
-    if (!treatAsBreak) {
-      if (teacherId) {
-        const teacherConflict = await prisma.timetable.findFirst({
-          where: { 
-            day: formattedDay as any, 
-            period: periodNumber, 
-            teacherId 
-          }
-        });
-        if (teacherConflict) {
-          return res.status(400).json({ 
-            success: false, 
-            message: "Teacher is already assigned to another section at this time." 
-          });
+    // Resolve teacherId (Teacher.id) to User.id for database storage
+    let targetUserId = null;
+    if (!treatAsBreak && teacherId) {
+      const teacherProfile = await prisma.teacher.findFirst({
+        where: {
+          OR: [
+            { id: teacherId },
+            { userId: teacherId }
+          ]
         }
+      });
+      targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+    }
+
+    if (!treatAsBreak && targetUserId) {
+      const teacherConflict = await prisma.timetable.findFirst({
+        where: { 
+          day: formattedDay as any, 
+          period: periodNumber, 
+          teacherId: targetUserId 
+        }
+      });
+      if (teacherConflict) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Teacher is already assigned to another section at this time." 
+        });
       }
     }
 
@@ -55,7 +67,7 @@ export const createTimetableEntry = async (req: Request, res: Response) => {
       });
     }
 
-    // 3. Create database entry with proper dynamic column typing
+    // Create database entry with User.id for teacherId
     const entry = await prisma.timetable.create({
       data: {
         day: formattedDay as any,
@@ -68,7 +80,7 @@ export const createTimetableEntry = async (req: Request, res: Response) => {
         breakLabel: treatAsBreak ? (breakLabel || "Recess") : null,
         sectionId,
         subjectId: treatAsBreak ? null : subjectId,
-        teacherId: treatAsBreak ? null : teacherId
+        teacherId: treatAsBreak ? null : targetUserId
       }
     });
 
@@ -117,13 +129,27 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
         const periodNumber = Number(period);
         const treatAsBreak = Boolean(isBreak);
 
-        // 1. Conflict check for Teacher (Skip if it's a structural break)
+        // Resolve teacherId (Teacher.id) to User.id for database storage
+        let targetUserId = null;
         if (!treatAsBreak && teacherId) {
+          const teacherProfile = await tx.teacher.findFirst({
+            where: {
+              OR: [
+                { id: teacherId },
+                { userId: teacherId }
+              ]
+            }
+          });
+          targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+        }
+
+        // 1. Conflict check for Teacher (Skip if it's a structural break)
+        if (!treatAsBreak && targetUserId) {
           const teacherConflict = await tx.timetable.findFirst({
             where: {
               day: formattedDay as any,
               period: periodNumber,
-              teacherId
+              teacherId: targetUserId
             }
           });
           if (teacherConflict) {
@@ -156,7 +182,7 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
             breakLabel: treatAsBreak ? (breakLabel || "Recess") : null,
             sectionId,
             subjectId: treatAsBreak ? null : subjectId,
-            teacherId: treatAsBreak ? null : teacherId
+            teacherId: treatAsBreak ? null : targetUserId
           }
         });
 
@@ -186,8 +212,8 @@ export const getDailyTimetableBySection = async (
   res: Response
 ) => {
   try {
-    const { sectionId } = req.params;
-    const { day } = req.query;
+    const sectionId = req.params.sectionId as string;
+    const day = req.query.day as string;
  
     if (!sectionId) {
       return res.status(400).json({
@@ -217,12 +243,27 @@ export const getDailyTimetableBySection = async (
       },
       include: {
         subject: { select: { name: true, code: true } },
-        teacher: { select: { id: true, firstName: true, lastName: true } },
       },
       orderBy: { period: "asc" },
     });
  
-    const normalizedSchedule = normalizeTimetable(timetableRows, day);
+    // Manually resolve teacher profiles since teacherId stores User.id in the DB
+    const resolvedRows = [];
+    for (const row of timetableRows) {
+      let resolvedTeacher = null;
+      if (row.teacherId) {
+        resolvedTeacher = await prisma.teacher.findUnique({
+          where: { userId: row.teacherId },
+          select: { id: true, firstName: true, lastName: true }
+        });
+      }
+      resolvedRows.push({
+        ...row,
+        teacher: resolvedTeacher
+      });
+    }
+
+    const normalizedSchedule = normalizeTimetable(resolvedRows, day);
  
     return res.status(200).json({
       success: true,
@@ -242,7 +283,7 @@ export const getWeeklyTimetableBySection = async (
   res: Response
 ) => {
   try {
-    const { sectionId } = req.params;
+    const sectionId = req.params.sectionId as string;
 
     if (!sectionId) {
       return res.status(400).json({
@@ -269,7 +310,7 @@ export const getWeeklyTimetableBySection = async (
 
     const sectionLabel = `${sectionMetadata.academicClass.name} - ${sectionMetadata.name}`;
 
-    const weeklySchedule = await prisma.timetable.findMany({
+    let weeklySchedule = await prisma.timetable.findMany({
       where: {
         sectionId
       },
@@ -295,12 +336,86 @@ export const getWeeklyTimetableBySection = async (
       ]
     });
 
-    const formattedSchedule = weeklySchedule.map((entry) => ({
-      ...entry,
-      displayTeacherName: entry.teacher
-        ? `${entry.teacher.firstName} ${entry.teacher.lastName}`.trim()
-        : "Unassigned"
-    }));
+    // Auto-initialize default periods as placeholders if database is empty for this section
+    if (weeklySchedule.length === 0) {
+      const defaultPeriods = [
+        { period: 1, startTime: "08:00", endTime: "08:45" },
+        { period: 2, startTime: "08:45", endTime: "09:30" },
+        { period: 3, startTime: "09:30", endTime: "10:15" },
+        { period: 4, startTime: "10:30", endTime: "11:15" },
+        { period: 5, startTime: "11:15", endTime: "12:00" },
+        { period: 6, startTime: "12:00", endTime: "12:45" },
+        { period: 7, startTime: "01:15", endTime: "02:00" },
+        { period: 8, startTime: "02:00", endTime: "02:45" }
+      ];
+
+      await prisma.$transaction(
+        defaultPeriods.map(dp => 
+          prisma.timetable.create({
+            data: {
+              sectionId,
+              day: "MONDAY",
+              period: dp.period,
+              startTime: dp.startTime,
+              endTime: dp.endTime,
+              isBreak: false,
+              subjectId: null,
+              teacherId: null
+            }
+          })
+        )
+      );
+
+      // Re-fetch
+      weeklySchedule = await prisma.timetable.findMany({
+        where: {
+          sectionId
+        },
+        include: {
+          subject: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          },
+          teacher: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true
+            }
+          }
+        },
+        orderBy: [
+          { day: "asc" },
+          { startTime: "asc" }
+        ]
+      });
+    }
+
+    // Resolve teacher profiles manually since teacherId stores User.id in the DB
+    const formattedSchedule = [];
+    for (const entry of weeklySchedule) {
+      let displayTeacherName = "Unassigned";
+      let resolvedTeacherId = entry.teacherId;
+
+      if (entry.teacherId) {
+        const tProfile = await prisma.teacher.findUnique({
+          where: { userId: entry.teacherId }
+        });
+        if (tProfile) {
+          displayTeacherName = `${tProfile.firstName} ${tProfile.lastName}`.trim();
+          resolvedTeacherId = tProfile.id; // Return Teacher.id for the frontend select dropdown
+        }
+      }
+
+      formattedSchedule.push({
+        ...entry,
+        teacherId: resolvedTeacherId,
+        displayTeacherName
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -324,8 +439,8 @@ export const getDailyTeacherTimetable = async (
 ) => {
   try {
     // Grab the IDs straight from the route params and query
-    const { teacherId } = req.params;
-    const { day } = req.query;
+    const teacherId = req.params.teacherId as string;
+    const day = req.query.day as string;
 
     if (!teacherId) {
       return res.status(400).json({
@@ -343,10 +458,21 @@ export const getDailyTeacherTimetable = async (
 
     const formattedDay = day.toUpperCase() as any;
 
+    // Resolve teacher profile to get User.id for database query
+    const teacherProfile = await prisma.teacher.findFirst({
+      where: {
+        OR: [
+          { id: teacherId },
+          { userId: teacherId }
+        ]
+      }
+    });
+    const targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+
     // Fetch strictly the actual classes this teacher is taking today
     const teacherPeriods = await prisma.timetable.findMany({
       where: {
-        teacherId: teacherId, 
+        teacherId: targetUserId, 
         day: formattedDay,
         isBreak: false,       
       },
@@ -369,7 +495,7 @@ export const getDailyTeacherTimetable = async (
       endTime: row.endTime,
       period: row.period,
       isActive: isCurrentPeriodActive(row.startTime, row.endTime, day), // Assumes you have this helper imported
-      room: row.room || "Campus Hall",
+      room: row.room || null,
       color: row.color || null,
       subject: row.subject?.name || "Unknown Subject",
       sectionLabel: row.section 
@@ -396,7 +522,7 @@ export const getDailyTeacherTimetable = async (
 export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => {
   try {
     // 1. Grab the exact Teacher Profile ID from the URL
-    const { teacherId } = req.params;
+    const teacherId = req.params.teacherId as string;
 
     if (!teacherId) {
       return res.status(400).json({
@@ -405,10 +531,21 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
       });
     }
 
+    // Resolve teacher profile to get User.id for database query
+    const teacherProfile = await prisma.teacher.findFirst({
+      where: {
+        OR: [
+          { id: teacherId },
+          { userId: teacherId }
+        ]
+      }
+    });
+    const targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+
     // 2. Fetch strictly the actual classes this teacher is taking for the entire week
     const weeklyPeriods = await prisma.timetable.findMany({
       where: {
-        teacherId: teacherId, 
+        teacherId: targetUserId, 
         isBreak: false,       // ✅ Completely ignoring school breaks
       },
       include: {
@@ -438,7 +575,7 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
       period: row.period,
       time: row.startTime,
       endTime: row.endTime,
-      room: row.room || "Campus Hall",
+      room: row.room || null,
       color: row.color || null,
       subject: row.subject?.name || "Unknown Subject",
       code: row.subject?.code || "N/A",
@@ -458,6 +595,218 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
       success: false,
       message: "Failed to fetch weekly teacher timetable.",
       error: error.message,
+    });
+  }
+};
+
+export const updateTimetableEntry = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const {
+      startTime,
+      endTime,
+      room,
+      color,
+      isBreak,
+      breakLabel,
+      subjectId,
+      teacherId
+    } = req.body;
+
+    const existingEntry = await prisma.timetable.findUnique({
+      where: { id }
+    });
+
+    if (!existingEntry) {
+      return res.status(404).json({ success: false, message: "Timetable entry not found." });
+    }
+
+    const treatAsBreak = isBreak !== undefined ? Boolean(isBreak) : existingEntry.isBreak;
+
+    // Resolve teacherId (Teacher.id) to User.id for database storage
+    let targetUserId = null;
+    if (!treatAsBreak && teacherId) {
+      const teacherProfile = await prisma.teacher.findFirst({
+        where: {
+          OR: [
+            { id: teacherId },
+            { userId: teacherId }
+          ]
+        }
+      });
+      targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+    } else if (!treatAsBreak) {
+      targetUserId = existingEntry.teacherId;
+    }
+
+    // Check teacher conflict if teacherId is changed and is not a break
+    if (!treatAsBreak && targetUserId) {
+      const teacherConflict = await prisma.timetable.findFirst({
+        where: {
+          day: existingEntry.day,
+          period: existingEntry.period,
+          teacherId: targetUserId,
+          id: { not: id } // exclude current entry
+        }
+      });
+      if (teacherConflict) {
+        return res.status(400).json({
+          success: false,
+          message: "Teacher is already assigned to another section at this time."
+        });
+      }
+    }
+
+    const updatedEntry = await prisma.timetable.update({
+      where: { id },
+      data: {
+        startTime: startTime !== undefined ? startTime : existingEntry.startTime,
+        endTime: endTime !== undefined ? endTime : existingEntry.endTime,
+        room: room !== undefined ? (room || null) : existingEntry.room,
+        color: color !== undefined ? (color || null) : existingEntry.color,
+        isBreak: treatAsBreak,
+        breakLabel: treatAsBreak ? (breakLabel || "Recess") : null,
+        subjectId: treatAsBreak ? null : (subjectId !== undefined ? subjectId : existingEntry.subjectId),
+        teacherId: treatAsBreak ? null : (teacherId !== undefined ? targetUserId : existingEntry.teacherId)
+      }
+    });
+
+    return res.status(200).json({ success: true, data: updatedEntry });
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Error updating timetable entry",
+      error: error.message
+    });
+  }
+};
+
+export const deleteTimetableEntry = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+
+    const existingEntry = await prisma.timetable.findUnique({
+      where: { id }
+    });
+
+    if (!existingEntry) {
+      return res.status(404).json({ success: false, message: "Timetable entry not found." });
+    }
+
+    // Check if this is the only record for this section and period
+    const peerRecordsCount = await prisma.timetable.count({
+      where: {
+        sectionId: existingEntry.sectionId,
+        period: existingEntry.period
+      }
+    });
+
+    if (peerRecordsCount <= 1) {
+      // Last record. Convert to placeholder instead of deleting to keep the period row in grid.
+      await prisma.timetable.update({
+        where: { id },
+        data: {
+          isBreak: false,
+          breakLabel: null,
+          subjectId: null,
+          teacherId: null,
+          room: null,
+          color: null
+        }
+      });
+      return res.status(200).json({ success: true, message: "Timetable entry cleared (period preserved)." });
+    } else {
+      await prisma.timetable.delete({
+        where: { id }
+      });
+      return res.status(200).json({ success: true, message: "Timetable entry deleted successfully." });
+    }
+
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Error deleting timetable entry",
+      error: error.message
+    });
+  }
+};
+
+export const updateSectionPeriods = async (req: Request, res: Response) => {
+  try {
+    const sectionId = req.params.sectionId as string;
+    const { periods } = req.body; // array of { originalPeriod?: number, period: number, startTime: string, endTime: string }
+
+    if (!sectionId) {
+      return res.status(400).json({ success: false, message: "sectionId parameter is required." });
+    }
+    if (!periods || !Array.isArray(periods)) {
+      return res.status(400).json({ success: false, message: "periods array is required." });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Fetch all existing records for this section
+      const existingRecords = await tx.timetable.findMany({
+        where: { sectionId }
+      });
+
+      // 2. Delete all existing records for this section to avoid unique constraint violations during update
+      if (existingRecords.length > 0) {
+        await tx.timetable.deleteMany({
+          where: { sectionId }
+        });
+      }
+
+      // 3. Re-create entries based on the new ordered period configuration
+      for (const p of periods) {
+        // Find existing records that belonged to this period's original number
+        const matchedRecords = p.originalPeriod 
+          ? existingRecords.filter(r => r.period === p.originalPeriod)
+          : [];
+
+        if (matchedRecords.length > 0) {
+          // Recreate matching records with the updated period number and timing
+          for (const rec of matchedRecords) {
+            await tx.timetable.create({
+              data: {
+                sectionId,
+                day: rec.day,
+                period: p.period,
+                startTime: p.startTime,
+                endTime: p.endTime,
+                isBreak: rec.isBreak,
+                breakLabel: rec.breakLabel,
+                subjectId: rec.subjectId,
+                teacherId: rec.teacherId,
+                room: rec.room,
+                color: rec.color
+              }
+            });
+          }
+        } else {
+          // No original records matched this period. Create a placeholder record on Monday
+          await tx.timetable.create({
+            data: {
+              sectionId,
+              day: "MONDAY",
+              period: p.period,
+              startTime: p.startTime,
+              endTime: p.endTime,
+              isBreak: false,
+              subjectId: null,
+              teacherId: null
+            }
+          });
+        }
+      }
+    });
+
+    return res.status(200).json({ success: true, message: "Periods updated and reordered successfully." });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update and reorder periods.",
+      error: error.message
     });
   }
 };

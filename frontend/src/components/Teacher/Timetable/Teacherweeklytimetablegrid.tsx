@@ -62,7 +62,6 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
   filterMode,
   selectedSection,
 }) => {
-  // ✅ 2. Extract teacherData for the API call
   const { teacherData } = useAuth();
 
   // ─── Class-wise weekly state ───────────────────────────────────────────────

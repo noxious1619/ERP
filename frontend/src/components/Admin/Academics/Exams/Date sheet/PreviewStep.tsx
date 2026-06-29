@@ -1,16 +1,25 @@
-import { Printer, Download, ArrowLeft, Send } from "lucide-react"
-import type { ScheduleRow } from "./ScheduleStep"
-
+import { Printer, Download, ArrowLeft, Send } from "lucide-react";
 interface PreviewStepProps {
-  title: string
-  academicYear: string
-  reportingTime: string
-  instructions: string
-  selectedClasses: string[]
-  selectedSections: string[]
-  scheduleRows: ScheduleRow[]
-  onBack: () => void
-  onPublish: () => void
+  title: string;
+  academicYear: string;
+  reportingTime: string;
+  instructions: string;
+  selectedClasses: string[];
+  selectedSections: string[];
+  scheduleRows: PreviewRow[];
+  onBack: () => void;
+  onPublish: () => void;
+}
+
+interface PreviewRow {
+  id: string;
+  date: string;
+  subject: string;
+  title: string;
+  syllabus: string; // add this
+  timeSlot: string;
+  duration: string;
+  maxMarks: string;
 }
 
 export default function PreviewStep({
@@ -22,42 +31,40 @@ export default function PreviewStep({
   selectedSections,
   scheduleRows,
   onBack,
-  onPublish
+  onPublish,
 }: PreviewStepProps) {
-
   const totalMaxMarks = scheduleRows.reduce((acc, curr) => {
-    const marks = Number(curr.maxMarks)
-    return isNaN(marks) ? acc : acc + marks
-  }, 0)
+    const marks = Number(curr.maxMarks);
+    return isNaN(marks) ? acc : acc + marks;
+  }, 0);
 
   const handlePrint = () => {
-    window.print()
-  }
+    window.print();
+  };
 
   const handleExportPDF = () => {
-    alert("Exporting Datesheet to PDF format...")
-  }
+    alert("Exporting Datesheet to PDF format...");
+  };
 
   // Format date helper: e.g. "2026-06-16" -> "Tue, Jun 16, 2026"
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "N/A"
+    if (!dateStr) return "N/A";
     try {
-      const dateObj = new Date(dateStr)
-      if (isNaN(dateObj.getTime())) return dateStr
+      const dateObj = new Date(dateStr);
+      if (isNaN(dateObj.getTime())) return dateStr;
       return dateObj.toLocaleDateString("en-US", {
         weekday: "short",
         year: "numeric",
         month: "short",
-        day: "numeric"
-      })
+        day: "numeric",
+      });
     } catch {
-      return dateStr
+      return dateStr;
     }
-  }
+  };
 
   return (
     <div className="flex flex-col gap-6">
-      
       {/* Action Buttons Top Bar */}
       <div className="flex justify-between items-center bg-gray-50 border border-gray-100 rounded-xl px-5 py-3 shadow-3xs">
         <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -81,7 +88,6 @@ export default function PreviewStep({
 
       {/* Printable Sheet Card */}
       <div className="border border-gray-150 rounded-2xl bg-white shadow-md overflow-hidden max-w-4xl mx-auto w-full print:border-none print:shadow-none">
-        
         {/* Document Header Blue Banner */}
         <div className="bg-[#4285F4] text-white p-8 text-center relative overflow-hidden">
           {/* Subtle design accents */}
@@ -92,7 +98,9 @@ export default function PreviewStep({
             Official Academic Document
           </span>
           <h2 className="text-2xl font-black tracking-tight uppercase">
-            {title ? `${title} Examination Datesheet` : "General Examination Datesheet"}
+            {title
+              ? `${title} Examination Datesheet`
+              : "General Examination Datesheet"}
           </h2>
           <p className="text-blue-100 text-sm mt-1.5 font-medium">
             Academic Session: {academicYear || "N/A"}
@@ -102,20 +110,36 @@ export default function PreviewStep({
         {/* Info Grid Block */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-8 py-5 border-b border-gray-100 bg-gray-50/50 text-xs">
           <div>
-            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">Classes Included</p>
-            <p className="text-gray-800 font-semibold">{selectedClasses.join(", ") || "None Selected"}</p>
+            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+              Classes Included
+            </p>
+            <p className="text-gray-800 font-semibold">
+              {selectedClasses.join(", ") || "None Selected"}
+            </p>
           </div>
           <div>
-            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">Sections</p>
-            <p className="text-gray-800 font-semibold">{selectedSections.join(", ") || "None Selected"}</p>
+            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+              Sections
+            </p>
+            <p className="text-gray-800 font-semibold">
+              {selectedSections.join(", ") || "None Selected"}
+            </p>
           </div>
           <div>
-            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">Reporting Time</p>
-            <p className="text-gray-800 font-semibold">{reportingTime || "Not Specified"}</p>
+            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+              Reporting Time
+            </p>
+            <p className="text-gray-800 font-semibold">
+              {reportingTime || "Not Specified"}
+            </p>
           </div>
           <div>
-            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total Papers</p>
-            <p className="text-gray-800 font-semibold">{scheduleRows.length} Exams scheduled</p>
+            <p className="text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+              Total Papers
+            </p>
+            <p className="text-gray-800 font-semibold">
+              {scheduleRows.length} Exams scheduled
+            </p>
           </div>
         </div>
 
@@ -130,7 +154,7 @@ export default function PreviewStep({
                 <th className="py-3 px-4">Time Slot</th>
                 <th className="py-3 px-4 text-center">Duration</th>
                 <th className="py-3 px-4 text-center">Max Marks</th>
-                <th className="py-3 px-4">Invigilator</th>
+                <th className="py-3 px-4">Syllabus</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-gray-700">
@@ -145,9 +169,7 @@ export default function PreviewStep({
                   <td className="py-3 px-4 font-semibold text-[#4285F4]">
                     {row.subject}
                   </td>
-                  <td className="py-3 px-4">
-                    {row.timeSlot}
-                  </td>
+                  <td className="py-3 px-4">{row.timeSlot}</td>
                   <td className="py-3 px-4 text-center font-medium">
                     {row.duration}
                   </td>
@@ -155,7 +177,7 @@ export default function PreviewStep({
                     {row.maxMarks}
                   </td>
                   <td className="py-3 px-4 font-medium text-gray-600">
-                    {row.invigilator || "Unassigned"}
+                    {row.syllabus || "—"}
                   </td>
                 </tr>
               ))}
@@ -164,8 +186,14 @@ export default function PreviewStep({
 
           {/* Table Totals Summary Bar */}
           <div className="flex justify-end items-center gap-6 mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs font-semibold text-gray-600">
-            <span>Total Papers: <strong className="text-gray-900">{scheduleRows.length}</strong></span>
-            <span>Total Weightage: <strong className="text-gray-900">{totalMaxMarks} Marks</strong></span>
+            <span>
+              Total Papers:{" "}
+              <strong className="text-gray-900">{scheduleRows.length}</strong>
+            </span>
+            <span>
+              Total Weightage:{" "}
+              <strong className="text-gray-900">{totalMaxMarks} Marks</strong>
+            </span>
           </div>
 
           {/* Instructions Block */}
@@ -183,15 +211,23 @@ export default function PreviewStep({
           {/* Signatures Row */}
           <div className="mt-12 pt-8 border-t border-dashed border-gray-100 flex justify-between items-end text-xs text-gray-400 font-medium">
             <div>
-              <p className="mb-1">Generated: {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+              <p className="mb-1">
+                Generated:{" "}
+                {new Date().toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </p>
               <p>Academic Office Administration</p>
             </div>
             <div className="text-right">
               <div className="w-40 border-b border-gray-300 mb-1.5" />
-              <p className="font-semibold text-gray-700">Controller of Examinations</p>
+              <p className="font-semibold text-gray-700">
+                Controller of Examinations
+              </p>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -211,7 +247,6 @@ export default function PreviewStep({
           <Send className="h-4 w-4" /> PUBLISH DATESHEET
         </button>
       </div>
-
     </div>
-  )
+  );
 }

@@ -14,6 +14,7 @@ interface UseStudentsOptions {
   classId?: string
   gender?: string
   status?: string
+  year?: string
   page?: number
   limit?: number
 }
@@ -24,6 +25,12 @@ interface UseStudentsResult {
   loading: boolean
   error: string | null
   refetch: () => void
+  stats: {
+    total: number
+    active: number
+    inactive: number
+    newThisMonth: number
+  }
 }
 
 export function useStudents({
@@ -32,6 +39,7 @@ export function useStudents({
   classId = "",
   gender = "",
   status = "",
+  year = "",
   page = 1,
   limit = 6,
 }: UseStudentsOptions = {}): UseStudentsResult {
@@ -39,6 +47,12 @@ export function useStudents({
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    newThisMonth: 0,
+  })
 
   const fetchStudents = useCallback(async () => {
     setLoading(true)
@@ -52,6 +66,7 @@ export function useStudents({
       if (classId) params.set("classId", classId)
       if (gender) params.set("gender", gender)
       if (status) params.set("status", status)
+      if (year) params.set("year", year)
 
       params.set("page", page.toString())
       params.set("limit", limit.toString())
@@ -75,6 +90,9 @@ export function useStudents({
 
       setStudents(json.data)
       setPagination(json.pagination)
+      if (json.stats) {
+        setStats(json.stats)
+      }
     } catch (err: any) {
       setError(err.message ?? "Something went wrong")
     } finally {
@@ -86,6 +104,7 @@ export function useStudents({
     classId,
     gender,
     status,
+    year,
     page,
     limit,
   ])
@@ -100,5 +119,6 @@ export function useStudents({
     loading,
     error,
     refetch: fetchStudents,
+    stats,
   }
 }

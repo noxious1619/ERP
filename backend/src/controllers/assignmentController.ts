@@ -221,6 +221,20 @@ export const getAssignmentSubmissions = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: "Assignment or Section not found" });
     }
 
+    const teacher = await prisma.teacher.findUnique({
+      where: {
+        id: assignment.teacherId,
+      },
+      select: {
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+    const teacherName = teacher
+      ? `${teacher.firstName} ${teacher.lastName}`
+      : "Unknown Teacher";
+
     const sectionId = assignment.sectionId;
 
     // 2. ⚡ OPTIMIZED STATS: Let the database count the rows
@@ -317,6 +331,8 @@ export const getAssignmentSubmissions = async (req: Request, res: Response) => {
              subject: assignment.subject.name,
              class: assignment.class.name,
              section: assignment.section.name,
+             givenBy: teacherName,
+             description: assignment.content || `Maximum marks: ${assignment.maxScore || 100} marks. No description provided.`,
              dueDate: assignment.dueDate,
              createdAt: assignment.createdAt,
              maxScore: assignment.maxScore
@@ -402,8 +418,11 @@ export const getAssignmentList = async (req: Request, res: Response) => {
     // ── Build where clause ──────────────────────────────────────
     const where: any = {
       teacherId: teacher.id,
-      classId,
     };
+
+    if (classId) {
+      where.classId = classId;
+    }
 
     if (sectionId) {
       where.sectionId = sectionId;

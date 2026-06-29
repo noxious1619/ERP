@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useAuth from "../../../../hooks/useAuth";
 import { Sigma } from "lucide-react";
 import ViewDetailSidebar from "../../../Student/Homework/ViewDetailSidebar";
 import type { HomeworkTask } from "../../../Student/Homework/ViewDetailSidebar";
@@ -9,9 +10,12 @@ interface AssignmentInfoProps {
     subject: string;
     class: string;
     section: string;
+    givenBy: string;
+    description: string;
     dueDate: string;
     createdAt: string;
     maxScore: number;
+    content?: string; 
   };
 }
 
@@ -29,27 +33,34 @@ const parseDateString = (isoString?: string) => {
   return { month, day, full };
 };
 
+// const userData = useAuth(); 
+
 const AssignmentInfoCard = ({ info }: AssignmentInfoProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  console.log("AssignmentInfoCard received info:", info); 
+  
   // Fallbacks if data is still loading
   const currentTitle = info?.title || "Loading Assignment...";
   const currentSubject = info?.subject || "—";
   const currentClass = info?.class && info?.section ? `Class - ${info.class} (${info.section})` : "—";
+  const currentGivenBy = info?.givenBy || "Faculty";
+  const description = info?.description || `Maximum marks: ${info?.maxScore || 100} marks`;
+  const maxScore = info?.maxScore || 100;
   
   const startParsed = parseDateString(info?.createdAt);
   const dueParsed = parseDateString(info?.dueDate);
 
   // Map backend details cleanly into your existing sidebar structure
   const teacherTask: HomeworkTask = {
-    id: 1, // Static placeholder identifier required by the type
+    id: 1,
     title: currentTitle,
     subject: currentSubject,
     status: "ASSIGNED",
     dueDate: info?.dueDate ? new Date(info.dueDate).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' }) : "—",
     dueTime: info?.dueDate ? new Date(info.dueDate).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' }) : "—",
-    givenBy: "Teacher Session", 
-    description: `Maximum points achievable for this assignment: ${info?.maxScore || 0} marks. Detailed analytics regarding sections and individual completions are displayed below.`,
+    givenBy: currentGivenBy,
+    description: description,
+    maxScore: maxScore,
     teacherImages: [], 
   };
 

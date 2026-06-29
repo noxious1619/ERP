@@ -18,8 +18,9 @@ export interface HomeworkTask {
   givenBy: string;
   description: string;
   teacherImages?: string[];
-  attachments: string;   // e.g., "1 attachment"
+  attachments: string;   
   statusClass: string;
+  maxScore: number;  
 }
 
 interface UploadedFile {
@@ -273,7 +274,10 @@ const ViewDetailSidebar = ({
             </div>
 
             {/* Description — always shown */}
-            <div className="rounded-2xl bg-[#F5F8FF] p-4">
+            <div className="flex-col rounded-2xl bg-[#F5F8FF] p-4">
+              <h3 className="text-[12px] font-bold text-[#4F52A3] uppercase tracking-widest mb-2">
+                max score: {task.maxScore} marks
+              </h3>
               <h3 className="text-[12px] font-bold text-[#4F52A3] uppercase tracking-widest mb-2">
                 Description
               </h3>

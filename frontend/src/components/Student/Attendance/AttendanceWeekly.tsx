@@ -1,14 +1,24 @@
-"use client";
-import { useState, useEffect, useMemo } from "react";
+import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { processWeeklyAttendance } from "../../../utils/attendanceUtils"; // Adjust path if needed
 
-interface AttendanceWeeklyProps {
-  heatmapData?: Record<string, "P" | "A" | "H">;
-  loading?: boolean;
+interface WeeklyTrend {
+  week: string;
+  present: number;
+  totalDays: number;
+  percentage: number;
 }
 
-// --- Lollipop Bar Sub-Component ---
+interface AttendanceWeeklyProps {
+  trends: WeeklyTrend[];
+  loading: boolean;
+  monthLabel: string;
+  yearLabel: string | number;
+  onPrev: () => void;
+  onNext: () => void;
+  isNextDisabled: boolean;
+}
+
+// --- Lollipop Bar Sub-Component (100% UNCHANGED) ---
 const CHART_HEIGHT = 200;
 const DOT_SIZE = 16;
 const LABEL_HEIGHT = 20;
@@ -49,25 +59,18 @@ function LollipopBar({ percentage }: { percentage: number }) {
 }
 
 // --- Main UI Component ---
-export default function AttendanceWeekly({ heatmapData = {}, loading = false }: AttendanceWeeklyProps) {
-  
-  // 1. Offload the heavy lifting to our imported utility function
-  const { data: monthsData, defaultIndex } = useMemo(() => {
-    return processWeeklyAttendance(heatmapData, 2026);
-  }, [heatmapData]);
+export default function AttendanceWeekly({ 
+  trends, 
+  loading, 
+  monthLabel, 
+  yearLabel, 
+  onPrev, 
+  onNext, 
+  isNextDisabled 
+}: AttendanceWeeklyProps) {
 
-  const [currentIndex, setCurrentIndex] = useState(defaultIndex);
-
-  // 2. Auto-jump to the latest active month when data finishes loading
-  useEffect(() => {
-    setCurrentIndex(defaultIndex);
-  }, [defaultIndex]);
-
-  const goPrev = () => currentIndex > 0 && setCurrentIndex((i) => i - 1);
-  const goNext = () => currentIndex < monthsData.length - 1 && setCurrentIndex((i) => i + 1);
-
-  // 3. Render Skeleton Loader while data is fetching
-  if (loading || !monthsData.length) {
+  // Render Skeleton Loader
+  if (loading || !trends.length) {
     return (
       <div className="rounded-[30px] bg-white shadow-[0px_15px_25px_10px_rgba(0,0,0,0.04)] p-6 w-full min-h-[350px] animate-pulse">
         <div className="h-6 w-48 bg-gray-200 rounded mb-6" />
@@ -81,37 +84,39 @@ export default function AttendanceWeekly({ heatmapData = {}, loading = false }: 
     );
   }
 
-  const current = monthsData[currentIndex];
-
-  // 4. Render Actual UI
+  // Render Actual UI
   return (
     <div className="rounded-[30px] bg-white shadow-[0px_15px_25px_10px_rgba(0,0,0,0.04)] p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-[22px] font-bold text-gray-900 tracking-tight">
-          {current.month} {current.year}
+          {monthLabel} {yearLabel}
         </h2>
         <div className="flex items-center gap-1">
-          <button onClick={goPrev} disabled={currentIndex === 0} className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+          <button onClick={onPrev} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
             <ChevronLeft className="w-5 h-5 text-gray-500" />
           </button>
-          <button onClick={goNext} disabled={currentIndex === monthsData.length - 1} className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed">
+          <button 
+            onClick={onNext} 
+            disabled={isNextDisabled} 
+            className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
             <ChevronRight className="w-5 h-5 text-gray-500" />
           </button>
         </div>
       </div>
 
       <div className="flex items-end justify-around">
-        {current.weeks.map((week) => (
-          <LollipopBar key={week.label} percentage={week.percentage} />
+        {trends.map((week) => (
+          <LollipopBar key={week.week} percentage={week.percentage} />
         ))}
       </div>
 
       <div className="border-t border-gray-200 mt-1" />
 
       <div className="flex justify-around mt-2">
-        {current.weeks.map((week) => (
-          <span key={week.label} className="text-[13px] text-gray-500 font-medium">
-            {week.label}
+        {trends.map((week) => (
+          <span key={week.week} className="text-[13px] text-gray-500 font-medium">
+            {week.week}
           </span>
         ))}
       </div>

@@ -137,7 +137,7 @@ const Homework: React.FC<HomeworkProps> = ({
           </div>
         ) : displayData.length > 0 ? (
           displayData.map((item) => {
-            const subjectName = item.subject || "Subject";
+            const subjectName = item.title || "Subject";
             const styling = getSubjectStyling(subjectName);
 
             return (

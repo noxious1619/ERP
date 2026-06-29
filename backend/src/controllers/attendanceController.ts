@@ -558,3 +558,86 @@ export const getStudentHeatmapGrid = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getSectionWeeklyTrends = async (req: Request, res: Response) => {
+  try {
+    const { sectionId } = req.params;
+    const { month, year } = req.query;
+
+    if (!sectionId) {
+      return res.status(400).json({ success: false, message: "Section ID is required." });
+    }
+
+    // Default to current system month/year if not explicitly sent by frontend
+    const currentSystemDate = new Date();
+    const targetYear = year ? parseInt(year as string, 10) : currentSystemDate.getFullYear();
+    const targetMonth = month ? parseInt(month as string, 10) : (currentSystemDate.getMonth() + 1); // 1-12
+
+    // Establish exact UTC start and end constraints for that single month
+    const startOfMonth = new Date(Date.UTC(targetYear, targetMonth - 1, 1, 0, 0, 0, 0));
+    const endOfMonth = new Date(Date.UTC(targetYear, targetMonth, 0, 23, 59, 59, 999));
+
+    // Fetch records for ALL students that belong to this section
+    const rawMonthlyRecords = await prisma.attendance.findMany({
+      where: {
+        student: {
+          sectionId: sectionId // Cross-relational filter!
+        },
+        date: { gte: startOfMonth, lte: endOfMonth }
+      },
+      select: {
+        date: true,
+        status: true
+      },
+      orderBy: { date: 'asc' }
+    });
+
+    const weeklyBuckets = [
+      { week: "Week 1", present: 0, totalDays: 0 },
+      { week: "Week 2", present: 0, totalDays: 0 },
+      { week: "Week 3", present: 0, totalDays: 0 },
+      { week: "Week 4", present: 0, totalDays: 0 }
+    ];
+
+    // Sort all class records into the correct week buckets
+    rawMonthlyRecords.forEach(record => {
+      const dayOfMonth = new Date(record.date).getUTCDate();
+
+      let bucketIndex = 3; // Defaults to Week 4 for days 22+
+      if (dayOfMonth <= 7) bucketIndex = 0;
+      else if (dayOfMonth <= 14) bucketIndex = 1;
+      else if (dayOfMonth <= 21) bucketIndex = 2;
+
+      weeklyBuckets[bucketIndex].totalDays += 1;
+      
+      // Assuming you only count 'PRESENT' as a positive metric
+      if (record.status === 'PRESENT') {
+        weeklyBuckets[bucketIndex].present += 1;
+      }
+    });
+
+    // Format final collection with computed percentages for the UI
+    const weeklyTrends = weeklyBuckets.map(b => ({
+      ...b,
+      percentage: b.totalDays > 0 ? parseFloat(((b.present / b.totalDays) * 100).toFixed(1)) : 0.0
+    }));
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    return res.status(200).json({
+      success: true,
+      sectionId,
+      monthName: monthNames[targetMonth - 1],
+      year: targetYear,
+      totalRecordsProcessed: rawMonthlyRecords.length,
+      weeklyTrends
+    });
+
+  } catch (error: any) {
+    return res.status(500).json({ 
+      success: false, 
+      message: "Failed to compile section weekly analytics.", 
+      error: error.message 
+    });
+  }
+};

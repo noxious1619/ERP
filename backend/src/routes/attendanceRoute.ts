@@ -8,7 +8,7 @@ import { markBulkAttendance,
     getStudentHeatmapGrid,
     getDailyAttendance,
     saveDailyAttendance,
-
+    getSectionWeeklyTrends,
 } from '../controllers/attendanceController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
@@ -59,6 +59,11 @@ router.get('/attendanceData/student/:studentId/weekly-trends',
 router.get('/attendanceData/student/:studentId/heatmap',
     restrictTo('STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
     getStudentHeatmapGrid
+);
+
+router.get('/attendanceData/section/:sectionId/weekly-trends',
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
+    getSectionWeeklyTrends
 );
 
 export default router;

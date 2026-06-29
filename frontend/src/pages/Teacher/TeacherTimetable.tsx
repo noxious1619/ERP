@@ -184,7 +184,7 @@ const TeacherTimetablePage = () => {
         const response = await axios.get(
           `http://localhost:5000/api/timetable/teacher/${teacherData.id}/daily`,
           {
-            params: { day: ACTIVE_DAY },
+            params: { day: ACTIVE_DAY, filter: "mySubject" },
             headers: { Authorization: `Bearer ${token}` },
           }
         );
@@ -208,7 +208,10 @@ const TeacherTimetablePage = () => {
         const token = localStorage.getItem("token");
         const response = await axios.get(
           `http://localhost:5000/api/timetable/teacher/${teacherData.id}/weekly`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { 
+            params: { filter: "mySubject" },
+            headers: { Authorization: `Bearer ${token}` } 
+          }
         );
         if (response.data.success) setMySubjectWeeklyData(response.data.data);
       } catch (err) {

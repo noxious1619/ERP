@@ -6,17 +6,23 @@ import type { HomeworkTask } from "../../../Student/Homework/ViewDetailSidebar";
 
 interface AssignmentInfoProps {
   info?: {
+    id: string;
     title: string;
     subject: string;
+    subjectId: string;
     class: string;
+    classId: string;
     section: string;
+    sectionId: string;
     givenBy: string;
     description: string;
+    content?: string;
     dueDate: string;
     createdAt: string;
     maxScore: number;
-    content?: string; 
+    fileUrl?: string | null;
   };
+  onEditClick?: () => void;
 }
 
 // Helper to extract date components (e.g., "MAY", "20", "20 May, 2026")
@@ -35,7 +41,7 @@ const parseDateString = (isoString?: string) => {
 
 // const userData = useAuth(); 
 
-const AssignmentInfoCard = ({ info }: AssignmentInfoProps) => {
+const AssignmentInfoCard = ({ info, onEditClick }: AssignmentInfoProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   console.log("AssignmentInfoCard received info:", info); 
   
@@ -141,6 +147,7 @@ const AssignmentInfoCard = ({ info }: AssignmentInfoProps) => {
         task={sidebarOpen ? teacherTask : null}
         onClose={() => setSidebarOpen(false)}
         isTeacherView={true}
+        onEditClick={onEditClick}
       />
     </>
   );

@@ -8,6 +8,7 @@ import {
   getAssignmentList,
   getAssignmentDetails,
   getAssignmentSummary,
+  updateAssignment,
 } from '../controllers/assignmentController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
@@ -49,6 +50,11 @@ router
   .get(
     restrictTo('TEACHER', 'ADMIN'),
     getAssignmentDetails
+  )
+  .patch(
+    restrictTo('TEACHER', 'ADMIN'),
+    upload.single('file'),
+    updateAssignment
   );
 
 router

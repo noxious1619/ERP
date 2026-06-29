@@ -34,7 +34,7 @@ const RightSidebarHeader = ({
   return (
     <div className="flex items-center justify-end gap-10">
       {/* Notification */}
-      <div className="relative" ref={notificationRef}>
+      {/* <div className="relative" ref={notificationRef}>
         <button
           onClick={() => setShowNotifications((prev) => !prev)}
           className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] cursor-pointer"
@@ -45,18 +45,24 @@ const RightSidebarHeader = ({
         {showNotifications && (
           <NotificationDropdown onClose={() => setShowNotifications(false)} />
         )}
-      </div>
+      </div> */}
 
       {/* Profile */}
       <div
         onClick={() => navigate(profileRoute)}
         className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer"
       >
-        <img
-          src={profileImage}
-          alt="Profile"
-          className="h-full w-full object-cover"
-        />
+        {localStorage.getItem("role") === "TEACHER" ? (
+          <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
+            P
+          </div>
+        ) : (
+          <img
+            src={profileImage}
+            alt="Profile"
+            className="h-full w-full object-cover"
+          />
+        )}
       </div>
     </div>
   );

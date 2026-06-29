@@ -467,15 +467,43 @@ export const getDailyTeacherTimetable = async (
         ]
       }
     });
-    const targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+    if (!teacherProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher profile not found."
+      });
+    }
+    const targetUserId = teacherProfile.userId;
+
+    const filter = req.query.filter as string | undefined;
+
+    // Fetch strictly the actual classes this teacher is taking today
+    const whereClause: any = {
+      teacherId: targetUserId, 
+      day: formattedDay,
+      isBreak: false,
+    };
+
+    if (filter === "mySubject") {
+      // Fetch strictly the subjects assigned to this teacher in their profile (TeacherSectionSubject)
+      const assignments = await prisma.teacherSectionSubject.findMany({
+        where: { teacherId: teacherProfile.id },
+        select: { subject: { select: { name: true } } }
+      });
+      const assignedSubjectNames = Array.from(new Set(assignments.map((a) => a.subject?.name).filter(Boolean)));
+
+      // Find all subject IDs matching those names
+      const matchingSubjects = await prisma.subject.findMany({
+        where: { name: { in: assignedSubjectNames as string[] } },
+        select: { id: true }
+      });
+      const assignedSubjectIds = matchingSubjects.map((s) => s.id);
+      whereClause.subjectId = { in: assignedSubjectIds };
+    }
 
     // Fetch strictly the actual classes this teacher is taking today
     const teacherPeriods = await prisma.timetable.findMany({
-      where: {
-        teacherId: targetUserId, 
-        day: formattedDay,
-        isBreak: false,       
-      },
+      where: whereClause,
       include: {
         subject: { select: { name: true, code: true } },
         section: {
@@ -540,14 +568,41 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
         ]
       }
     });
-    const targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+    if (!teacherProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher profile not found."
+      });
+    }
+    const targetUserId = teacherProfile.userId;
+
+    const filter = req.query.filter as string | undefined;
+
+    const whereClause: any = {
+      teacherId: targetUserId, 
+      isBreak: false,       // ✅ Completely ignoring school breaks
+    };
+
+    if (filter === "mySubject") {
+      // Fetch strictly the subjects assigned to this teacher in their profile (TeacherSectionSubject)
+      const assignments = await prisma.teacherSectionSubject.findMany({
+        where: { teacherId: teacherProfile.id },
+        select: { subject: { select: { name: true } } }
+      });
+      const assignedSubjectNames = Array.from(new Set(assignments.map((a) => a.subject?.name).filter(Boolean)));
+
+      // Find all subject IDs matching those names
+      const matchingSubjects = await prisma.subject.findMany({
+        where: { name: { in: assignedSubjectNames as string[] } },
+        select: { id: true }
+      });
+      const assignedSubjectIds = matchingSubjects.map((s) => s.id);
+      whereClause.subjectId = { in: assignedSubjectIds };
+    }
 
     // 2. Fetch strictly the actual classes this teacher is taking for the entire week
     const weeklyPeriods = await prisma.timetable.findMany({
-      where: {
-        teacherId: targetUserId, 
-        isBreak: false,       // ✅ Completely ignoring school breaks
-      },
+      where: whereClause,
       include: {
         subject: { select: { name: true, code: true } },
         section: {

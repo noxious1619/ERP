@@ -33,8 +33,8 @@ const TeacherHomeworkSidebar = ({
         </div>
       </button>
 
-      <TeacherStatsCard />
-      <DailyAssignmentUpdates />
+      {/* <TeacherStatsCard /> */}
+      {/* <DailyAssignmentUpdates /> */}
     </div>
   );
 };

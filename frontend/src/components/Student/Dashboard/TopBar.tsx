@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../../../components/Student/Dashboard/SearchBar";
+// import SearchBar from "../../../components/Student/Dashboard/SearchBar";
 import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-import question from "../../../assets/Student/Dashboard/TopBar/question.svg";
-import setting from "../../../assets/Student/Dashboard/TopBar/setting.png";
+// import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
+// import question from "../../../assets/Student/Dashboard/TopBar/question.svg";
+// import setting from "../../../assets/Student/Dashboard/TopBar/setting.png";
 
 interface TopBarProps {
   /** 
@@ -77,7 +77,7 @@ const TopBar: React.FC<TopBarProps> = ({
                      ring-2 ring-white shadow-sm hover:ring-blue-300 transition-all cursor-pointer"
           aria-label="Go to profile"
         >
-          {profileImageUrl ? (
+          {profileImageUrl && localStorage.getItem("role") !== "TEACHER" ? (
             <img
               src={profileImageUrl}
               alt="Profile"

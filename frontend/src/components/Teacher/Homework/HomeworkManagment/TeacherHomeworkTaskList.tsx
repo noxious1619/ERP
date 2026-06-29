@@ -65,6 +65,7 @@ interface TeacherHomeworkTaskListProps {
   assignments: AssignmentCard[];
   loading: boolean;
   error: string | null;
+  onEditClick: (task: AssignmentCard) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ const TeacherHomeworkTaskList = ({
   assignments,
   loading,
   error,
+  onEditClick,
 }: TeacherHomeworkTaskListProps) => {
   const navigate = useNavigate();
 
@@ -111,12 +113,11 @@ const TeacherHomeworkTaskList = ({
         return (
           <div
             key={task.id}
-            className={`
+            className="
               flex min-h-[88px] items-center justify-between
               rounded-[22px] bg-white px-6
               shadow-[0px_2px_10px_rgba(0,0,0,0.05)]
-              ${isFirst ? "border border-blue-200" : ""}
-            `}
+            "
           >
             {/* LEFT */}
             <div className="flex items-center gap-4">
@@ -148,21 +149,16 @@ const TeacherHomeworkTaskList = ({
                 onClick={() => navigate(`/teacher/homework/${task.id}`)}
                 className="text-[13px] font-semibold text-[#090958] hover:text-[#4F52A3] transition-colors cursor-pointer whitespace-nowrap"
               >
-                {isFirst ? "Check" : "View Details"}
+                View Details
               </button>
 
               <button
-                onClick={() => navigate(`/teacher/homework/${task.id}/edit`)}
-                disabled={isFirst}
-                className={`
+                onClick={() => onEditClick(task)}
+                className="
                   rounded-full px-6 py-[8px] text-[13px] font-semibold
                   transition-all duration-150 cursor-pointer
-                  ${
-                    isFirst
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "bg-[#4285F4] text-white hover:bg-[#3a3d8a]"
-                  }
-                `}
+                  bg-[#4285F4] text-white hover:bg-[#3a3d8a]
+                "
               >
                 Edit
               </button>

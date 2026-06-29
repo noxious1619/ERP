@@ -34,6 +34,7 @@ interface ViewDetailSidebarProps {
   task: HomeworkTask | null;
   onClose: () => void;
   isTeacherView?: boolean;
+  onEditClick?: () => void;
 }
 
 const STATUS_STYLES: Record<HomeworkTask["status"], string> = {
@@ -57,6 +58,7 @@ const ViewDetailSidebar = ({
   task,
   onClose,
   isTeacherView = false,
+  onEditClick,
 }: ViewDetailSidebarProps) => {
   const [imgIndex, setImgIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
@@ -387,7 +389,10 @@ const ViewDetailSidebar = ({
         {/* Bottom button */}
         <div className="px-5 pt-3 pb-6 shrink-0 border-t border-gray-100">
           {isTeacherView ? (
-            <button className="w-full rounded-2xl py-3.5 bg-[#4285F4] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3f4290] active:scale-[0.98] transition shadow">
+            <button 
+              onClick={onEditClick}
+              className="w-full rounded-2xl py-3.5 bg-[#4285F4] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3f4290] active:scale-[0.98] transition shadow"
+            >
               EDIT
             </button>
           ) : (

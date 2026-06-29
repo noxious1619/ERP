@@ -271,11 +271,11 @@ const AttendanceManagement = () => {
               {/* Stats Panel */}
               <div className="w-[320px] flex-shrink-0 flex flex-col gap-8">
                 <AttendanceStats students={students} />
-                <WeeklyAttendanceChart
+                {/* <WeeklyAttendanceChart
                   classLabel={classLabel}
                   section={sectionLabel.replace("Section ", "")}
                   weeklyData={WEEKLY_DATA}
-                />
+                /> */}
               </div>
             </div>
           )}

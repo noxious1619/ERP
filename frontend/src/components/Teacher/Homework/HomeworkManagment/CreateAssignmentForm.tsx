@@ -14,9 +14,10 @@ interface AssignHomeworkModalProps {
   onClose: () => void;
   // Passing the teachingAssignments from the parent's useAuth hook
   teachingAssignments: any[]; 
+  editingAssignment?: any | null;
 }
 
-const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomeworkModalProps) => {
+const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssignment }: AssignHomeworkModalProps) => {
   // Form State - Notice we removed selectedClassId!
   const [selectedSectionId, setSelectedSectionId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
@@ -27,6 +28,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
   const [time, setTime] = useState("");
   const [maxScore, setMaxScore] = useState(100);
   const [file, setFile] = useState<File | null>(null);
+  const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,7 +51,6 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
   }, [teachingAssignments]);
 
   // 2. Get unique subjects based ONLY on the selected section
-  // 2. Get unique subjects based ONLY on the selected section
   const availableSubjects = useMemo(() => {
     if (!selectedSectionId || !teachingAssignments) return [];
 
@@ -64,10 +65,58 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
     return Array.from(subjectsMap.values());
   }, [selectedSectionId, teachingAssignments]);
 
-  // --- Effects ---
-  
+  // Pre-populate form states when editingAssignment changes
+  useEffect(() => {
+    if (editingAssignment) {
+      setSelectedSectionId(editingAssignment.section?.id || "");
+      setSelectedSubjectId(editingAssignment.subject?.id || "");
+      
+      const title = editingAssignment.title || "";
+      const parts = title.split(" - ");
+      if (parts.length > 1) {
+        setChapter(parts[0]);
+        setTopic(parts.slice(1).join(" - "));
+      } else {
+        setChapter(title);
+        setTopic("");
+      }
+
+      setDescription(editingAssignment.content || "");
+      
+      if (editingAssignment.dueDate) {
+        const d = new Date(editingAssignment.dueDate);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        setDueDate(`${yyyy}-${mm}-${dd}`);
+        
+        const hrs = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        setTime(`${hrs}:${mins}`);
+      } else {
+        setDueDate("");
+        setTime("");
+      }
+      setMaxScore(editingAssignment.maxScore || 100);
+      setFile(null);
+      setExistingFileUrl(editingAssignment.fileUrl || null);
+    } else {
+      setSelectedSectionId("");
+      setSelectedSubjectId("");
+      setChapter("");
+      setTopic("");
+      setDescription("");
+      setDueDate("");
+      setTime("");
+      setMaxScore(100);
+      setFile(null);
+      setExistingFileUrl(null);
+    }
+  }, [editingAssignment, open]);
+
   // Auto-select subject if there's only 1 available, otherwise clear it if invalid
   useEffect(() => {
+    if (editingAssignment) return; // Skip auto-selection during edit
     if (availableSubjects.length === 1) {
       setSelectedSubjectId(availableSubjects[0].id);
     } else if (availableSubjects.length === 0) {
@@ -78,7 +127,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
         setSelectedSubjectId("");
       }
     }
-  }, [availableSubjects, selectedSubjectId]);
+  }, [availableSubjects, selectedSubjectId, editingAssignment]);
 
   // If modal is closed, don't render
   if (!open) return null;
@@ -129,10 +178,16 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
       
       if (file) {
         formData.append("file", file);
+      } else if (!existingFileUrl && editingAssignment) {
+        formData.append("removeAttachment", "true");
       }
 
-      const response = await fetch("http://localhost:5000/api/assignments", {
-        method: "POST",
+      const url = editingAssignment
+        ? `http://localhost:5000/api/assignments/${editingAssignment.id}`
+        : "http://localhost:5000/api/assignments";
+
+      const response = await fetch(url, {
+        method: editingAssignment ? "PATCH" : "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -152,11 +207,11 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
         setTime("");
         onClose();
       } else {
-        alert(data.message || "Failed to create assignment");
+        alert(data.message || "Failed to submit assignment");
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert("An error occurred while assigning homework.");
+      alert("An error occurred while submitting homework.");
     } finally {
       setIsSubmitting(false);
     }
@@ -184,7 +239,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
           <div className="flex items-center gap-3 mb-6">
             <FileText className="w-6 h-6 text-[#4D8DFF]" />
             <h2 className="text-[20px] font-semibold text-[#222]">
-              Assign Homework
+              {editingAssignment ? "Edit Homework" : "Assign Homework"}
             </h2>
           </div>
 
@@ -324,7 +379,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
               onChange={(e) => handleFile(e.target.files)}
             />
 
-            {!file ? (
+            {!file && !existingFileUrl ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
@@ -343,11 +398,16 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
               <div className="flex items-center justify-between px-4 py-3 rounded-lg border bg-[#F9FAFB]">
                 <div className="flex items-center gap-3">
                   <FileText size={20} className="text-[#4D8DFF]" />
-                  <span className="text-[15px] font-medium text-gray-700 truncate">{file.name}</span>
+                  <span className="text-[15px] font-medium text-gray-700 truncate">
+                    {file ? file.name : existingFileUrl?.split("/").pop() || "Attached File"}
+                  </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setFile(null)}
+                  onClick={() => {
+                    setFile(null);
+                    setExistingFileUrl(null);
+                  }}
                   className="text-red-500 p-2 hover:bg-red-50 rounded-full transition-colors"
                 >
                   <Trash2 size={18} />
@@ -359,19 +419,23 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments }: AssignHomew
 
         {/* Footer */}
         <div className="px-8 py-5 border-t border-[#F2F4F7] flex justify-end gap-3 bg-white">
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="h-[46px] px-7 rounded-full border border-[#D0D5DD] text-[#667085] text-[14px] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            SAVE AS DRAFT
-          </button>
+          {!editingAssignment && (
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="h-[46px] px-7 rounded-full border border-[#D0D5DD] text-[#667085] text-[14px] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              SAVE AS DRAFT
+            </button>
+          )}
           <button 
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="h-[46px] px-8 rounded-full bg-[#4D8DFF] text-white text-[14px] font-semibold shadow-md hover:bg-[#3d7dee] transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? "ASSIGNING..." : "ASSIGN HOMEWORK"}
+            {isSubmitting 
+              ? (editingAssignment ? "SAVING..." : "ASSIGNING...") 
+              : (editingAssignment ? "SAVE CHANGES" : "ASSIGN HOMEWORK")}
           </button>
         </div>
       </div>

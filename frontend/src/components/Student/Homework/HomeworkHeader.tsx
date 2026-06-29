@@ -49,7 +49,7 @@ const HomeworkHeader = ({
       {/* Right Section */}
       <div className="ml-auto flex items-center gap-10 pt-3 pr-2">
         {/* Notification */}
-        <div className="relative" ref={notificationRef}>
+        {/* <div className="relative" ref={notificationRef}>
           <button
             className="transition-transform duration-200 hover:scale-105 cursor-pointer"
             onClick={() => setShowNotifications(!showNotifications)}
@@ -64,18 +64,24 @@ const HomeworkHeader = ({
             <NotificationDropdown onClose={() => setShowNotifications(false)} />
           )}
           <div className="absolute right-[1px] top-[2px] h-[9px] w-[9px] rounded-full bg-[#E54866]" />
-        </div>
+        </div> */}
 
         {/* Profile */}
         <div
           onClick={() => navigate(profileRoute)}
           className="h-[58px] w-[58px] overflow-hidden rounded-full border-[3px] border-white shadow-[0px_4px_14px_rgba(0,0,0,0.12)] cursor-pointer"
         >
-          <img
-            src={profileImage}
-            alt="Profile"
-            className="h-full w-full object-cover"
-          />
+          {localStorage.getItem("role") === "TEACHER" ? (
+            <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
+              P
+            </div>
+          ) : (
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="h-full w-full object-cover"
+            />
+          )}
         </div>
       </div>
     </div>

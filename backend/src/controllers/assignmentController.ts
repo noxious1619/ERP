@@ -327,12 +327,18 @@ export const getAssignmentSubmissions = async (req: Request, res: Response) => {
       success: true,
       data: {
          assignmentInfo: {
+             id: assignment.id,
              title: assignment.title,
-             subject: assignment.subject.name,
-             class: assignment.class.name,
-             section: assignment.section.name,
+             subject: (assignment as any).subject.name,
+             subjectId: assignment.subjectId,
+             class: (assignment as any).class.name,
+             classId: assignment.classId,
+             section: (assignment as any).section?.name || "",
+             sectionId: assignment.sectionId,
+             fileUrl: assignment.fileUrl,
              givenBy: teacherName,
              description: assignment.content || `Maximum marks: ${assignment.maxScore || 100} marks. No description provided.`,
+             content: assignment.content || "",
              dueDate: assignment.dueDate,
              createdAt: assignment.createdAt,
              maxScore: assignment.maxScore
@@ -451,6 +457,7 @@ export const getAssignmentList = async (req: Request, res: Response) => {
         select: {
           id:        true,
           title:     true,
+          content:   true,
           dueDate:   true,
           maxScore:  true,
           sectionId: true,
@@ -471,11 +478,13 @@ export const getAssignmentList = async (req: Request, res: Response) => {
     const cards = assignments.map((a) => ({
       id:              a.id,
       title:           a.title,
+      content:         a.content,
       dueDate:         a.dueDate,
       maxScore:        a.maxScore,
       class:           a.class,
       section:         a.section ?? null,
       subject:         a.subject,
+      fileUrl:         a.fileUrl,
       attachmentCount: a.fileUrl ? 1 : 0,
       submissionCount: a._count.submissions,
     }));
@@ -646,5 +655,113 @@ export const getAssignmentSummary = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateAssignment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { 
+      title, 
+      content, 
+      classId, 
+      sectionId, 
+      subjectId, 
+      dueDate, 
+      maxScore 
+    } = req.body;
+
+    const titleStr = title as string | undefined;
+    const contentStr = content as string | undefined;
+    const classIdStr = classId as string | undefined;
+    const sectionIdStr = sectionId as string | undefined;
+    const subjectIdStr = subjectId as string | undefined;
+    const dueDateStr = dueDate as string | undefined;
+    const maxScoreVal = maxScore !== undefined ? (parseInt(maxScore as string) || 100) : undefined;
+
+    const userId = (req as any).user.id;
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId: userId }
+    });
+
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher profile record not found for this authenticated session."
+      });
+    }
+
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: id as string }
+    });
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: "Assignment not found."
+      });
+    }
+
+    if (assignment.teacherId !== teacher.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to update this assignment."
+      });
+    }
+
+    // 1. Handle File Path (from Multer)
+    let fileUrl: string | null = assignment.fileUrl;
+    if (req.file) {
+      fileUrl = req.file.path;
+    } else if (req.body.removeAttachment === "true") {
+      fileUrl = null;
+    }
+
+    // 2. Validate Class-Section Relationship
+    if (sectionIdStr) {
+      const whereClause: any = { id: sectionIdStr };
+      if (classIdStr) {
+        whereClause.classId = classIdStr;
+      }
+      const section = await prisma.section.findFirst({
+        where: whereClause
+      });
+      if (!section) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "The selected section does not belong to this class." 
+        });
+      }
+    }
+
+    const dataToUpdate: any = {};
+    if (titleStr !== undefined) dataToUpdate.title = titleStr;
+    if (contentStr !== undefined) dataToUpdate.content = contentStr;
+    if (fileUrl !== undefined) dataToUpdate.fileUrl = fileUrl;
+    if (dueDateStr !== undefined) dataToUpdate.dueDate = new Date(dueDateStr);
+    if (maxScoreVal !== undefined) dataToUpdate.maxScore = maxScoreVal;
+    if (subjectIdStr !== undefined) dataToUpdate.subjectId = subjectIdStr;
+    if (classIdStr !== undefined) dataToUpdate.classId = classIdStr;
+    if (sectionIdStr !== undefined) {
+      dataToUpdate.sectionId = sectionIdStr === "" ? null : sectionIdStr;
+    }
+
+    const updatedAssignment = await prisma.assignment.update({
+      where: { id: id as string },
+      data: dataToUpdate,
+      include: {
+        subject: { select: { name: true } },
+        class: { select: { name: true } }
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Assignment updated successfully!",
+      data: updatedAssignment
+    });
+
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

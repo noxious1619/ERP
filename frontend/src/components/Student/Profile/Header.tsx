@@ -38,7 +38,7 @@ const ProfileHeader = () => {
        
 
         {/* Notification */}
-        <div className="relative">
+        {/* <div className="relative">
           <button
             className="transition-transform duration-200 hover:scale-105 cursor-pointer"
             onClick={() => setShowNotifications(!showNotifications)}
@@ -49,23 +49,21 @@ const ProfileHeader = () => {
               className="h-[26px] w-[26px]"
             />
           </button>
-          {/* Dropdown */}
           {showNotifications && (
             <NotificationDropdown onClose={() => setShowNotifications(false)} />
           )}
 
-          {/* Red Dot */}
           <div className="absolute right-[1px] top-[2px] h-[9px] w-[9px] rounded-full bg-[#E54866]" />
-        </div>
+        </div> */}
 
         {/* Profile */}
-        <div className="h-[58px] w-[58px] overflow-hidden rounded-full border-[3px] border-white shadow-[0px_4px_14px_rgba(0,0,0,0.12)] cursor-pointer ">
+        {/* <div className="h-[58px] w-[58px] overflow-hidden rounded-full border-[3px] border-white shadow-[0px_4px_14px_rgba(0,0,0,0.12)] cursor-pointer ">
           <img
             src={profileImage}
             alt="Student"
             className="h-full w-full object-cover"
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

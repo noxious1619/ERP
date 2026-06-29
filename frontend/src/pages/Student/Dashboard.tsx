@@ -62,9 +62,15 @@ const Dashboard = () => {
             `http://localhost:5000/api/attendance/attendanceData/student/${studentId}/totalPercetage`,
             { params: { year: currentYear }, headers: { Authorization: `Bearer ${token}` } }
           ),
-          targetSectionId 
-            ? axios.get(`http://localhost:5000/api/timetable/section/${targetSectionId}`, 
-            { headers: { Authorization: `Bearer ${token}` } }) 
+          targetSectionId
+            ? axios.get(
+                `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              )
             : Promise.resolve(null),
           axios.get(`http://localhost:5000/api/assignments/my-feed`, 
             { headers: { Authorization: `Bearer ${token}` } }
@@ -87,14 +93,12 @@ const Dashboard = () => {
           setAggregates(aggResponse.data.aggregates);
         }
 
-        console.log("Raw timetable data for the week:", timetableResponse?.data?.data || "No timetable data fetched.");
         if (timetableResponse?.data?.success) {
           // 1. Change to ALL CAPS to match your database exactly
           const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
           const currentDayString = days[new Date().getDay()]; 
           
           const filteredForToday = timetableResponse.data.data.filter(
-            // 2. Change `item.dayOfWeek` to `item.day`
             (item: any) => item.day === currentDayString
           );
           
@@ -102,7 +106,7 @@ const Dashboard = () => {
           const sortedSchedule = filteredForToday.sort((a: any, b: any) => 
             a.startTime.localeCompare(b.startTime)
           );
-          
+          // console.log("Today's sorted schedule:", sortedSchedule);
           setTodaySchedule(sortedSchedule);
         }
         if (homeworkResponse?.data?.success) {

@@ -1,72 +1,75 @@
 import express from 'express';
-import { 
-  createAssignment, 
-  getStudentAssignments, 
+import {
+  createAssignment,
+  getStudentAssignments,
   submitAssignment,
   getAssignmentSubmissions,
   gradeSubmission,
   getAssignmentList,
   getAssignmentDetails,
   getAssignmentSummary,
-
 } from '../controllers/assignmentController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
 import { upload } from '../middleware/uploadMiddleware.js';
 
-
 const router = express.Router();
 
 router.use(protect);
 
-router.post(
-  '/', 
-  restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
-  upload.single('file'), 
-  createAssignment
-);
+router
+  .route('/')
+  .post(
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'),
+    upload.single('file'),
+    createAssignment
+  );
 
-// GET feed for the logged-in student
-router.get(
-  '/my-feed', 
-  getStudentAssignments
-);
+router
+  .route('/my-feed')
+  .get(getStudentAssignments);
 
-// Students can submit homework
-router.post(
-  '/submit', 
-  restrictTo('STUDENT', 'TEACHER'), 
-  upload.single('file'), 
-  submitAssignment
-);
+router
+  .route('/submit')
+  .post(
+    restrictTo('STUDENT', 'TEACHER'),
+    upload.single('file'),
+    submitAssignment
+  );
 
-// Teacher routes
-router.get('/:id/submissions', 
-  restrictTo('TEACHER', 'ADMIN'), 
-  getAssignmentSubmissions
-);
+router
+  .route('/list')
+  .get(
+    restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'),
+    getAssignmentList
+  );
 
-router.patch('/submissions/:submissionId/grade', 
-  restrictTo('TEACHER', 'ADMIN'), 
-  gradeSubmission
-);
+router
+  .route('/:id')
+  .get(
+    restrictTo('TEACHER', 'ADMIN'),
+    getAssignmentDetails
+  );
 
-// Get list of assignments for students
-router.get('/list', 
-  restrictTo('TEACHER', 'ADMIN'), 
-  getAssignmentList
-);
+router
+  .route('/:id/submissions')
+  .get(
+    restrictTo('TEACHER', 'ADMIN'),
+    getAssignmentSubmissions
+  );
 
-// Get details of a specific assignment
-router.get('/:id', 
-  restrictTo('TEACHER', 'ADMIN'), 
-  getAssignmentDetails
-);
+router
+  .route('/:id/summary')
+  .get(
+    restrictTo('TEACHER', 'ADMIN'),
+    getAssignmentSummary
+  );
 
-// Get summary of a specific assignment
-router.get('/:id/summary', 
-  restrictTo('TEACHER', 'ADMIN'), 
-  getAssignmentSummary
-);
+router
+  .route('/submissions/:submissionId/grade')
+  .patch(
+    restrictTo('TEACHER', 'ADMIN'),
+    gradeSubmission
+  );
 
 export default router;

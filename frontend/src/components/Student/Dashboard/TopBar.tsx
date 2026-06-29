@@ -44,31 +44,31 @@ const TopBar: React.FC<TopBarProps> = ({
   return (
     <div className="relative flex items-center justify-between px-6 py-4">
       {/* Search Bar */}
-      <SearchBar />
+      {/* <SearchBar /> */}
 
       {/* Right Side Icons */}
       <div
-        className="relative ml-4 flex items-center gap-3"
+        className="relative ml-auto flex gap-3"
         ref={notificationRef}
       >
         {/* Notification Bell */}
-        <button
+        {/* <button
           onClick={() => setShowNotifications((prev) => !prev)}
           className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer"
         >
           <img src={notification} alt="Notifications" className="h-6 w-6" />
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-        </button>
+        </button> */}
 
         {/* Help */}
-        <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer">
+        {/* <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer">
           <img src={question} alt="Help" className="h-6 w-6" />
-        </button>
+        </button> */}
 
         {/* Settings */}
-        <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer">
+        {/* <button className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-50 cursor-pointer">
           <img src={setting} alt="Settings" className="h-6 w-6" />
-        </button>
+        </button> */}
 
         {/* Profile Avatar — navigates to the path passed via prop */}
         <button

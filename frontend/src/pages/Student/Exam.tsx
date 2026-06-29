@@ -160,7 +160,7 @@ const Exam = () => {
             <div className="flex flex-col gap-6">
               <Calendar />
 
-              <CalendarMessageCard />
+              {/* <CalendarMessageCard /> */}
 
               {/* Download Datesheet — disabled until data is loaded */}
               <button

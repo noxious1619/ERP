@@ -24,7 +24,7 @@ import { restrictTo } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-router.use(protect); 
+router.use(protect);
 
 router.route('/years')
   .get(restrictTo('SUPER_ADMIN', 'ADMIN'), getAcademicYears)

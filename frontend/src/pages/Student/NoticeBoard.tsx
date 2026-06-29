@@ -72,7 +72,7 @@ const NoticeBoard = () => {
           <div className="flex-1 overflow-y-auto px-6 pb-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex flex-col gap-6">
               <Calendar />
-              <CalendarMessageCard />
+              {/* <CalendarMessageCard /> */}
             </div>
           </div>
         </div>

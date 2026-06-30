@@ -94,7 +94,7 @@ const TeacherTimetablePage = () => {
   const [mySubjectWeeklyData, setMySubjectWeeklyData] = useState<MySubjectWeeklyEntry[]>([]);
   const [mySubjectWeeklyLoading, setMySubjectWeeklyLoading] = useState(false);
   
-  const ACTIVE_DAY = getCurrentAPIDay();
+  const ACTIVE_DAY = "Monday"; // Default to Monday; can be dynamically set based on selectedDate if needed
 
   // ─── 1. Initialize Profile State from useAuth (NO API CALL NEEDED) ────────
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { Users, UserCheck, CheckCircle2, UserPlus, BookOpen, TrendingUp, TrendingDown } from "lucide-react"
+import { Users, UserCheck, CheckCircle2, BookOpen, TrendingUp, TrendingDown } from "lucide-react"
 
 interface DashboardStatsGridProps {
   stats?: {
@@ -44,15 +44,7 @@ export default function DashboardStatsGrid({ stats }: DashboardStatsGridProps) {
       iconBg: "bg-green-50 text-green-500",
       gridClass: "col-span-1 lg:col-span-4",
     },
-    {
-      label: "New Admissions",
-      value: stats?.newAdmissions !== undefined ? stats.newAdmissions.toString() : "No Data",
-      trend: "Joined past 7d",
-      trendType: "neutral",
-      icon: UserPlus,
-      iconBg: "bg-blue-50 text-blue-500",
-      gridClass: "col-span-1 lg:col-span-6",
-    },
+  
     {
       label: "Active Classes",
       value: stats?.activeClasses !== undefined ? stats.activeClasses.toString() : "No Data",

@@ -22,6 +22,7 @@ export default function Dashboard() {
         const response = await axios.get("http://localhost:5000/api/admin/dashboard/stats", { headers })
         
         if (response.data.success) {
+          console.log("Dashboard stats fetched successfully:", response.data.data);
           setData(response.data.data)
         } else {
           setError("Failed to load dashboard statistics.")

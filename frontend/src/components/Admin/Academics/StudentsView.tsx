@@ -57,6 +57,7 @@ export default function StudentsView() {
     status: selectedStatus,
     year: selectedYear,
   })
+  console.log("StudentsView stats:", stats)  // Debugging line
 
   // Fetch classes and academic years on mount
   useEffect(() => {

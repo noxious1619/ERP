@@ -70,6 +70,7 @@ const TeacherTimetablePage = () => {
 
   // ✅ Extract teacherData from auth context
   const { teacherData } = useAuth();
+  console.log("Teacher Data from Auth Context:", teacherData);
 
   // ─── Sections from teacher profile ───────────────────────────────────────
   const [teacherSections, setTeacherSections] = useState<TeacherSection[]>([]);
@@ -196,11 +197,14 @@ const TeacherTimetablePage = () => {
         const response = await axios.get(
           `http://localhost:5000/api/timetable/teacher/${teacherData.id}/daily`,
           {
-            params: { day: ACTIVE_DAY, filter: "mySubject" },
+            params: { day: ACTIVE_DAY },
             headers: { Authorization: `Bearer ${token}` },
           },
         );
-        if (response.data.success) setMySubjectItems(response.data.data);
+        if (response.data.success) {
+          console.log("My Subject Daily Response:", response.data.data);
+          setMySubjectItems(response.data.data);
+        }
         else setMySubjectError("Failed to load timetable.");
       } catch (err: any) {
         setMySubjectError(
@@ -223,7 +227,6 @@ const TeacherTimetablePage = () => {
         const response = await axios.get(
           `http://localhost:5000/api/timetable/teacher/${teacherData.id}/weekly`,
           {
-            params: { filter: "mySubject" },
             headers: { Authorization: `Bearer ${token}` },
           },
         );

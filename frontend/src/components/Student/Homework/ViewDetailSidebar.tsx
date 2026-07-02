@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"; 
+import { useState, useRef, useEffect } from "react";
 import useAuth from "../../../hooks/useAuth";
 import {
   X,
@@ -67,12 +67,14 @@ const ViewDetailSidebar = ({
   const [isDragging, setIsDragging] = useState(false);
   const [visible, setVisible] = useState(false);
   const { studentData } = useAuth();
-  console.log("Current user in sidebar:", studentData?.id);
-  
+
   // Submission States
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  
+  const [submitMessage, setSubmitMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -101,7 +103,7 @@ const ViewDetailSidebar = ({
     const file = files[0]; // Strictly grab only the first file
 
     if (file.type !== "application/pdf") {
-      setSubmitMessage({ type: 'error', text: 'Only PDF files are allowed.' });
+      setSubmitMessage({ type: "error", text: "Only PDF files are allowed." });
       return;
     }
 
@@ -109,13 +111,13 @@ const ViewDetailSidebar = ({
     if (uploads[0]?.previewUrl) URL.revokeObjectURL(uploads[0].previewUrl);
 
     setSubmitMessage(null); // Clear previous errors
-    
+
     // Override the state with ONLY the new file
     setUploads([
       {
         id: crypto.randomUUID(),
         file,
-        previewUrl: null, 
+        previewUrl: null,
         isPdf: true,
       },
     ]);
@@ -133,24 +135,36 @@ const ViewDetailSidebar = ({
   const handleSubmitAssignment = async () => {
     if (uploads.length === 0) return;
 
+    if (!studentData) {
+      setSubmitMessage({
+        type: "error",
+        text: "Student information not found. Please login again.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitMessage(null);
 
     try {
       const formData = new FormData();
-      formData.append("assignmentId", task!.id.toString());
-      formData.append("file", uploads[0].file); 
+
+      formData.append("assignmentId", task.id.toString());
+      formData.append("file", uploads[0].file);
       formData.append("student", JSON.stringify({ id: studentData.id }));
 
-      const token = localStorage.getItem("token"); 
+      const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/assignments/submit", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
+      const response = await fetch(
+        "http://localhost:5000/api/assignments/submit",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         },
-        body: formData,
-      });
+      );
 
       const result = await response.json();
 
@@ -158,20 +172,24 @@ const ViewDetailSidebar = ({
         throw new Error(result.message || "Failed to submit assignment");
       }
 
-      setSubmitMessage({ type: 'success', text: result.message || 'Submitted successfully!' });
-      
+      setSubmitMessage({
+        type: "success",
+        text: result.message || "Submitted successfully!",
+      });
+
       setTimeout(() => {
         onClose();
       }, 1500);
-
     } catch (error: any) {
       console.error("Submission error:", error);
-      setSubmitMessage({ type: 'error', text: error.message || 'Something went wrong.' });
+      setSubmitMessage({
+        type: "error",
+        text: error.message || "Something went wrong.",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-
 
   const openFilePicker = () => fileInputRef.current?.click();
   const handleDragOver = (e: React.DragEvent) => {
@@ -391,7 +409,7 @@ const ViewDetailSidebar = ({
                     ))}
                   </div>
                 )}
-                
+
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -407,13 +425,22 @@ const ViewDetailSidebar = ({
                     <Upload size={16} className="text-[#4F52A3]" />
                   </div>
                   <p className="text-[12px] text-gray-500 text-center leading-snug px-3">
-                    {isDragging ? "Drop PDF here" : (
-                      <>Drag & drop or <span className="text-[#4F52A3] font-semibold">browse</span></>
+                    {isDragging ? (
+                      "Drop PDF here"
+                    ) : (
+                      <>
+                        Drag & drop or{" "}
+                        <span className="text-[#4F52A3] font-semibold">
+                          browse
+                        </span>
+                      </>
                     )}
                   </p>
-                  <p className="text-[11px] text-gray-400">PDF only (Max 1 file)</p>
+                  <p className="text-[11px] text-gray-400">
+                    PDF only (Max 1 file)
+                  </p>
                 </div>
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -431,11 +458,14 @@ const ViewDetailSidebar = ({
 
         {/* Bottom button */}
         <div className="px-5 pt-3 pb-6 shrink-0 border-t border-gray-100 flex flex-col gap-2">
-          
           {submitMessage && (
-            <div className={`text-[12px] font-semibold text-center rounded-lg py-2 ${
-              submitMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
+            <div
+              className={`text-[12px] font-semibold text-center rounded-lg py-2 ${
+                submitMessage.type === "success"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
               {submitMessage.text}
             </div>
           )}
@@ -447,40 +477,38 @@ const ViewDetailSidebar = ({
             >
               EDIT
             </button>
+          ) : uploads.length === 0 ? (
+            // STATE 1: NO FILE
+            <button
+              onClick={openFilePicker}
+              className="w-full rounded-2xl py-3.5 bg-white border-2 border-[#4285F4] text-[#4285F4] font-semibold text-[14px] tracking-wide hover:bg-blue-50 active:scale-[0.98] transition shadow flex items-center justify-center gap-2"
+            >
+              <Upload size={15} />
+              UPLOAD PDF
+            </button>
           ) : (
-            uploads.length === 0 ? (
-              // STATE 1: NO FILE
-              <button
-                onClick={openFilePicker}
-                className="w-full rounded-2xl py-3.5 bg-white border-2 border-[#4285F4] text-[#4285F4] font-semibold text-[14px] tracking-wide hover:bg-blue-50 active:scale-[0.98] transition shadow flex items-center justify-center gap-2"
-              >
-                <Upload size={15} />
-                UPLOAD PDF
-              </button>
-            ) : (
-              // STATE 2: FILE READY TO SUBMIT
-              <button
-                onClick={handleSubmitAssignment}
-                disabled={isSubmitting}
-                className={`w-full rounded-2xl py-3.5 text-white font-semibold text-[14px] tracking-wide transition shadow flex items-center justify-center gap-2 ${
-                  isSubmitting 
-                    ? "bg-gray-400 cursor-not-allowed" 
-                    : "bg-[#4285F4] hover:bg-[#3f4290] active:scale-[0.98]"
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    SUBMITTING...
-                  </>
-                ) : (
-                  <>
-                    <FileText size={15} />
-                    SUBMIT ASSIGNMENT
-                  </>
-                )}
-              </button>
-            )
+            // STATE 2: FILE READY TO SUBMIT
+            <button
+              onClick={handleSubmitAssignment}
+              disabled={isSubmitting}
+              className={`w-full rounded-2xl py-3.5 text-white font-semibold text-[14px] tracking-wide transition shadow flex items-center justify-center gap-2 ${
+                isSubmitting
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#4285F4] hover:bg-[#3f4290] active:scale-[0.98]"
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  SUBMITTING...
+                </>
+              ) : (
+                <>
+                  <FileText size={15} />
+                  SUBMIT ASSIGNMENT
+                </>
+              )}
+            </button>
           )}
         </div>
       </div>

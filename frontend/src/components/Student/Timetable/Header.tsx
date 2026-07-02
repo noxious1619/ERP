@@ -1,29 +1,11 @@
-import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
 import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
-import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
+interface TimetableHeaderProps {
+  sectionLabel?: string;
+}
 
-const TimetableHeader = () => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
+const TimetableHeader = ({ sectionLabel }: TimetableHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isWeekly = location.pathname === "/student/timetable/weekly";
@@ -36,6 +18,7 @@ const TimetableHeader = () => {
           My Timetable
         </h1>
         <p className="text-sm font-semibold text-gray-400 mt-1">
+          {sectionLabel ? `${sectionLabel} · ` : ""}
           {getDynamicHeaderDate()}
         </p>
       </div>

@@ -1,13 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import SearchBar from "../../../components/Student/Dashboard/SearchBar";
-import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
-// import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-// import question from "../../../assets/Student/Dashboard/TopBar/question.svg";
-// import setting from "../../../assets/Student/Dashboard/TopBar/setting.png";
-
 interface TopBarProps {
-  /** 
+  /**
    * URL of the logged-in user's profile image.
    * When dynamic: pass teacher.profileImage or student.profileImage from your auth/API context.
    */
@@ -24,22 +17,7 @@ const TopBar: React.FC<TopBarProps> = ({
   profileImageUrl,
   profilePath = "/student/profile", // safe default — won't break existing student usage
 }) => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   return (
     <div className="relative flex items-center justify-between px-6 py-4">
@@ -47,10 +25,7 @@ const TopBar: React.FC<TopBarProps> = ({
       {/* <SearchBar /> */}
 
       {/* Right Side Icons */}
-      <div
-        className="relative ml-auto flex gap-3"
-        ref={notificationRef}
-      >
+      <div className="relative ml-auto flex gap-3">
         {/* Notification Bell */}
         {/* <button
           onClick={() => setShowNotifications((prev) => !prev)}
@@ -90,11 +65,6 @@ const TopBar: React.FC<TopBarProps> = ({
             </div>
           )}
         </button>
-
-        {/* Notification Dropdown */}
-        {showNotifications && (
-          <NotificationDropdown onClose={() => setShowNotifications(false)} />
-        )}
       </div>
     </div>
   );

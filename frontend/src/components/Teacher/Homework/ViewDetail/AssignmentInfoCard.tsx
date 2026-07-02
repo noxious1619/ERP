@@ -1,5 +1,4 @@
 import { useState } from "react";
-import useAuth from "../../../../hooks/useAuth";
 import { Sigma } from "lucide-react";
 import ViewDetailSidebar from "../../../Student/Homework/ViewDetailSidebar";
 import type { HomeworkTask } from "../../../Student/Homework/ViewDetailSidebar";
@@ -39,36 +38,67 @@ const parseDateString = (isoString?: string) => {
   return { month, day, full };
 };
 
-// const userData = useAuth(); 
+const getTaskStatus = (dueDate?: string): HomeworkTask["status"] => {
+  if (!dueDate) return "PENDING";
+  const due = new Date(dueDate);
+  const now = new Date();
+  const diffDays = Math.ceil(
+    (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays < 0) return "OVERDUE";
+  if (diffDays === 0) return "DUE TODAY";
+  if (diffDays === 1) return "DUE TOMORROW";
+  return "PENDING";
+};
+
+// const userData = useAuth();
 
 const AssignmentInfoCard = ({ info, onEditClick }: AssignmentInfoProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  console.log("AssignmentInfoCard received info:", info); 
-  
+  console.log("AssignmentInfoCard received info:", info);
+
   // Fallbacks if data is still loading
   const currentTitle = info?.title || "Loading Assignment...";
   const currentSubject = info?.subject || "—";
-  const currentClass = info?.class && info?.section ? `Class - ${info.class} (${info.section})` : "—";
+  const currentClass =
+    info?.class && info?.section
+      ? `Class - ${info.class} (${info.section})`
+      : "—";
   const currentGivenBy = info?.givenBy || "Faculty";
-  const description = info?.description || `Maximum marks: ${info?.maxScore || 100} marks`;
+  const description =
+    info?.description || `Maximum marks: ${info?.maxScore || 100} marks`;
   const maxScore = info?.maxScore || 100;
-  
+
   const startParsed = parseDateString(info?.createdAt);
   const dueParsed = parseDateString(info?.dueDate);
 
   // Map backend details cleanly into your existing sidebar structure
   const teacherTask: HomeworkTask = {
-    id: 1,
-    title: currentTitle,
-    subject: currentSubject,
-    status: "ASSIGNED",
-    dueDate: info?.dueDate ? new Date(info.dueDate).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' }) : "—",
-    dueTime: info?.dueDate ? new Date(info.dueDate).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' }) : "—",
-    givenBy: currentGivenBy,
-    description: description,
-    maxScore: maxScore,
-    teacherImages: [], 
-  };
+  id: 1,
+  title: currentTitle,
+  subject: currentSubject,
+  status: getTaskStatus(info?.dueDate),
+  statusClass: "", // unused by ViewDetailSidebar today, kept for type compatibility
+  dueDate: info?.dueDate
+    ? new Date(info.dueDate).toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      })
+    : "—",
+  dueTime: info?.dueDate
+    ? new Date(info.dueDate).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—",
+  givenBy: currentGivenBy,
+  description: description,
+  maxScore: maxScore,
+  teacherImages: [],
+  attachments: info?.fileUrl ?? "", // your AssignmentInfoProps already has fileUrl, may as well pass it through
+};
 
   return (
     <>

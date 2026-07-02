@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Users, Save, Loader2 } from "lucide-react";
+import {  Save, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../../components/Teacher/Dashboard/Navbar";
@@ -10,7 +10,6 @@ import type { AttendanceStatus } from "../../components/Teacher/Attendance/Stude
 import AttendanceStatusTable from "../../components/Teacher/Attendance/Attendancestatustable";
 import AttendanceStats from "../../components/Teacher/Attendance/Attendancestats";
 import AttendanceFilter from "../../components/Teacher/Attendance/Attendancefilter";
-import WeeklyAttendanceChart from "../../components/Teacher/Attendance/Weeklyattendancechart";
 import { AuthContext } from "../../context/AuthContext";
 
 interface DynamicStudent {
@@ -20,14 +19,14 @@ interface DynamicStudent {
   studentId: string;
 }
 
-const WEEKLY_DATA = [
-  { date: "21/6", count: 32 },
-  { date: "22/6", count: 34 },
-  { date: "23/6", count: 38 },
-  { date: "24/6", count: 28 },
-  { date: "25/6", count: 40 },
-  { date: "26/6", count: 37 },
-];
+// const WEEKLY_DATA = [
+//   { date: "21/6", count: 32 },
+//   { date: "22/6", count: 34 },
+//   { date: "23/6", count: 38 },
+//   { date: "24/6", count: 28 },
+//   { date: "25/6", count: 40 },
+//   { date: "26/6", count: 37 },
+// ];
 
 const AttendanceManagement = () => {
   const auth = useContext(AuthContext);

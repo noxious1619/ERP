@@ -6,7 +6,8 @@ import TeacherHomeworkTaskList from "../../components/Teacher/Homework/HomeworkM
 import TeacherHomeworkSidebar from "../../components/Teacher/Homework/HomeworkManagment/TeacherHomeworkSidebar";
 import CreateAssignmentForm from "../../components/Teacher/Homework/HomeworkManagment/CreateAssignmentForm";
 import useAuth from "../../hooks/useAuth";
-import useAssignmentList from "../../hooks/useAssignmentList";
+import useAssignmentList, { type AssignmentCard } from "../../hooks/useAssignmentList";
+
 
 // ─── Filter state shape (Updated) ─────────────────────────────────────────────
 interface Filters {

@@ -4,7 +4,7 @@ import {
     getFeeStructure, 
     generateMonthlyFees, 
     updatePaymentStatus,
-    getDefaulters,
+    // getDefaulters,
     getMyFeeHistory 
 } from '../controllers/financeController.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -43,11 +43,11 @@ router.patch(
 );
 
 // Route for fetching defaulters
-router.get(
-    '/defaulters', 
-    restrictTo('SUPER_ADMIN', 'ADMIN', 'TEACHER', 'FINANCE'), 
-    getDefaulters
-);
+// router.get(
+//     '/defaulters', 
+//     restrictTo('SUPER_ADMIN', 'ADMIN', 'TEACHER', 'FINANCE'), 
+//     getDefaulters
+// );
 
 // Route for students to view their fee payment history
 router.get(

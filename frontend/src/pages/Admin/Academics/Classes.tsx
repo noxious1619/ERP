@@ -25,6 +25,7 @@ interface Section {
   name: string;
   homeRoom: string | null;
   capacity: number;
+  classTeacherId: string | null;
   classTeacherName: string;
   studentCount: number;
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { MapPin, User, BookOpen } from "lucide-react";
+import { MapPin, BookOpen } from "lucide-react";
 import TimetableScheduleCard from "../../../components/Student/Timetable/ScheduleCard";
 import type { TeacherFilterMode } from "./TeacherTimetableHeader";
 

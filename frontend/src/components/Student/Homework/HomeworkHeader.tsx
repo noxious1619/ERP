@@ -1,9 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+// import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
-import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
-import NotificationDropdown from "../../Student/Dashboard/NotificationDropdown";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 interface HomeworkHeaderProps {
   title?: string;
@@ -15,24 +11,24 @@ const HomeworkHeader = ({
   subtitle,
   profileRoute = "/student/profile",
 }: HomeworkHeaderProps) => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
+  // const [showNotifications, setShowNotifications] = useState(false);
+  // const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (
+  //       notificationRef.current &&
+  //       !notificationRef.current.contains(event.target as Node)
+  //     ) {
+  //       setShowNotifications(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, []);
 
   return (
     <div className="flex w-full items-start">

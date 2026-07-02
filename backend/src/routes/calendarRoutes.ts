@@ -2,8 +2,8 @@ import express from 'express';
 import { 
   addHoliday, 
   getHolidays, 
-  updateHoliday, 
-  deleteHoliday,
+  // updateHoliday, 
+  // deleteHoliday,
   initializeYearHolidays 
 } from '../controllers/holidayController.js';
 import { protect } from '../middleware/authMiddleware.js'; // Adjust paths as per your project
@@ -26,16 +26,16 @@ router.post(
   addHoliday
 );
 
-router.patch(
-  '/update/:id', 
-  restrictTo('ADMIN', 'SUPER_ADMIN'), 
-  updateHoliday
-);
+// router.patch(
+//   '/update/:id', 
+//   restrictTo('ADMIN', 'SUPER_ADMIN'), 
+//   updateHoliday
+// );
 
-router.delete(
-  '/delete/:id', 
-  restrictTo('ADMIN', 'SUPER_ADMIN'), 
-  deleteHoliday
-);
+// router.delete(
+//   '/delete/:id', 
+//   restrictTo('ADMIN', 'SUPER_ADMIN'), 
+//   deleteHoliday
+// );
 
 export default router;

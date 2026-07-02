@@ -6,8 +6,8 @@ import StudentProfile from "../../components/Student/Profile/StudentProfile";
 import GuardianCard, {
   type ParentData,
 } from "../../components/Student/Profile/GuardianCard";
-import AcademicPerformance from "../../components/Student/Profile/AcademicPerformance";
-import AttendanceCard from "../../components/Student/Profile/AttendanceCard";
+// import AcademicPerformance from "../../components/Student/Profile/AcademicPerformance";
+// import AttendanceCard from "../../components/Student/Profile/AttendanceCard";
 import axios from "axios";
 const Profile = () => {
   const [parent, setParent] = useState<ParentData | null>(null);
@@ -46,8 +46,8 @@ const Profile = () => {
             {/* Center */}
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <GuardianCard parent={parent} isLoading={isLoading} />
-              <AcademicPerformance />
-              <AttendanceCard />
+              {/* <AcademicPerformance />
+              <AttendanceCard /> */}
             </div>
           </div>
         </div>

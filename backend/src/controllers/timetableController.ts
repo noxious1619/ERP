@@ -253,9 +253,9 @@ export const getDailyTimetableBySection = async (
       let resolvedTeacher = null;
       if (row.teacherId) {
         resolvedTeacher = await prisma.teacher.findUnique({
-          where: { userId: row.teacherId },
-          select: { id: true, firstName: true, lastName: true }
-        });
+  where: { id: row.teacherId },  
+  select: { id: true, firstName: true, lastName: true }
+});
       }
       resolvedRows.push({
         ...row,
@@ -401,9 +401,9 @@ export const getWeeklyTimetableBySection = async (
       let resolvedTeacherId = entry.teacherId;
 
       if (entry.teacherId) {
-        const tProfile = await prisma.teacher.findUnique({
-          where: { userId: entry.teacherId }
-        });
+       const tProfile = await prisma.teacher.findUnique({
+  where: { id: entry.teacherId }  // ← Teacher.id, not userId
+});
         if (tProfile) {
           displayTeacherName = `${tProfile.firstName} ${tProfile.lastName}`.trim();
           resolvedTeacherId = tProfile.id; // Return Teacher.id for the frontend select dropdown
@@ -473,13 +473,13 @@ export const getDailyTeacherTimetable = async (
         message: "Teacher profile not found."
       });
     }
-    const targetUserId = teacherProfile.userId;
+   
 
     const filter = req.query.filter as string | undefined;
 
     // Fetch strictly the actual classes this teacher is taking today
     const whereClause: any = {
-      teacherId: targetUserId, 
+     teacherId: teacherId, 
       day: formattedDay,
       isBreak: false,
     };
@@ -574,12 +574,11 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
         message: "Teacher profile not found."
       });
     }
-    const targetUserId = teacherProfile.userId;
 
     const filter = req.query.filter as string | undefined;
 
     const whereClause: any = {
-      teacherId: targetUserId, 
+      teacherId: teacherId, 
       isBreak: false,       // ✅ Completely ignoring school breaks
     };
 

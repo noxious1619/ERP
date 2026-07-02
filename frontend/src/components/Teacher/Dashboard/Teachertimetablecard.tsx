@@ -1,5 +1,4 @@
 import React from "react";
-import { Languages } from "lucide-react";
 
 interface TeacherTimetableCardProps {
   className: string; // e.g. "Class – X(A)"

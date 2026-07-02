@@ -46,7 +46,6 @@ const WORD_LIMIT = 175;
 type AudienceType = "ALL_STUDENTS" | "ALL_TEACHERS" | "CLASS" | "SECTION";
 
 const CreateNoticeModal = ({
-  existingNotices,
   onClose,
   onSuccess,
 }: CreateNoticeModalProps) => {

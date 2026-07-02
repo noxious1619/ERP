@@ -1,26 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
-import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
-import NotificationDropdown from "../../Student/Dashboard/NotificationDropdown";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 const ProfileHeader = () => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+ 
   return (
     <div className="flex items-start justify-between">
       {/* Left Content */}

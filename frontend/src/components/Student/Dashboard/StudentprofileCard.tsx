@@ -1,6 +1,5 @@
 import React from "react";
 import { CircleUserRound } from "lucide-react";
-import studentPhoto from "../../../assets/Student/Dashboard/StudentprofileCard/student.png";
 import { useNavigate } from "react-router-dom";
 
 // Define the exact props we expect from the Dashboard

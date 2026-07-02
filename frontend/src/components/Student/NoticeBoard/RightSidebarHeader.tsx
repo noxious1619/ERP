@@ -1,9 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
+// import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
-
 interface RightSidebarHeaderProps {
   /** Where the profile avatar navigates to. Defaults to student profile. */
   profileRoute?: string;
@@ -12,24 +8,24 @@ interface RightSidebarHeaderProps {
 const RightSidebarHeader = ({
   profileRoute = "/student/profile",
 }: RightSidebarHeaderProps) => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
+  // const [showNotifications, setShowNotifications] = useState(false);
+  // const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (
+  //       notificationRef.current &&
+  //       !notificationRef.current.contains(event.target as Node)
+  //     ) {
+  //       setShowNotifications(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, []);
 
   return (
     <div className="flex items-center justify-end gap-10">

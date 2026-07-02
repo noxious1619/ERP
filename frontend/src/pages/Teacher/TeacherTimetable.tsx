@@ -48,7 +48,7 @@ interface WeeklyTimetableEntry {
   room: string | null;
   color: string | null;
   subject?: { id: string; name: string; code: string } | null;
-  teacher?: { id: string; name: string } | null; 
+  teacher?: { id: string; name: string } | null;
   displayTeacherName?: string | null;
 }
 
@@ -101,7 +101,6 @@ const TeacherTimetablePage = () => {
   const [mySubjectWeeklyLoading, setMySubjectWeeklyLoading] = useState(false);
 
   const ACTIVE_DAY = getCurrentAPIDay();
-
 
   // ─── 1. Initialize Profile State from useAuth (NO API CALL NEEDED) ────────
   useEffect(() => {

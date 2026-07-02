@@ -5,7 +5,6 @@ import NoticeBoardHeader from "../../components/Student/NoticeBoard/NoticeHeader
 import Filters from "../../components/Student/NoticeBoard/Filter";
 import NoticeCards from "../../components/Student/NoticeBoard/NoticeCards";
 import Calendar from "../../components/Student/Dashboard/Calendar";
-import CalendarMessageCard from "../../components/Student/Dashboard/CalendarMessageCard";
 import RightSidebarHeader from "../../components/Student/NoticeBoard/RightSidebarHeader";
 import type { Notice } from "../../types/notice";
 

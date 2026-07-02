@@ -1,4 +1,3 @@
-import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 
 const NoticeBoardHeader = () => {
@@ -20,8 +19,6 @@ const NoticeBoardHeader = () => {
           {getDynamicHeaderDate()}
         </p>
       </div>
-
-      
     </div>
   );
 };

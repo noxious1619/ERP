@@ -48,7 +48,7 @@ const DateScheduleCard = ({
   // 2. Client-side filter: Scan the whole week data array and grab only matching cards
   const filteredSchedule = timetableData
     .filter((item) => item.day?.toUpperCase() === targetDayEnum)
-    .sort((a, b) => a.startTime.localeCompare(b));
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const handleDownload = () => {
     if (filteredSchedule.length === 0) return;

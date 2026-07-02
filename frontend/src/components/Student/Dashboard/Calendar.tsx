@@ -23,7 +23,9 @@ const CalendarSection = ({
   const containerWidth = className ?? (isDashboard ? "w-[340px]" : "w-full");
 
   return (
-    <div className={`rounded-3xl bg-white px-6 py-6 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.05)] ${containerWidth}`}>
+    <div
+      className={`rounded-3xl bg-white px-6 py-6 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.05)] ${containerWidth}`}
+    >
       <Calendar
         value={selectedDate}
         onChange={(val) => {
@@ -34,7 +36,7 @@ const CalendarSection = ({
         prev2Label={null}
         next2Label={null}
         showNeighboringMonth={true}
-        formatShortWeekday={(locale, date) =>
+        formatShortWeekday={(_locale, date) =>
           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][date.getDay()]
         }
         tileClassName={({ date, view }) => {

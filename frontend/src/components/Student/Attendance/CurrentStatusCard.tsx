@@ -68,11 +68,14 @@ const CurrentStatusCard: React.FC<CurrentStatusCardProps> = ({
                   outerRadius={64} // Controls thickness shape boundaries
                   paddingAngle={0}
                   dataKey="value"
-                  startAngle={90}  // Forces layout sweep to drop from the top center vertical line
+                  startAngle={90} // Forces layout sweep to drop from the top center vertical line
                   endAngle={-270}
                 >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {chartData.map((_, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
               </PieChart>
@@ -92,7 +95,9 @@ const CurrentStatusCard: React.FC<CurrentStatusCardProps> = ({
       <div className="mt-12 flex items-center justify-between gap-4">
         {/* Present Box */}
         <div className="flex h-16 px-4 py-4 flex-1 flex-col items-center justify-center rounded-2xl bg-[#3A71FF]">
-          <h3 className="text-xl font-bold leading-none text-white">{daysPresent}</h3>
+          <h3 className="text-xl font-bold leading-none text-white">
+            {daysPresent}
+          </h3>
           <p className="mt-2 text-[10px] font-semibold tracking-wide text-white/90">
             DAYS PRESENT
           </p>
@@ -100,7 +105,9 @@ const CurrentStatusCard: React.FC<CurrentStatusCardProps> = ({
 
         {/* Absent Box */}
         <div className="flex h-16 px-4 py-4 flex-1 flex-col items-center justify-center rounded-2xl bg-[#B70828]">
-          <h3 className="text-xl font-bold leading-none text-white">{daysAbsent}</h3>
+          <h3 className="text-xl font-bold leading-none text-white">
+            {daysAbsent}
+          </h3>
           <p className="mt-2 text-[10px] font-semibold tracking-wide text-white/90">
             DAYS ABSENT
           </p>

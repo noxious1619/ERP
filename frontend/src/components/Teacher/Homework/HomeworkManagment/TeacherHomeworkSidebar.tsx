@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
-import TeacherStatsCard from "../../Homework/HomeworkManagment/TeacherStatsCard";
-import DailyAssignmentUpdates from "../../Homework/HomeworkManagment/DailyAssignmentUpdates";
+// import TeacherStatsCard from "../../Homework/HomeworkManagment/TeacherStatsCard";
+// import DailyAssignmentUpdates from "../../Homework/HomeworkManagment/DailyAssignmentUpdates";
 interface TeacherHomeworkSidebarProps {
   onCreateAssignment: () => void;
 }

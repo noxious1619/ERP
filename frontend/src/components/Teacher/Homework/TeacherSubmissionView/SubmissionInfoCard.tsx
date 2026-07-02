@@ -1,36 +1,61 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 type Grade = "Complete" | "Incomplete" | "Wrong" | null;
 
+interface SubmissionData {
+  attachments?: string[];
+  score?: number;
+  submittedAt?: string;
+  description?: string;
+  student?: {
+    name?: string;
+    classSection?: string;
+    rollNo?: string;
+  };
+  assignment?: {
+    content?: string;
+    maxScore?: number;
+  };
+}
+
 interface Props {
-  data: any; // Data from your custom hook
+  data: SubmissionData;
   saving: boolean;
   onSubmitGrade: (score: number, status: string, remarks: string) => void;
 }
-
 // Helper to format the date to match your exact UI
 const formatSubmitDate = (isoString?: string) => {
   if (!isoString) return { month: "—", day: "—", fullDate: "—", time: "—" };
   const d = new Date(isoString);
-  const month = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+  const month = d.toLocaleString("en-US", { month: "short" }).toUpperCase();
   const day = d.getDate().toString();
-  const fullDate = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const fullDate = d.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
   return { month, day, fullDate, time };
 };
 
 const SubmissionInfoCard = ({ data, saving, onSubmitGrade }: Props) => {
   // Use backend attachments, fallback to empty array
   const images = data?.attachments || [];
-  
+
   const [activeImage, setActiveImage] = useState(0);
-  const [selectedGrade, setSelectedGrade] = useState<Grade>(data?.score ? "Complete" : null);
+  const [selectedGrade, setSelectedGrade] = useState<Grade>(
+    data?.score ? "Complete" : null,
+  );
   const [marks, setMarks] = useState(data?.score?.toString() || "");
 
   const dateDetails = formatSubmitDate(data?.submittedAt);
 
-  const handlePrev = () => setActiveImage((i) => (i - 1 + images.length) % images.length);
+  const handlePrev = () =>
+    setActiveImage((i) => (i - 1 + images.length) % images.length);
   const handleNext = () => setActiveImage((i) => (i + 1) % images.length);
 
   const handleSave = () => {
@@ -39,7 +64,7 @@ const SubmissionInfoCard = ({ data, saving, onSubmitGrade }: Props) => {
       alert("Please enter a valid number for marks.");
       return;
     }
-    
+
     // Pass the marks and use the grade status as the remark
     onSubmitGrade(Number(marks), "GRADED", `Marked as: ${selectedGrade}`);
   };
@@ -130,7 +155,8 @@ const SubmissionInfoCard = ({ data, saving, onSubmitGrade }: Props) => {
             {data?.student?.name || "Student Name"}
           </h2>
           <p className="text-[13px] text-gray-400 mt-0.5">
-            {data?.student?.classSection || "Class - Unknown"} &nbsp;•&nbsp; Roll no: {data?.student?.rollNo || "-"}
+            {data?.student?.classSection || "Class - Unknown"} &nbsp;•&nbsp;
+            Roll no: {data?.student?.rollNo || "-"}
           </p>
         </div>
 
@@ -148,7 +174,9 @@ const SubmissionInfoCard = ({ data, saving, onSubmitGrade }: Props) => {
             <p className="text-[13px] font-semibold text-gray-800">
               {dateDetails.fullDate}
             </p>
-            <p className="text-[12px] text-gray-500 mt-0.5">{dateDetails.time}</p>
+            <p className="text-[12px] text-gray-500 mt-0.5">
+              {dateDetails.time}
+            </p>
           </div>
         </div>
 
@@ -158,7 +186,9 @@ const SubmissionInfoCard = ({ data, saving, onSubmitGrade }: Props) => {
             Description
           </p>
           <p className="text-[13px] text-gray-700 leading-relaxed">
-            {data?.description || data?.assignment?.content || "No description provided."}
+            {data?.description ||
+              data?.assignment?.content ||
+              "No description provided."}
           </p>
         </div>
 

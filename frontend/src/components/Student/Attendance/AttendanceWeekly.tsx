@@ -1,6 +1,4 @@
-import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
 interface WeeklyTrend {
   week: string;
   present: number;
@@ -80,7 +78,7 @@ export default function AttendanceWeekly({
   onNext,
   isNextDisabled,
 }: AttendanceWeeklyProps) {
-    const safeTrends = trends ?? [];
+  const safeTrends = trends ?? [];
   // Render Skeleton Loader
   if (loading || !safeTrends.length) {
     return (

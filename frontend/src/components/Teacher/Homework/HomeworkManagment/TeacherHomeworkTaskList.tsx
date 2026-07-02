@@ -5,13 +5,15 @@ import type { AssignmentCard } from "../../../../hooks/useAssignmentList";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const formatDueDate = (dateStr: string): { label: string; colorClass: string } => {
+const formatDueDate = (
+  dateStr: string,
+): { label: string; colorClass: string } => {
   const due = new Date(dateStr);
   const now = new Date();
 
   // Strip time for day comparison
   const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-  const today  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffMs = dueDay.getTime() - today.getTime();
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
@@ -106,9 +108,8 @@ const TeacherHomeworkTaskList = ({
 
   return (
     <div className="mt-3 flex w-full flex-col gap-4">
-      {assignments.map((task, index) => {
+      {assignments.map((task) => {
         const { label, colorClass } = formatDueDate(task.dueDate);
-        const isFirst = index === 0;
 
         return (
           <div
@@ -122,12 +123,18 @@ const TeacherHomeworkTaskList = ({
             {/* LEFT */}
             <div className="flex items-center gap-4">
               <div className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-[#F4EFFB]">
-                <img src={sigmaIcon} alt={task.subject.name} className="h-[20px] w-[20px]" />
+                <img
+                  src={sigmaIcon}
+                  alt={task.subject.name}
+                  className="h-[20px] w-[20px]"
+                />
               </div>
 
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h3 className="text-[14px] font-bold text-gray-800">{task.title}</h3>
+                  <h3 className="text-[14px] font-bold text-gray-800">
+                    {task.title}
+                  </h3>
                   <span
                     className={`rounded-full px-3 py-[3px] text-[11px] font-semibold tracking-[0.4px] ${colorClass}`}
                   >
@@ -137,7 +144,11 @@ const TeacherHomeworkTaskList = ({
                 <p className="mt-[3px] text-zinc-500 text-[13px] flex items-center gap-1">
                   {task.class.name}
                   {task.section ? ` · ${task.section.name}` : ""} •
-                  <img src={attachmentIcon} alt="" className="h-[13px] w-[13px]" />
+                  <img
+                    src={attachmentIcon}
+                    alt=""
+                    className="h-[13px] w-[13px]"
+                  />
                   {attachmentLabel(task.attachmentCount)}
                 </p>
               </div>

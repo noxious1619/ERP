@@ -754,7 +754,7 @@ export const getTeacherTeachingAssignments = async (
   }
 };
 
-// ── GET /api/teachers ─────────────────────────────────────────────────────────
+
 // ── GET /api/teachers ─────────────────────────────────────────────────────────
 export const getAllTeachers = async (req: Request, res: Response) => {
   try {

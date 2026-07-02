@@ -914,7 +914,7 @@ sectionDataTrends.push(dayPct);
 
 export const getSectionWeeklyTrends = async (req: Request, res: Response) => {
   try {
-    const { sectionId } = req.params;
+    const { sectionId } = req.params as { sectionId: string };
     const { month, year } = req.query;
 
     if (!sectionId) {
@@ -953,22 +953,22 @@ export const getSectionWeeklyTrends = async (req: Request, res: Response) => {
     ];
 
     // Sort all class records into the correct week buckets
-    rawMonthlyRecords.forEach(record => {
-      const dayOfMonth = new Date(record.date).getUTCDate();
+  rawMonthlyRecords.forEach(record => {
+  const dayOfMonth = new Date(record.date).getUTCDate();
 
-      let bucketIndex = 3; // Defaults to Week 4 for days 22+
-      if (dayOfMonth <= 7) bucketIndex = 0;
-      else if (dayOfMonth <= 14) bucketIndex = 1;
-      else if (dayOfMonth <= 21) bucketIndex = 2;
+  let bucketIndex = 3;
+  if (dayOfMonth <= 7) bucketIndex = 0;
+  else if (dayOfMonth <= 14) bucketIndex = 1;
+  else if (dayOfMonth <= 21) bucketIndex = 2;
 
-      weeklyBuckets[bucketIndex].totalDays += 1;
-      
-      // Assuming you only count 'PRESENT' as a positive metric
-      if (record.status === 'PRESENT') {
-        weeklyBuckets[bucketIndex].present += 1;
-      }
-    });
+  const bucket = weeklyBuckets[bucketIndex]!; // safe: bucketIndex always 0-3, array has 4 items
 
+  bucket.totalDays += 1;
+
+  if (record.status === 'PRESENT') {
+    bucket.present += 1;
+  }
+});
     // Format final collection with computed percentages for the UI
     const weeklyTrends = weeklyBuckets.map(b => ({
       ...b,

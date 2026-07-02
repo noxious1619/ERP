@@ -6,7 +6,6 @@ import timetable from "../../../assets/Student/Dashboard/Navbar/timetable.png";
 import homework from "../../../assets/Student/Dashboard/Navbar/homework.png";
 import attendance from "../../../assets/Student/Dashboard/Navbar/attendance.png";
 import exams from "../../../assets/Student/Dashboard/Navbar/exam.png";
-import setting from "../../../assets/Student/Dashboard/Navbar/setting.png";
 import notice from "../../../assets/Student/Dashboard/Navbar/notice.png";
 
 type NavItem = {

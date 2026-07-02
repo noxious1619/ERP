@@ -33,12 +33,12 @@ const DAY_COLUMNS: Record<string, number> = {
 };
 
 const DAYS_HEADER = [
-  { day: "Monday"},
-  { day: "Tuesday"},
-  { day: "Wednesday"},
-  { day: "Thursday"},
-  { day: "Friday"},
-  { day: "Saturday"},
+  { day: "Monday" },
+  { day: "Tuesday" },
+  { day: "Wednesday" },
+  { day: "Thursday" },
+  { day: "Friday" },
+  { day: "Saturday" },
 ];
 
 // ─── Break injection helpers ──────────────────────────────────────────────────
@@ -70,13 +70,15 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
   const [classError, setClassError] = useState<string | null>(null);
 
   // ─── My Subject weekly state ───────────────────────────────────────────────
-  const [mySubjectEntries, setMySubjectEntries] = useState<TeacherWeeklyEntry[]>([]);
+  const [mySubjectEntries, setMySubjectEntries] = useState<
+    TeacherWeeklyEntry[]
+  >([]);
   const [mySubjectLoading, setMySubjectLoading] = useState(false);
   const [mySubjectError, setMySubjectError] = useState<string | null>(null);
 
   // ─── Fetch class-wise weekly when section changes ─────────────────────────
   useEffect(() => {
-    if (!selectedSection || filterMode !== "class") return;
+    if (!selectedSection) return;
 
     const fetchClassWeekly = async () => {
       try {
@@ -87,7 +89,11 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
         // ✅ FIXED PATH: Pointing to the new Section Weekly endpoint
         const response = await axios.get(
           `http://localhost:5000/api/timetable/section/${selectedSection.id}/weekly`,
-          { headers: { Authorization: `Bearer ${token}` } },
+
+          {
+            params: { filter: "mySubject" },
+            headers: { Authorization: `Bearer ${token}` },
+          },
         );
 
         if (response.data.success) {
@@ -99,8 +105,12 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
               endTime: row.endTime,
               isBreak: row.isBreak,
               code: row.isBreak ? "" : row.subject?.code || "N/A",
-              subject: row.isBreak ? (row.breakLabel || "Break") : (row.subject?.name || "No Subject"),
-              teacher: row.isBreak ? "" : row.displayTeacherName || "Faculty Staff",
+              subject: row.isBreak
+                ? row.breakLabel || "Break"
+                : row.subject?.name || "No Subject",
+              teacher: row.isBreak
+                ? ""
+                : row.displayTeacherName || "Faculty Staff",
               room: row.isBreak ? "" : row.room || "TBD",
               color: row.isBreak ? "" : row.color || "BLUE",
             }),
@@ -119,7 +129,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
     };
 
     fetchClassWeekly();
-  }, [selectedSection, filterMode]);
+  }, [selectedSection]);
 
   // ─── Fetch My Subject weekly ───────────────────────────────────────────────
   useEffect(() => {
@@ -151,7 +161,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
               teacher: row.subject || "No Subject", // Swap professor name for the subject name
               room: row.room || "TBD",
               color: row.color || "BLUE",
-            })
+            }),
           );
 
           // Inject break rows for all 6 days at 12:00
@@ -183,7 +193,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
     };
 
     fetchMySubjectWeekly();
-  }, [filterMode, teacherData?.id]);
+  }, [filterMode, teacherData]);
 
   // ─── Pick active dataset ───────────────────────────────────────────────────
   const entries = filterMode === "mySubject" ? mySubjectEntries : classEntries;
@@ -197,8 +207,6 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
       .map((e) => e.startTime);
     return Array.from(new Set(times)).sort((a, b) => a.localeCompare(b));
   }, [entries]);
-
-  const lunchRowIndex = dynamicTimeSlots.indexOf("12:00");
 
   // ─── Loading state ────────────────────────────────────────────────────────
   if (loading) {
@@ -232,12 +240,20 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
 
   const isCardActive = (day: string, start?: string, end?: string) => {
     if (!start) return false;
-    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const days = [
+      "SUNDAY",
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+    ];
     const currentDay = days[new Date().getDay()];
     if (day.toUpperCase() !== currentDay) return false;
 
     const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
     let resolvedEnd = end;
     if (!resolvedEnd) {
@@ -245,7 +261,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
       const totalMin = h * 60 + m + 45;
       const endHour = Math.floor(totalMin / 60) % 24;
       const endMin = totalMin % 60;
-      resolvedEnd = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+      resolvedEnd = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
     }
 
     return currentTime >= start && currentTime <= resolvedEnd;
@@ -268,9 +284,6 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
           >
             <span className="text-[11px] font-semibold uppercase tracking-[1.5px] text-[#666B78]">
               {item.day}
-            </span>
-            <span className="text-[16px] font-bold text-[#2B2F38]">
-              {item.date}
             </span>
           </div>
         ))}
@@ -309,7 +322,11 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
             if (rowIndex === -1) return null;
 
             const columnWidth = 100 / COLUMN_COUNT;
-            const isActive = isCardActive(item.day, item.startTime, item.endTime);
+            const isActive = isCardActive(
+              item.day,
+              item.startTime,
+              item.endTime,
+            );
 
             return (
               <div
@@ -322,7 +339,13 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
                 }}
               >
                 {!item.isBreak && (
-                  <div className={isActive ? "ring-4 ring-[#3B4FE8] rounded-[24px] shadow-lg animate-pulse" : ""}>
+                  <div
+                    className={
+                      isActive
+                        ? "ring-4 ring-[#3B4FE8] rounded-[24px] shadow-lg animate-pulse"
+                        : ""
+                    }
+                  >
                     <WeeklyClassCard
                       code={item.code}
                       subject={item.subject}

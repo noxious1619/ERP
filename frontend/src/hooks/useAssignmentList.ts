@@ -27,6 +27,7 @@ export interface Pagination {
 interface UseAssignmentListParams {
   classId: string;
   sectionId: string;
+  subjectId: string;
   date: "today" | "all";
   page?: number;
   pageSize?: number;
@@ -35,6 +36,7 @@ interface UseAssignmentListParams {
 const useAssignmentList = ({
   classId,
   sectionId,
+  subjectId,
   date,
   page = 1,
   pageSize = 10,
@@ -53,7 +55,7 @@ const useAssignmentList = ({
     try {
       const token = localStorage.getItem("token");
       const { data } = await axios.get(`${BASE_URL}/list`, {
-        params: { classId, sectionId, date, page, pageSize },
+        params: { classId, sectionId, subjectId, date, page, pageSize },
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -66,7 +68,7 @@ const useAssignmentList = ({
     } finally {
       setLoading(false);
     }
-  }, [classId, sectionId, date, page, pageSize]);
+  }, [classId, sectionId, subjectId, date, page, pageSize]);
 
   useEffect(() => {
     fetchAssignments();

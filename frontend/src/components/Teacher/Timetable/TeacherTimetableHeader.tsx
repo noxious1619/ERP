@@ -1,10 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
-import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
-import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 
 export type TeacherFilterMode = "class" | "mySubject";
@@ -30,34 +26,34 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
   selectedSection,
   onSectionChange,
 }) => {
-  const [showNotifications, setShowNotifications] = useState(false);
+  // const [showNotifications, setShowNotifications] = useState(false);
   const [showClassDropdown, setShowClassDropdown] = useState(false);
 
-  const notificationRef = useRef<HTMLDivElement>(null);
+  // const notificationRef = useRef<HTMLDivElement>(null);
   const classDropdownRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
   const isWeekly = location.pathname.includes("weekly");
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-      if (
-        classDropdownRef.current &&
-        !classDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowClassDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (
+  //       notificationRef.current &&
+  //       !notificationRef.current.contains(event.target as Node)
+  //     ) {
+  //       setShowNotifications(false);
+  //     }
+  //     if (
+  //       classDropdownRef.current &&
+  //       !classDropdownRef.current.contains(event.target as Node)
+  //     ) {
+  //       setShowClassDropdown(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => document.removeEventListener("mousedown", handleClickOutside);
+  // }, []);
 
   // Format section label: "Class 10 - Section A"
   const getSectionLabel = (section: TeacherSection) =>

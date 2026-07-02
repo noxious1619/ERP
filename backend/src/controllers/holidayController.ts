@@ -123,61 +123,61 @@ export const addHoliday = async (req: Request, res: Response) => {
 };
 
 // 4. UPDATE HOLIDAY
-export const updateHoliday = async (req: Request, res: Response) => {
-  const { id } = req.params;
+// export const updateHoliday = async (req: Request, res: Response) => {
+//   const { id } = req.params;
 
-  try {
-    const { type, appliesTo } = req.body;
+//   try {
+//     const { type, appliesTo } = req.body;
 
-    // ✅ Validation
-    if (type && !VALID_HOLIDAY_TYPES.includes(type)) {
-      return res.status(400).json({ message: "Invalid holiday type" });
-    }
+//     // ✅ Validation
+//     if (type && !VALID_HOLIDAY_TYPES.includes(type)) {
+//       return res.status(400).json({ message: "Invalid holiday type" });
+//     }
 
-    if (appliesTo && !VALID_AUDIENCE.includes(appliesTo)) {
-      return res.status(400).json({ message: "Invalid audience" });
-    }
+//     if (appliesTo && !VALID_AUDIENCE.includes(appliesTo)) {
+//       return res.status(400).json({ message: "Invalid audience" });
+//     }
 
-    const updated = await prisma.holiday.update({
-      where: { id },
-      data: {
-        ...req.body,
-        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
-        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
-        type,
-        appliesTo,
-      },
-    });
+//     const updated = await prisma.holiday.update({
+//       where: { id },
+//       data: {
+//         ...req.body,
+//         startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+//         endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+//         type,
+//         appliesTo,
+//       },
+//     });
 
-    res.status(200).json({ success: true, data: updated });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: "Update failed",
-      error: error.message,
-    });
-  }
-};
+//     res.status(200).json({ success: true, data: updated });
+//   } catch (error: any) {
+//     res.status(400).json({
+//       success: false,
+//       message: "Update failed",
+//       error: error.message,
+//     });
+//   }
+// };
 
 // 5. DELETE HOLIDAY
-export const deleteHoliday = async (req: Request, res: Response) => {
-  const { id } = req.params;
+// export const deleteHoliday = async (req: Request, res: Response) => {
+//   const { id } = req.params;
 
-  try {
-    await prisma.holiday.delete({
-      where: { id },
-    });
+//   try {
+//     await prisma.holiday.delete({
+//       where: { id },
+//     });
 
-    res.status(200).json({
-      success: true,
-      message: "Holiday deleted",
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      message: "Delete failed",
-      error: error.message,
-    });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       message: "Holiday deleted",
+//     });
+//   } catch (error: any) {
+//     res.status(400).json({
+//       success: false,
+//       message: "Delete failed",
+//       error: error.message,
+//     });
+//   }
+// };
 

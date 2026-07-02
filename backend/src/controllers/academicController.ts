@@ -266,14 +266,29 @@ export const getWeeklyTimetableBySection = async (req: Request, res: Response) =
       });
     }
 
-    const weeklySchedule = await prisma.timetable.findMany({
-      where: { sectionId: sectionIdStr },
-      include: {
-        subject: { select: { id: true, name: true, code: true } },
-        teacher: { select: { id: true, name: true } }
+   const weeklySchedule = await prisma.timetable.findMany({
+  where: { sectionId: sectionIdStr },
+  include: {
+    subject: {
+      select: {
+        id: true,
+        name: true,
+        code: true,
       },
-      orderBy: [{ day: "asc" }, { startTime: "asc" }]
-    });
+    },
+    teacher: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+      },
+    },
+  },
+  orderBy: [
+    { day: "asc" },
+    { startTime: "asc" },
+  ],
+});
 
     return res.status(200).json({
       success: true,
@@ -506,14 +521,29 @@ export const getDailyTimetableBySection = async (req: Request, res: Response) =>
       return res.status(200).json({ success: true, data: [] });
     }
 
-    const timetableRows = await prisma.timetable.findMany({
-      where: { sectionId: sectionIdStr, day: day.toUpperCase() as any },
-      include: {
-        subject: { select: { name: true, code: true } },
-        teacher: { select: { id: true, name: true } },
+   const timetableRows = await prisma.timetable.findMany({
+  where: {
+   sectionId: sectionIdStr,
+    day: day.toUpperCase() as any,
+  },
+  include: {
+    subject: {
+      select: {
+        name: true,
+        code: true,
       },
-      orderBy: { period: "asc" },
-    });
+    },
+    teacher: {
+      select: {
+        firstName: true,
+        lastName: true,
+      },
+    },
+  },
+  orderBy: {
+    period: "asc",
+  },
+});
 
     const normalizedSchedule = normalizeTimetable(timetableRows, day);
 

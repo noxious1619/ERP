@@ -29,6 +29,7 @@ interface HomeworkProps {
   tab1Label?: string;
   tab2Label?: string;
   tab2StatusKey?: string;
+  homeworkPath?: string;
 }
 
 const getSubjectStyling = (subjectName: string = "") => {
@@ -78,6 +79,7 @@ const Homework: React.FC<HomeworkProps> = ({
   tab1Label = "Pending",
   tab2Label = "Overdue",
   tab2StatusKey = "OVERDUE",
+  homeworkPath = "/student/homework",
 }) => {
   const [activeTab, setActiveTab] = useState<string>(tab1Label);
   const navigate = useNavigate();
@@ -98,9 +100,7 @@ const Homework: React.FC<HomeworkProps> = ({
     <div className="w-full rounded-3xl bg-white px-5 py-5 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.08)]">
       {/* Header */}
       <div className="flex items-center">
-        <h2 className="mx-auto text-[20px] font-bold text-black">
-          Homework
-        </h2>
+        <h2 className="mx-auto text-[20px] font-bold text-black">Homework</h2>
 
         <div className="flex items-end rounded-full bg-pink-800/10 px-2 py-[2px]">
           <span className="text-[11px] font-semibold text-[#AC3149]">
@@ -140,7 +140,7 @@ const Homework: React.FC<HomeworkProps> = ({
             return (
               <div
                 key={item.id}
-                onClick={() => navigate("/student/homework")}
+                onClick={() => navigate(homeworkPath)} // was: navigate("/student/homework")
                 className="mt-2 flex h-[70px] shrink-0 cursor-pointer items-center justify-between rounded-[20px] bg-[#F8F9FE] px-6 transition-colors hover:bg-gray-100"
               >
                 {/* Left Content */}

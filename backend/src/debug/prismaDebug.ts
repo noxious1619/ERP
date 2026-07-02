@@ -6,7 +6,7 @@ console.log("==== PRISMA DEBUG START ====");
 console.log("Prisma keys:", Object.keys(Prisma));
 
 // Try to access enums
-console.log("HolidayType:", Prisma?.HolidayType);
-console.log("HolidayAudience:", Prisma?.HolidayAudience);
+// console.log("HolidayType:", Prisma?.HolidayType);
+// console.log("HolidayAudience:", Prisma?.HolidayAudience);
 
 console.log("==== PRISMA DEBUG END ====");

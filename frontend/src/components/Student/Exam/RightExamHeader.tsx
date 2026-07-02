@@ -1,29 +1,26 @@
-import { useState, useRef, useEffect } from "react";
+// import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
-import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
-import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
+
 
 const RightHeader = () => {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
+  // const [showNotifications, setShowNotifications] = useState(false);
+  // const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (
+  //       notificationRef.current &&
+  //       !notificationRef.current.contains(event.target as Node)
+  //     ) {
+  //       setShowNotifications(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, []);
   return (
     <div className="flex items-center justify-end gap-8 items-start ">
     

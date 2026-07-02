@@ -82,7 +82,7 @@ const WeeklyTimetable = () => {
         {/* Sticky Header */}
         <div className="px-10 pt-8 py-4 shrink-0 bg-[#F5F6FA]">
           {/* Pass the data down to the header for the PDF button */}
-          <TimetableHeader />
+          <TimetableHeader  sectionLabel={sectionLabel}/>
         </div>
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

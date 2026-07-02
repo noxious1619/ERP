@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Plus, Bell, User } from "lucide-react";
+import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminNavbar() {

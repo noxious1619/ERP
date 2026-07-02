@@ -134,7 +134,25 @@ export interface StudentProfile {
   id: string;
   admissionNumber: string;
   rollNumber: string | null;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;
+  gender: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  phoneNumber: string | null;
+  bloodGroup: string | null;
+  profileImage: string | null;
   sectionId: string;
+  section: {
+    id: string;
+    name: string;
+    academicClass: {
+      id: string;
+      name: string;
+    };
+  };
 }
 
 export interface TeacherProfile {
@@ -294,7 +312,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     teacherData?.classTeacherOf?.academicClass?.name || null;
   const globalSectionName = teacherData?.classTeacherOf?.name || null;
   const globalSectionId = teacherData?.classTeacherOf?.id || null;
-  
 
   return (
     <AuthContext.Provider

@@ -37,8 +37,14 @@ export const getAdminNotices = async (req: Request, res: Response) => {
 // ─── DELETE A NOTICE ──────────────────────────────────────────────────────────
 export const deleteNotice = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
+if (!id) {
+  return res.status(400).json({
+    success: false,
+    message: "Notice id is required."
+  });
+}
     const existing = await prisma.notice.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ success: false, message: 'Notice not found.' });
@@ -55,8 +61,15 @@ export const deleteNotice = async (req: Request, res: Response) => {
 // ─── UPDATE A NOTICE ──────────────────────────────────────────────────────────
 export const updateNotice = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { title, content, targetType, targetId, priority, category, expiresAt } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Notice id is required."
+      });
+    }
 
     const existing = await prisma.notice.findUnique({ where: { id } });
     if (!existing) {

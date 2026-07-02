@@ -204,7 +204,14 @@ export const submitAssignment = async (req: Request, res: Response) => {
 
 export const getAssignmentSubmissions = async (req: Request, res: Response) => {
   try {
-    const assignmentId = req.params.id;
+const rawId = req.params.id;
+
+if (!rawId || Array.isArray(rawId)) {
+  return res.status(400).json({ success: false, message: "Invalid assignment ID" });
+}
+
+const assignmentId: string = rawId;
+    
     const { search = "", status = "ALL", page = "1", pageSize = "10" } = req.query;
 
     // 1. Fetch Assignment basic details
@@ -366,6 +373,10 @@ export const gradeSubmission = async (req: Request, res: Response) => {
     const { score, remarks } = req.body;
     const teacherId = (req as any).user.id;
 
+    if (!submissionId || Array.isArray(submissionId)) {
+  return res.status(400).json({ success: false, message: 'Invalid submission id.' });
+}
+
     const updatedSubmission = await prisma.submission.update({
       where: { id: submissionId },
       data: {
@@ -512,6 +523,10 @@ export const getAssignmentList = async (req: Request, res: Response) => {
 export const getAssignmentDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+if (!id || Array.isArray(id)) {
+  return res.status(400).json({ success: false, message: 'Invalid assignment id.' });
+}
     const userId  = (req as any).user.id;
 
     // Verify caller is a teacher

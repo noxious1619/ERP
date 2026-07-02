@@ -2,7 +2,6 @@ import { useState } from "react";
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import RightExamHeader from "../../components/Student/Exam/RightExamHeader";
 import Calendar from "../../components/Student/Dashboard/Calendar";
-import CalendarMessageCard from "../../components/Student/Dashboard/CalendarMessageCard";
 import UpcomingExams from "../../components/Student/Exam/UpcomingExams";
 import { getDynamicHeaderDate } from "../../utils/dateHelpers";
 import { downloadDatesheetPdf } from "../../utils/Downloaddatesheet";

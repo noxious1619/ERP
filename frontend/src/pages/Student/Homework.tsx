@@ -3,15 +3,15 @@ import axios from "axios";
 import useAuth from "../../hooks/useAuth";
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import HomeworkHeader from "../../components/Student/Homework/HomeworkHeader";
-import StatusCard from "../../components/Student/Homework/StatusCard";
+// import StatusCard from "../../components/Student/Homework/StatusCard";
 import HomeworkFilters from "../../components/Student/Homework/HomeworkFilters";
 import HomeworkTaskList from "../../components/Student/Homework/HomeworkTaskList";
-import WeeklyProgressCard from "../../components/Student/Homework/WeeklyProgressCard";
-import DeadlinesCard from "../../components/Student/Homework/DeadlinesCard";
+// import WeeklyProgressCard from "../../components/Student/Homework/WeeklyProgressCard";
+// import DeadlinesCard from "../../components/Student/Homework/DeadlinesCard";
 
 const Homework = () => {
-  const { studentData, loading: authLoading } = useAuth();
-  const [showDeadlines, setShowDeadlines] = useState(false);
+  const { studentData, } = useAuth();
+  // const [showDeadlines, setShowDeadlines] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 

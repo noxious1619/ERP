@@ -194,55 +194,55 @@ export const updatePaymentStatus = async (req: any, res: Response) => {
  * PHASE 4: The Defaulter Engine
  * Goal: Find all students with unpaid bills for a specific Class/Section.
  */
-export const getDefaulters = async (req: any, res: Response) => {
-  try {
-    const { classId, sectionId } = req.query;
+// export const getDefaulters = async (req: any, res: Response) => {
+//   try {
+//     const { classId, sectionId } = req.query;
 
-    const defaulters = await prisma.student.findMany({
-      where: {
-        isActive: true,
-        // Filter by Class or specific Section
-        section: sectionId ? { id: sectionId as string } : { classId: classId as string },
-        // ONLY find students who have unpaid records
-        feeRecords: {
-          some: {
-            status: { in: ['PENDING', 'BOUNCED'] }
-          }
-        }
-      },
-      include: {
-        section: { include: { class: true } },
-        feeRecords: {
-          where: {
-            status: { in: ['PENDING', 'BOUNCED'] }
-          }
-        }
-      }
-    });
+//     const defaulters = await prisma.student.findMany({
+//       where: {
+//         isActive: true,
+//         // Filter by Class or specific Section
+//         section: sectionId ? { id: sectionId as string } : { classId: classId as string },
+//         // ONLY find students who have unpaid records
+//         feeRecords: {
+//           some: {
+//             status: { in: ['PENDING', 'BOUNCED'] }
+//           }
+//         }
+//       },
+//       include: {
+//         section: { include: { class: true } },
+//         feeRecords: {
+//           where: {
+//             status: { in: ['PENDING', 'BOUNCED'] }
+//           }
+//         }
+//       }
+//     });
 
     // Format the data for a clean UI table
-    const report = defaulters.map(student => {
-      const totalOwed = student.feeRecords.reduce((sum, rec) => sum + rec.amountDue, 0);
-      return {
-        studentName: `${student.firstName} ${student.lastName}`,
-        admissionNumber: student.admissionNumber,
-        className: student.section.class.name,
-        sectionName: student.section.name,
-        monthsPending: student.feeRecords.length,
-        totalAmountOwed: totalOwed,
-        details: student.feeRecords.map(r => ({ month: r.month, year: r.year, amount: r.amountDue }))
-      };
-    });
+    // const report = defaulters.map(student => {
+    //   const totalOwed = student.feeRecords.reduce((sum, rec) => sum + rec.amountDue, 0);
+    //   return {
+    //     studentName: `${student.firstName} ${student.lastName}`,
+    //     admissionNumber: student.admissionNumber,
+    //     className: student.section.class.name,
+    //     sectionName: student.section.name,
+    //     monthsPending: student.feeRecords.length,
+    //     totalAmountOwed: totalOwed,
+    //     details: student.feeRecords.map(r => ({ month: r.month, year: r.year, amount: r.amountDue }))
+    //   };
+    // });
 
-    res.status(200).json({
-      success: true,
-      count: report.length,
-      data: report
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       count: report.length,
+//       data: report
+//     });
+//   } catch (error: any) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 
 /**
  * PHASE 6: Personal Fee History (Student/Parent)

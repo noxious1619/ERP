@@ -1,11 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import search from "../../../assets/Student/Dashboard/TopBar/search.svg";
-import notification from "../../../assets/Student/Dashboard/TopBar/notification.svg";
 import studentAvatar from "../../../assets/Student/Timetable/Header/profile.png";
-import NotificationDropdown from "../../../components/Student/Dashboard/NotificationDropdown";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 import { useNavigate } from "react-router";
-
 interface AttendanceHeaderProps {
   title: string;
   subtitle?: string;
@@ -18,24 +13,6 @@ const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
   onProfileClick,
 }) => {
   const navigate = useNavigate();
-  const [showNotifications, setShowNotifications] = useState(false);
-  const notificationRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        notificationRef.current &&
-        !notificationRef.current.contains(event.target as Node)
-      ) {
-        setShowNotifications(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   return (
     <div className="flex items-start justify-between">
       {/* Left Side */}

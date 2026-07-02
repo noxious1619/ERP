@@ -4,11 +4,7 @@ import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   GraduationCap,
-  UserPlus,
-  DollarSign,
   Bell,
-  Settings,
-  HelpCircle,
   ChevronDown,
 } from "lucide-react";
 
@@ -52,41 +48,16 @@ const NAV: NavItem[] = [
         href: "#",
         children: [
           { label: "Date sheet", href: "/admin/academics/exams/datesheet" },
-          { label: "Exam Template", href: "#" },
         ],
       },
-    ],
-  },
-  {
-    label: "Admission",
-    icon: UserPlus,
-    href: "#",
-    children: [],
-  },
-  {
-    label: "Finance",
-    icon: DollarSign,
-    href: "#",
-    children: [
-      { label: "Fee Setup", href: "/admin/finance/fee-setup" },
-      { label: "Collections", href: "/admin/finance/collections" },
-      { label: "Transactions", href: "/admin/finance/transactions" },
     ],
   },
   {
     label: "Communication",
     icon: Bell,
     href: "#",
-    children: [
-      { label: "Notices", href: "/admin/communication/notices" },
-      { label: "Announcements", href: "/admin/communication/announcements" },
-    ],
+    children: [{ label: "Notices", href: "/admin/communication/notices" }],
   },
-];
-
-const FOOTER_NAV = [
-  { label: "Settings", icon: Settings, href: "/admin/settings" },
-  { label: "Support", icon: HelpCircle, href: "/admin/support" },
 ];
 
 export default function AdminSidebar() {
@@ -346,24 +317,6 @@ export default function AdminSidebar() {
           );
         })}
       </nav>
-
-      <div className="border-t border-gray-100 px-2 py-3">
-        {FOOTER_NAV.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <a
-              key={item.label}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </a>
-          );
-        })}
-      </div>
     </aside>
   );
 }

@@ -12,7 +12,7 @@ interface TimetableEntry {
   breakLabel: string | null;
   room: string | null;
   color: string | null;
-  subject?: string | null;
+  subject?: { id: string; name: string; code: string } | null;
   displayTeacherName?: string | null;
 }
 
@@ -73,7 +73,7 @@ const TimetableSchedule: React.FC<TimetableScheduleProps> = ({
   const calculateDuration = (startTime: string, endTime: string) => {
     const [startH, startM] = (startTime || "00:00").split(":").map(Number);
     const [endH, endM] = (endTime || "00:00").split(":").map(Number);
-    
+
     const diff = endH * 60 + endM - (startH * 60 + startM);
     return diff > 0 ? `${diff} MINUTES` : undefined;
   };
@@ -101,7 +101,8 @@ const TimetableSchedule: React.FC<TimetableScheduleProps> = ({
   if (dailyItems.length === 0) {
     return (
       <div className="bg-gray-50 text-gray-500 p-8 rounded-2xl text-center text-sm font-medium mt-4 border border-dashed border-gray-200">
-        No timetable is scheduled for {DAY_ENUM_MAP[selectedDate.getDay()].toLowerCase()}.
+        No timetable is scheduled for{" "}
+        {DAY_ENUM_MAP[selectedDate.getDay()].toLowerCase()}.
       </div>
     );
   }

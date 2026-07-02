@@ -20,6 +20,8 @@ const EMPTY_ASSIGNMENT = (): TeacherAssignment => ({
   loading: false,
 });
 
+const suggestedPassword = (id: string) => (id ? `${id}@123` : "");
+
 export default function AddNewTeacherModal({
   isOpen,
   onClose,
@@ -30,7 +32,8 @@ export default function AddNewTeacherModal({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [contactNumber, setContactNumber] = useState("+91 ");
+  const [phoneDigits, setPhoneDigits] = useState("");
+  const contactNumber = `+91 ${phoneDigits}`;
   const [gender, setGender] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
   const [dob, setDob] = useState("");
@@ -43,6 +46,10 @@ export default function AddNewTeacherModal({
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [stateVal, setStateVal] = useState("");
+
+  // ── Password field ─────────────────────────────────────────────────
+  const [password, setPassword] = useState("");
+  const passwordTouchedRef = useRef(false);
 
   // ── Assignment fields ──────────────────────────────────────────────
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
@@ -68,6 +75,18 @@ export default function AddNewTeacherModal({
       .catch(console.error);
   }, [isOpen]);
 
+  // Auto-fill password from Employee ID unless admin has typed their own
+  useEffect(() => {
+    if (!passwordTouchedRef.current) {
+      setPassword(suggestedPassword(employeeId));
+    }
+  }, [employeeId]);
+
+  const handlePasswordChange = (val: string) => {
+    passwordTouchedRef.current = true;
+    setPassword(val);
+  };
+
   // Lock body scroll
   useEffect(() => {
     if (isOpen) {
@@ -84,17 +103,13 @@ export default function AddNewTeacherModal({
   if (!isOpen) return null;
 
   // ── Helpers ────────────────────────────────────────────────────────
-  const handleContactChange = (val: string) => {
-    if (!val.startsWith("+91")) setContactNumber("+91 ");
-    else setContactNumber(val);
-  };
 
   const resetForm = () => {
     setEmployeeId("");
     setFirstName("");
     setLastName("");
     setEmail("");
-    setContactNumber("+91 ");
+    setPhoneDigits("");
     setGender("");
     setBloodGroup("");
     setDob("");
@@ -107,6 +122,8 @@ export default function AddNewTeacherModal({
     setAddress("");
     setCity("");
     setStateVal("");
+    setPassword("");
+    passwordTouchedRef.current = false;
     setAssignments([EMPTY_ASSIGNMENT()]);
     setErrors({});
   };
@@ -129,6 +146,14 @@ export default function AddNewTeacherModal({
     }
     if (!joiningDate) {
       newErrors.joiningDate = "Joining Date is required";
+      hasMissing = true;
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+      hasMissing = true;
+    } else if (password.trim().length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
       hasMissing = true;
     }
 
@@ -205,6 +230,18 @@ export default function AddNewTeacherModal({
     );
   };
 
+  const handleContactChange = (val: string) => {
+    // strip everything except digits
+    let digits = val.replace(/\D/g, "");
+    // if the user typed/pasted the "91" country code themselves, drop it
+    if (val.trim().startsWith("+91") && digits.startsWith("91")) {
+      digits = digits.slice(2);
+    }
+    // Indian mobile numbers are 10 digits
+    digits = digits.slice(0, 10);
+    setPhoneDigits(digits);
+  };
+
   const addAssignment = () =>
     setAssignments((prev) => [...prev, EMPTY_ASSIGNMENT()]);
 
@@ -231,7 +268,7 @@ export default function AddNewTeacherModal({
           firstName,
           lastName,
           email,
-          password: "EdaOS@123",
+          password,
           employeeId,
           gender,
           dateOfBirth: dob,
@@ -464,6 +501,36 @@ export default function AddNewTeacherModal({
                     ),
                   )}
                 </select>
+              </div>
+            </div>
+
+            {/* Password Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">
+                  Password *
+                </label>
+                <input
+                  type="text"
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  placeholder="Auto-generated from Employee ID"
+                  className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
+                    errors.password
+                      ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
+                      : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  }`}
+                />
+                {errors.password ? (
+                  <span className="text-red-500 text-xs">
+                    {errors.password}
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">
+                    Auto-filled from Employee ID — you can edit it. Share this
+                    with the teacher for first login.
+                  </span>
+                )}
               </div>
             </div>
 

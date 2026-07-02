@@ -1,15 +1,13 @@
-"use client"
+"use client";
 
-import AdminSidebar from "../../components/Admin/sidebar"
-import AdminNavbar from "../../components/Admin/Navbar"
-import StudentsView from "../../components/Admin/Academics/StudentsView"
-
+import AdminSidebar from "../../components/Admin/sidebar";
+import AdminNavbar from "../../components/Admin/Navbar";
+import StudentsView from "../../components/Admin/Academics/Student/StudentsView";
 
 export default function Academics() {
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
-      <AdminSidebar
-      />
+      <AdminSidebar />
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <AdminNavbar />
@@ -19,5 +17,5 @@ export default function Academics() {
         </main>
       </div>
     </div>
-  )
+  );
 }

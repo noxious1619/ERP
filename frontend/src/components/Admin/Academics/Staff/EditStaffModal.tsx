@@ -8,12 +8,15 @@ interface EditStaffModalProps {
   staffId: string | null;
 }
 
+const suggestedPassword = (id: string) => (id ? `EMP@${id}` : "");
+
 export default function EditStaffModal({
   isOpen,
   onClose,
   onSuccess,
   staffId,
 }: EditStaffModalProps) {
+  const [employeeId, setEmployeeId] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState("");
@@ -30,6 +33,11 @@ export default function EditStaffModal({
   const [designation, setDesignation] = useState("");
   const [qualification, setQualification] = useState("");
   const [experience, setExperience] = useState("");
+
+  // ── Password reset ─────────────────────────────────────────────────
+  const [resetPassword, setResetPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const passwordTouchedRef = useRef(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
@@ -52,6 +60,7 @@ export default function EditStaffModal({
         if (!json.success) throw new Error(json.message);
 
         const s = json.data;
+        setEmployeeId(s.employeeId ?? "");
         setFirstName(s.firstName ?? "");
         setLastName(s.lastName ?? "");
         setGender(s.gender ?? "");
@@ -80,6 +89,11 @@ export default function EditStaffModal({
         setBio(s.bio ?? "");
         setStatus(s.status ?? "ACTIVE");
         setDesignation(s.designation ?? "");
+
+        // Reset password-reset UI state on every fresh load
+        setResetPassword(false);
+        setPassword("");
+        passwordTouchedRef.current = false;
       } catch (err: any) {
         setErrors({ submit: err.message });
       } finally {
@@ -103,13 +117,38 @@ export default function EditStaffModal({
     };
   }, [isOpen]);
 
+  // Auto-suggest password from Employee ID while reset is toggled on,
+  // unless the admin has typed their own value
+  useEffect(() => {
+    if (resetPassword && !passwordTouchedRef.current) {
+      setPassword(suggestedPassword(employeeId));
+    }
+  }, [employeeId, resetPassword]);
+
+  const handleResetToggle = (checked: boolean) => {
+    setResetPassword(checked);
+    passwordTouchedRef.current = false;
+    setPassword(checked ? suggestedPassword(employeeId) : "");
+  };
+
+  const handlePasswordChange = (val: string) => {
+    passwordTouchedRef.current = true;
+    setPassword(val);
+  };
+
   if (!isOpen) return null;
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+    if (!employeeId.trim()) newErrors.employeeId = "Employee ID is required";
     if (!firstName.trim()) newErrors.firstName = "First Name is required";
     if (!lastName.trim()) newErrors.lastName = "Last Name is required";
     if (!joiningDate) newErrors.joiningDate = "Joining Date is required";
+    if (resetPassword && !password.trim())
+      newErrors.password = "Enter a password or turn off reset";
+    else if (resetPassword && password.trim().length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -144,6 +183,9 @@ export default function EditStaffModal({
           state: stateVal,
           bio,
           status,
+          ...(resetPassword && password.trim()
+            ? { password: password.trim() }
+            : {}),
         }),
       });
 
@@ -213,8 +255,29 @@ export default function EditStaffModal({
                 </div>
               )}
 
-              {/* Name Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Employee ID + Name + Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[#0a1c3a]">
+                    Employee ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition-all ${
+                      errors.employeeId
+                        ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
+                        : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    }`}
+                  />
+                  {errors.employeeId && (
+                    <span className="text-red-500 text-xs">
+                      {errors.employeeId}
+                    </span>
+                  )}
+                </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[#0a1c3a]">
                     First Name *
@@ -401,6 +464,44 @@ export default function EditStaffModal({
                 </div>
               </div>
 
+              {/* Password Reset */}
+              <div className="flex flex-col gap-2 rounded-xl border border-gray-200/80 bg-white p-4">
+                <label className="flex items-center gap-2 text-sm font-semibold text-[#0a1c3a] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={resetPassword}
+                    onChange={(e) => handleResetToggle(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  Reset password
+                </label>
+                {resetPassword && (
+                  <>
+                    <input
+                      type="text"
+                      value={password}
+                      onChange={(e) => handlePasswordChange(e.target.value)}
+                      placeholder="Auto-generated from Employee ID"
+                      className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
+                        errors.password
+                          ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
+                          : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      }`}
+                    />
+                    {errors.password ? (
+                      <span className="text-red-500 text-xs">
+                        {errors.password}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        Auto-filled from Employee ID — you can edit it. Share
+                        this with the staff member.
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+
               {/* Address */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
@@ -460,32 +561,6 @@ export default function EditStaffModal({
                   {errors.submit}
                 </div>
               )}
-
-              {/* Photo Attachment (Static visual component) */}
-              {/* <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Add Photo
-                </label>
-                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
-                  <Upload className="mb-2 h-8 w-8 text-gray-400" />
-                  <p className="text-sm text-gray-500 mb-1">
-                    PDFs, Images, or Links
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <span className="text-blue-600 font-medium cursor-pointer hover:underline">
-                      Click to upload
-                    </span>{" "}
-                    or drag and drop
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 flex items-center gap-1.5 text-sm font-medium text-[#4285F4] hover:text-blue-600"
-                >
-                  <LinkIcon className="h-4 w-4" />
-                  Add Link
-                </button>
-              </div> */}
 
               {/* Footer */}
               <div className="border-t border-gray-100 pt-5 flex gap-4 mt-3">

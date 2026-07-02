@@ -27,17 +27,17 @@ const WeeklyTimetable = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const token = localStorage.getItem("token");
 
         // ✅ 4. FIXED PATH: Added /weekly to match your Express router
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`, 
+          `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`,
           {
             headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
 
         if (response.data.success) {
@@ -48,10 +48,16 @@ const WeeklyTimetable = () => {
             setSectionLabel(response.data.sectionLabel);
           }
         } else {
-          setError(response.data.message || "Failed to load database timetable elements.");
+          setError(
+            response.data.message ||
+              "Failed to load database timetable elements.",
+          );
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || "Connection failure with backend API layers.");
+        setError(
+          err.response?.data?.message ||
+            "Connection failure with backend API layers.",
+        );
       } finally {
         setLoading(false);
       }
@@ -76,18 +82,19 @@ const WeeklyTimetable = () => {
         {/* Sticky Header */}
         <div className="px-10 pt-8 py-4 shrink-0 bg-[#F5F6FA]">
           {/* Pass the data down to the header for the PDF button */}
-          <TimetableHeader 
-            sectionLabel={sectionLabel} 
-            scheduleData={scheduleData} 
-          />
+          <TimetableHeader />
         </div>
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {loading && <div className="text-center text-slate-500 py-10">Syncing live timetable...</div>}
-          {error && <div className="text-center text-red-500 py-10">⚠️ {error}</div>}
-          {!loading && !error && (
-            <WeeklyTimetableGrid entries={scheduleData} />
+          {loading && (
+            <div className="text-center text-slate-500 py-10">
+              Syncing live timetable...
+            </div>
           )}
+          {error && (
+            <div className="text-center text-red-500 py-10">⚠️ {error}</div>
+          )}
+          {!loading && !error && <WeeklyTimetableGrid entries={scheduleData} />}
         </div>
       </div>
     </div>

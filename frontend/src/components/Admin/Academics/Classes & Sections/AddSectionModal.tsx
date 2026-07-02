@@ -6,8 +6,14 @@ interface SectionData {
   name: string;
   homeRoom: string | null;
   capacity: number;
+  classTeacherId: string | null;
   classTeacherName: string;
   studentCount: number;
+}
+
+interface TeacherOption {
+  id: string;
+  name: string;
 }
 
 interface AddSectionModalProps {
@@ -30,6 +36,8 @@ export default function AddSectionModal({
   const [sectionName, setSectionName] = useState("");
   const [homeRoom, setHomeRoom] = useState("");
   const [capacity, setCapacity] = useState("50");
+  const [classTeacherId, setClassTeacherId] = useState("");
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -42,15 +50,46 @@ export default function AddSectionModal({
         setSectionName(editData.name);
         setHomeRoom(editData.homeRoom ?? "");
         setCapacity(String(editData.capacity));
+        setClassTeacherId(editData.classTeacherId ?? "");
       } else {
         setSectionName("");
         setHomeRoom("");
         setCapacity("50");
+        setClassTeacherId("");
       }
       setError(null);
       setSuccess(null);
     }
   }, [isOpen, editData]);
+
+  // Fetch teacher list whenever the modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchTeachers = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          "http://localhost:5000/api/teachers?limit=1000",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.error("Failed to fetch teachers:", res.status, data);
+          return;
+        }
+
+        setTeachers(data.data ?? []);
+      } catch (err) {
+        console.error("Error fetching teachers:", err);
+      }
+    };
+
+    fetchTeachers();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
@@ -102,6 +141,7 @@ export default function AddSectionModal({
         name: sectionName.trim(),
         homeRoom: homeRoom.trim() || null,
         capacity: Number(capacity) || 50,
+        classTeacherId: classTeacherId || null,
       };
 
       if (!isEditMode) body.classId = classId;
@@ -211,6 +251,24 @@ export default function AddSectionModal({
               min={1}
               className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-[#0a1c3a]">
+              Class Teacher
+            </label>
+            <select
+              value={classTeacherId}
+              onChange={(e) => setClassTeacherId(e.target.value)}
+              className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            >
+              <option value="">Not Assigned</option>
+              {teachers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex gap-4 mt-2">

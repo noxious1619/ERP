@@ -42,7 +42,7 @@ interface StaffTableProps {
   staffList: StaffType[];
   loading?: boolean;
   onEdit: (staff: StaffType) => void;
-  onDelete: (staff: StaffType) => void;
+  onDelete: (staff: StaffType[]) => void;
 }
 
 export default function StaffTable({
@@ -64,14 +64,15 @@ export default function StaffTable({
     );
 
   const selectedStaff = staffList.filter((s) => selected.includes(s.id));
-  const canAct = selectedStaff.length === 1;
+  const canEdit = selectedStaff.length === 1; // edit only for single
+  const canDelete = selectedStaff.length >= 1; // delete for one or more
 
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full min-w-[900px] text-sm">
         <thead>
           <tr className="border-b border-gray-100">
-            <th className="px-4 py-4 text-left w-12">
+            <th className="px-4 py-4 text-left w-12 sticky top-0 bg-gray-50 z-10 border-b border-gray-200">
               <input
                 type="checkbox"
                 checked={allSelected}
@@ -82,37 +83,40 @@ export default function StaffTable({
             {HEADERS.map((h) => (
               <th
                 key={h}
-                className="px-4 py-4 text-left font-medium text-gray-900"
+                className="px-4 py-4 text-left font-medium text-gray-900 sticky top-0 bg-gray-50 z-10 border-b border-gray-200"
               >
                 {h}
               </th>
             ))}
-            <th className="px-4 py-4 text-right">
+            <th className="px-4 py-4 text-right sticky top-0 bg-gray-50 z-10 border-b border-gray-200">
               <div className="flex items-center justify-end gap-2">
                 <button
-                  onClick={() => canAct && onEdit(selectedStaff[0])}
-                  disabled={!canAct}
+                  onClick={() => canEdit && onEdit(selectedStaff[0])}
+                  disabled={!canEdit}
                   title={
-                    canAct ? "Edit staff" : "Select one staff member to edit"
+                    canEdit
+                      ? "Edit staff"
+                      : "Select exactly one staff member to edit"
                   }
                   className={`p-1.5 rounded-lg transition-colors ${
-                    canAct
+                    canEdit
                       ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
                       : "text-gray-300 cursor-not-allowed"
                   }`}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
+
                 <button
-                  onClick={() => canAct && onDelete(selectedStaff[0])}
-                  disabled={!canAct}
+                  onClick={() => canDelete && onDelete(selectedStaff)}
+                  disabled={!canDelete}
                   title={
-                    canAct
-                      ? "Delete staff"
-                      : "Select one staff member to delete"
+                    canDelete
+                      ? `Delete ${selectedStaff.length} staff member(s)`
+                      : "Select at least one staff member to delete"
                   }
                   className={`p-1.5 rounded-lg transition-colors ${
-                    canAct
+                    canDelete
                       ? "text-red-500 hover:bg-red-50 cursor-pointer"
                       : "text-gray-300 cursor-not-allowed"
                   }`}

@@ -6,11 +6,9 @@ import { loginLimiter } from '../middleware/rateLimiter.js';
 import { register } from '../controllers/authController.js';
 
 const router = express.Router();
-router.use(protect);
-
 router.post('/register', register);
 router.post('/login',loginLimiter, login);
-
+router.use(protect);
 router.get('/me', (req: any, res) => {
   res.json({ message: "Authenticated!", user: req.user });
 });

@@ -242,15 +242,15 @@ export default function ConfigureStep({
           </div>
 
           <div className="relative mt-1">
-            <label className="absolute -top-2 left-3.5 bg-white px-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider z-10">
+            <label className="absolute -top-14 left-3.5 bg-white px-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider z-10">
               Class <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
+            <div className="relative  -top-8">
               <select
                 value={selectedClassId}
                 onChange={handleClassChange}
                 disabled={loadingClasses}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-[#4285F4] focus:border-[#4285F4] font-medium text-gray-800 transition bg-white cursor-pointer appearance-none disabled:opacity-50"
+                className="w-full border border-gray-200  rounded-lg px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-[#4285F4] focus:border-[#4285F4] font-medium text-gray-800 transition bg-white cursor-pointer appearance-none disabled:opacity-50"
               >
                 <option value="">
                   {loadingClasses ? "Loading classes..." : "Select a class"}

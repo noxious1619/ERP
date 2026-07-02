@@ -1,4 +1,4 @@
-import {  X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import useAuth from "../../../../hooks/useAuth";
 interface AddNewStaffModalProps {
@@ -17,8 +17,12 @@ export default function AddNewStaffModal({
   const [role, setRole] = useState("");
   const [subject, setSubject] = useState("");
   const [classAssigned, setClassAssigned] = useState("");
-  const [contactNumber, setContactNumber] = useState("+91 ");
+  const [phoneDigits, setPhoneDigits] = useState("");
+  const contactNumber = `+91 ${phoneDigits}`;
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [gender, setGender] = useState("");
   const [dob, setDob] = useState("");
   const [qualification, setQualification] = useState("");
@@ -49,14 +53,30 @@ export default function AddNewStaffModal({
     };
   }, [isOpen]);
 
+  // Auto-generate password from Employee ID unless admin manually edited it
+  useEffect(() => {
+    if (!passwordTouched) {
+      setPassword(employeeId ? `EMP@${employeeId}` : "");
+    }
+  }, [employeeId, passwordTouched]);
+
   if (!isOpen) return null;
 
   const handleContactChange = (val: string) => {
-    if (!val.startsWith("+91")) {
-      setContactNumber("+91 ");
-    } else {
-      setContactNumber(val);
+    // strip everything except digits
+    let digits = val.replace(/\D/g, "");
+    // if the user typed/pasted the "91" country code themselves, drop it
+    if (val.trim().startsWith("+91") && digits.startsWith("91")) {
+      digits = digits.slice(2);
     }
+    // Indian mobile numbers are 10 digits
+    digits = digits.slice(0, 10);
+    setPhoneDigits(digits);
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPasswordTouched(true);
+    setPassword(val);
   };
 
   const resetForm = () => {
@@ -66,8 +86,11 @@ export default function AddNewStaffModal({
     setRole("");
     setSubject("");
     setClassAssigned("");
-    setContactNumber("+91 ");
+    setPhoneDigits("");
     setEmail("");
+    setPassword("");
+    setPasswordTouched(false);
+    setShowPassword(false);
     setGender("");
     setDob("");
     setJoiningDate("");
@@ -107,6 +130,11 @@ export default function AddNewStaffModal({
 
     if (!joiningDate) {
       newErrors.joiningDate = "Joining Date is required";
+      missingRequiredField = true;
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
       missingRequiredField = true;
     }
 
@@ -159,7 +187,7 @@ export default function AddNewStaffModal({
             firstName,
             lastName,
             email,
-            password: "EdaOS@123",
+            password,
             employeeId,
             gender,
             dateOfBirth: dob,
@@ -177,7 +205,7 @@ export default function AddNewStaffModal({
             firstName,
             lastName,
             email,
-            password: "EdaOS@123",
+            password,
             employeeId,
             role,
             gender,
@@ -391,13 +419,14 @@ export default function AddNewStaffModal({
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
-                  Email
+                  Email *
                 </label>
                 <input
                   type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter Email Address"
+                  required
                   className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
                     errors.email
                       ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
@@ -406,6 +435,46 @@ export default function AddNewStaffModal({
                 />
                 {errors.email && (
                   <span className="text-red-500 text-xs">{errors.email}</span>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">
+                  Password *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    placeholder="Auto-generated from Employee ID"
+                    className={`w-full rounded-xl border bg-white px-4 py-2.5 pr-10 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
+                      errors.password
+                        ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
+                        : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.password ? (
+                  <span className="text-red-500 text-xs">
+                    {errors.password}
+                  </span>
+                ) : (
+                  <span className="text-gray-400 text-xs">
+                    Share this password with the staff member — they'll log in
+                    using their email.
+                  </span>
                 )}
               </div>
 
@@ -424,7 +493,10 @@ export default function AddNewStaffModal({
                   <option value="Other">Other</option>
                 </select>
               </div>
+            </div>
 
+            {/* Blood Group Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
                   Blood Group
@@ -445,10 +517,7 @@ export default function AddNewStaffModal({
                   <option value="AB-">AB-</option>
                 </select>
               </div>
-            </div>
 
-            {/* Dates & Academics Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
                   Date of Birth
@@ -494,7 +563,10 @@ export default function AddNewStaffModal({
                   className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
+            </div>
 
+            {/* Class Assigned Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
                   Class Assigned (if applicable)
@@ -605,32 +677,6 @@ export default function AddNewStaffModal({
                 {errors.submit}
               </div>
             )}
-
-            {/* Photo Attachment (Static visual component) */}
-            {/* <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-[#0a1c3a]">
-                Add Photo
-              </label>
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-8 transition-colors hover:bg-gray-50">
-                <Upload className="mb-2 h-8 w-8 text-gray-400" />
-                <p className="text-sm text-gray-500 mb-1">
-                  PDFs, Images, or Links
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="text-blue-600 font-medium cursor-pointer hover:underline">
-                    Click to upload
-                  </span>{" "}
-                  or drag and drop
-                </p>
-              </div>
-              <button
-                type="button"
-                className="mt-2 flex items-center gap-1.5 text-sm font-medium text-[#4285F4] hover:text-blue-600"
-              >
-                <LinkIcon className="h-4 w-4" />
-                Add Link
-              </button>
-            </div> */}
 
             {/* Footer */}
             <div className="border-t border-gray-100 pt-5 flex gap-4 mt-3">

@@ -25,20 +25,41 @@ export const getAdminDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    // 4. Active Classes
-    const activeClasses = await prisma.class.count();
-
-    // 5. Today's Attendance Snapshot
+// 4. Active Sections
+const activeSections = await prisma.section.count();
+    // 5. Today's Attendance Snapshot (uses latest active date in database if today has no logs)
+    let today = new Date();
+    
+    // Check if we have logs for today
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
+    const todayLogsCount = await prisma.attendance.count({
+      where: { date: { gte: startOfToday, lte: endOfToday } }
+    });
+
+    if (todayLogsCount === 0) {
+      const latestLog = await prisma.attendance.findFirst({
+        orderBy: { date: 'desc' },
+        select: { date: true }
+      });
+      if (latestLog) {
+        today = new Date(latestLog.date);
+      }
+    }
+
+    const startOfTargetDay = new Date(today);
+    startOfTargetDay.setHours(0, 0, 0, 0);
+    const endOfTargetDay = new Date(today);
+    endOfTargetDay.setHours(23, 59, 59, 999);
+
     const todayAttendance = await prisma.attendance.findMany({
       where: {
         date: {
-          gte: startOfToday,
-          lte: endOfToday
+          gte: startOfTargetDay,
+          lte: endOfTargetDay
         }
       }
     });
@@ -61,17 +82,11 @@ export const getAdminDashboardStats = async (req: Request, res: Response) => {
     // Student Attendance Percentage Today
     let studentAttendanceToday = null;
     if (totalStudents > 0 && totalAttendanceCount > 0) {
-      // Calculate present + late as present for daily percentage calculation
       const totalPresentOrLate = presentCount + lateCount;
       studentAttendanceToday = Math.round((totalPresentOrLate / totalStudents) * 100);
     }
 
-    // 6. Pending Fees
-    const pendingFeesAggregate = await prisma.monthlyFeeRecord.aggregate({
-      where: { status: 'PENDING' },
-      _sum: { amountDue: true }
-    });
-    const pendingFees = pendingFeesAggregate._sum.amountDue; // Returns number | null
+   
 
     // 7. Recent notices (limit to 3)
     const notices = await prisma.notice.findMany({
@@ -86,20 +101,14 @@ export const getAdminDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    // 8. Weekly Attendance Trend (Last 6 weekdays: Mon - Sat)
-    // Find the Monday of the current week (or last 6 days starting from Monday)
+    // 8. Weekly Attendance Trend (Last 6 weekdays: Mon - Sat) using the active target week
     const weeklyTrend: number[] = [];
-    const daysLabel = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-    
-    // We will get current week's dates for Monday to Saturday
-    const currentDay = new Date();
-    const currentDayOfWeek = currentDay.getDay(); // 0 is Sunday, 1 is Monday, etc.
+    const targetDayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
     
     for (let i = 1; i <= 6; i++) {
-      const targetDate = new Date();
-      // Adjust to the specific day of the current week (1 = Monday, ..., 6 = Saturday)
-      const diff = i - (currentDayOfWeek === 0 ? 7 : currentDayOfWeek);
-      targetDate.setDate(currentDay.getDate() + diff);
+      const targetDate = new Date(today);
+      const diff = i - (targetDayOfWeek === 0 ? 7 : targetDayOfWeek);
+      targetDate.setDate(today.getDate() + diff);
       targetDate.setHours(0, 0, 0, 0);
 
       const dayStart = new Date(targetDate);
@@ -121,7 +130,6 @@ export const getAdminDashboardStats = async (req: Request, res: Response) => {
         ).length;
         weeklyTrend.push(Math.round((presentOrLate / totalStudents) * 100));
       } else {
-        // If no records, push 0 or null (let's push null to denote "No Data" or 0)
         weeklyTrend.push(0);
       }
     }
@@ -134,14 +142,14 @@ export const getAdminDashboardStats = async (req: Request, res: Response) => {
           totalStaff: totalStaffCount,
           studentAttendanceToday,
           newAdmissions,
-          activeClasses,
-          pendingFees
+          activeSections, 
         },
         attendanceSnapshot: {
           present: presentCount,
           absent: absentCount,
           late: lateCount,
-          hasData: totalAttendanceCount > 0
+          hasData: totalAttendanceCount > 0,
+          snapshotDate: today 
         },
         weeklyTrend,
         notices

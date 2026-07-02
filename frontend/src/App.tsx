@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Authentication/Login";
 
 // ==========================================
 // STUDENT IMPORTS
@@ -28,7 +29,7 @@ import AttendanceManagement from "./pages/Teacher/Attendancemanagement";
 // ==========================================
 // ADMIN IMPORTS
 // ==========================================
-import Academics from "./pages/Admin/Academics";
+import Academics from "./pages/Admin/Student";
 import Staff from "./pages/Admin/Staff";
 import StaffProfile from "./pages/Admin/Staff/StaffProfile";
 import Classes from "./pages/Admin/Academics/Classes";
@@ -51,6 +52,7 @@ const App = () => {
     <AuthProvider>
       <Routes>
         {/* Default Route */}
+        <Route path="/login" element={<Login />} />
         <Route
           path="/"
           element={<Navigate to="/student/dashboard" replace />}

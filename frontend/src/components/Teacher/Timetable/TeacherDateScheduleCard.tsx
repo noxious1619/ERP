@@ -33,8 +33,9 @@ interface MySubjectWeeklyEntry {
   time?: string; // Backend uses time for teacher schedule
   isBreak?: boolean;
   breakLabel?: string;
-  subject: string; 
-  code?: string; 
+  endTime?: string;   
+  subject: string;
+  code?: string;
   room: string;
   color: string;
   sectionLabel?: string; // Backend passes the flat section label
@@ -104,6 +105,25 @@ const DateScheduleCard = ({
   const isLoading =
     filterMode === "class" ? classWeeklyLoading : mySubjectWeeklyLoading;
 
+  const isToday = safeDate.toDateString() === new Date().toDateString();
+
+  const isPeriodActive = (start?: string, end?: string) => {
+    if (!start) return false;
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+    let resolvedEnd = end;
+    if (!resolvedEnd) {
+      const [h, m] = start.split(":").map(Number);
+      const totalMin = h * 60 + m + 45;
+      const endHour = Math.floor(totalMin / 60) % 24;
+      const endMin = totalMin % 60;
+      resolvedEnd = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
+    }
+
+    return currentTime >= start && currentTime <= resolvedEnd;
+  };
+
   // ─── Filter full week data by selected date's day ─────────────────────────
   const classFilteredItems = classWeeklyData
     .filter((item) => item.day?.toUpperCase() === targetDayEnum)
@@ -153,10 +173,10 @@ const DateScheduleCard = ({
         day: targetDayEnum,
         items: mySubjectFilteredItems.map((item) => ({
           time: item.startTime || item.time || "TBD",
-          isBreak: item.isBreak,
+          isBreak: item.isBreak ?? false, // ← add ?? false
           breakLabel: item.breakLabel || null,
           subject: item.sectionLabel || item.subject,
-          professor: item.subject, // Map the actual subject name here
+          professor: item.subject,
           room: item.room,
         })),
       });
@@ -185,55 +205,88 @@ const DateScheduleCard = ({
           </div>
         ) : filterMode === "class" ? (
           /* ── CLASS MODE ── */
-          classFilteredItems.map((item) => (
-            <div
-              key={item.id}
-              className="relative z-10 flex py-2 items-center rounded-[14px] border border-[#D7DAE4] bg-white px-4 shadow-[0px_2px_6px_rgba(0,0,0,0.03)]"
-            >
-              <div className="flex flex-1 items-center">
-                <h4 className="text-[18px] font-medium text-[#1F1F1F]">
-                  {item.isBreak
-                    ? item.breakLabel || "Break"
-                    : item.subject?.name || "No Subject"}
-                </h4>
+          classFilteredItems.map((item) => {
+            const isActive =
+              isToday && isPeriodActive(item.startTime, item.endTime);
+            return (
+              <div
+                key={item.id}
+                className={`relative z-10 flex py-2 items-center rounded-[14px] border bg-white px-4 shadow-[0px_2px_6px_rgba(0,0,0,0.03)] ${
+                  isActive
+                    ? "border-[#3A72FF] ring-2 ring-[#3B4FE8]/20 border-l-4 border-l-[#3A72FF]"
+                    : "border-[#D7DAE4]"
+                }`}
+              >
+                <div className="flex flex-1 items-center">
+                  <h4 className="text-[18px] font-medium text-[#1F1F1F]">
+                    {item.isBreak
+                      ? item.breakLabel || "Break"
+                      : item.subject?.name || "No Subject"}
+                  </h4>
+                  {isActive && (
+                    <span className="ml-3 inline-flex items-center gap-1 text-[10px] font-bold text-[#3B4FE8] bg-[#EEF0FF] px-2 py-0.5 rounded-full animate-pulse">
+                      LIVE
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col items-end justify-center">
+                  <span
+                    className={`text-[11px] font-medium tracking-[1px] ${isActive ? "text-[#3B4FE8]" : "text-[#8A8A8A]"}`}
+                  >
+                    {item.startTime}
+                  </span>
+                  <p className="mt-2 text-[14px] text-[#6F6F6F]">
+                    {item.isBreak
+                      ? "Interval"
+                      : item.teacher?.name || "Faculty Staff"}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col items-end justify-center">
-                <span className="text-[11px] font-medium tracking-[1px] text-[#8A8A8A]">
-                  {item.startTime}
-                </span>
-                <p className="mt-2 text-[14px] text-[#6F6F6F]">
-                  {item.isBreak
-                    ? "Interval"
-                    : item.teacher?.name || "Faculty Staff"}
-                </p>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           /* ── MY SUBJECT MODE ── */
-          mySubjectFilteredItems.map((item) => (
-            <div
-              key={item.id}
-              className="relative z-10 flex py-2 items-center rounded-[14px] border border-[#D7DAE4] bg-white px-4 shadow-[0px_2px_6px_rgba(0,0,0,0.03)]"
-            >
-              <div className="flex flex-1 flex-col justify-center">
-                <h4 className="text-[18px] font-medium text-[#1F1F1F]">
-                  {item.isBreak ? item.breakLabel || "Break" : item.sectionLabel || item.subject}
-                </h4>
-                {item.subject && !item.isBreak && (
-                  <p className="mt-0.5 text-[12px] font-medium text-[#8A8A8A]">
-                    {item.subject}
-                  </p>
-                )}
+          mySubjectFilteredItems.map((item) => {
+            const timeVal = item.startTime || item.time || "";
+            const isActive = isToday && isPeriodActive(timeVal, item.endTime);
+            return (
+              <div
+                key={item.id}
+                className={`relative z-10 flex py-2 items-center rounded-[14px] border bg-white px-4 shadow-[0px_2px_6px_rgba(0,0,0,0.03)] ${
+                  isActive
+                    ? "border-[#3A72FF] ring-2 ring-[#3B4FE8]/20 border-l-4 border-l-[#3A72FF]"
+                    : "border-[#D7DAE4]"
+                }`}
+              >
+                <div className="flex flex-1 flex-col justify-center">
+                  <div className="flex items-center">
+                    <h4 className="text-[18px] font-medium text-[#1F1F1F]">
+                      {item.isBreak
+                        ? item.breakLabel || "Break"
+                        : item.sectionLabel || item.subject}
+                    </h4>
+                    {isActive && (
+                      <span className="ml-3 inline-flex items-center gap-1 text-[10px] font-bold text-[#3B4FE8] bg-[#EEF0FF] px-2 py-0.5 rounded-full animate-pulse">
+                        LIVE
+                      </span>
+                    )}
+                  </div>
+                  {item.subject && !item.isBreak && (
+                    <p className="mt-0.5 text-[12px] font-medium text-[#8A8A8A]">
+                      {item.subject}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end justify-center">
+                  <span
+                    className={`text-[11px] font-medium tracking-[1px] ${isActive ? "text-[#3B4FE8]" : "text-[#8A8A8A]"}`}
+                  >
+                    {timeVal}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col items-end justify-center">
-                <span className="text-[11px] font-medium tracking-[1px] text-[#8A8A8A]">
-                  {/* Safely display whichever time key exists */}
-                  {item.startTime || item.time}
-                </span>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

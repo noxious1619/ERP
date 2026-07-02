@@ -36,7 +36,7 @@ export default function StaffView() {
   const [editingStaff, setEditingStaff] = useState<StaffType | null>(null);
 
   // Delete confirmation state
-  const [deletingStaff, setDeletingStaff] = useState<StaffType | null>(null);
+  const [deletingStaff, setDeletingStaff] = useState<StaffType[]>([]);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
@@ -110,7 +110,7 @@ export default function StaffView() {
     ];
     const rows = (json.data as StaffType[]).map(
       (s) =>
-        `${s.employeeId},"${s.name}","${s.role}","${s.department}","${s.joiningDate}",${s.contact},${s.status}`,
+        `${s.employeeId},"${s.name}","${s.role}","${s.department}","${s.joiningDate}","=""${s.contact}""",${s.status}`,
     );
     const csv = headers.concat(rows).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -131,35 +131,54 @@ export default function StaffView() {
 
   // ── Delete handler ──────────────────────────────────────────────────────────
   const handleDeleteConfirm = async () => {
-    if (!deletingStaff) return;
+    if (deletingStaff.length === 0) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/staff/${deletingStaff.id}`,
-        {
+      const isSingle = deletingStaff.length === 1;
+
+      if (isSingle) {
+        // Use existing single delete endpoint
+        const res = await fetch(
+          `http://localhost:5000/api/staff/${deletingStaff[0].id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+      } else {
+        // Use bulk delete endpoint
+        const res = await fetch(`http://localhost:5000/api/staff/bulk-delete`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        },
-      );
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ ids: deletingStaff.map((s) => s.id) }),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+      }
 
       setDeleteSuccess(true);
       setTimeout(() => {
         setDeleteSuccess(false);
-        setDeletingStaff(null);
+        setDeletingStaff([]);
         fetchStaff();
       }, 1500);
     } catch (err: any) {
       setError(err.message);
-      setDeletingStaff(null);
+      setDeletingStaff([]);
     } finally {
       setDeleteLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden gap-5 h-full">
+    <div className="flex flex-col gap-5">
       <StaffHeader
         totalCount={meta?.total ?? 0}
         search={search}
@@ -173,7 +192,7 @@ export default function StaffView() {
       />
       <StaffStatsCards stats={meta?.stats ?? null} loading={loading} />
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 min-h-0">
         {error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-600">
             {error}
@@ -200,11 +219,11 @@ export default function StaffView() {
       )}
 
       {/* Delete confirmation dialog */}
-      {deletingStaff && (
+      {deletingStaff.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4">
           <div
             className="absolute inset-0"
-            onClick={() => !deleteLoading && setDeletingStaff(null)}
+            onClick={() => !deleteLoading && setDeletingStaff([])}
           />
           <div className="relative w-full max-w-md rounded-[24px] bg-white shadow-2xl z-10 p-6 flex flex-col gap-4">
             {deleteSuccess ? (
@@ -225,7 +244,10 @@ export default function StaffView() {
                   </svg>
                 </div>
                 <p className="text-sm font-semibold text-gray-800">
-                  Staff member deleted successfully
+                  {deletingStaff.length === 1
+                    ? "Staff member"
+                    : `${deletingStaff.length} staff members`}{" "}
+                  deleted successfully
                 </p>
               </div>
             ) : (
@@ -236,9 +258,15 @@ export default function StaffView() {
                   </h3>
                   <p className="text-sm text-gray-500">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold text-gray-800">
-                      {deletingStaff.name}
-                    </span>
+                    {deletingStaff.length === 1 ? (
+                      <span className="font-semibold text-gray-800">
+                        {deletingStaff[0].name}
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-gray-800">
+                        {deletingStaff.length} staff members
+                      </span>
+                    )}
                     ? This action cannot be undone.
                   </p>
                 </div>
@@ -250,7 +278,7 @@ export default function StaffView() {
 
                 <div className="flex gap-3 pt-1">
                   <button
-                    onClick={() => setDeletingStaff(null)}
+                    onClick={() => !deleteLoading && setDeletingStaff([])}
                     disabled={deleteLoading}
                     className="flex-1 rounded-2xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
                   >

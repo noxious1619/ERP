@@ -45,7 +45,7 @@ const TeacherDashboard: React.FC = () => {
       try {
         const res = await axios.get("http://localhost:5000/api/notices/teacher", { headers: { Authorization: `Bearer ${token}` } });
         const raw = res.data?.data ?? res.data?.notices ?? res.data ?? [];
-        setNoticeData(Array.isArray(raw) ? raw.slice(0, 3) : []);
+        setNoticeData(Array.isArray(raw) ? raw.slice(0, 6) : []);
       } catch (err) {
         console.error("Failed to load teacher notices:", err);
       } finally {
@@ -57,7 +57,9 @@ const TeacherDashboard: React.FC = () => {
     const fetchTimetable = async () => {
       if (!teacherData?.id) return;
       try {
-        const today = "Monday"; 
+        const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        let today = daysOfWeek[new Date().getDay()];
+        if (today === "Sunday") today = "Monday"; // Fallback to Monday schedule on Sunday
         const res = await axios.get(
           `http://localhost:5000/api/timetable/teacher/${teacherData.id}/daily?day=${today}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -124,7 +126,7 @@ const TeacherDashboard: React.FC = () => {
             subject: `${item.class.name} - ${item.section.name}`, // Output: "Class 10 - A"
             dueDate: formatDate(item.dueDate),
             dueTime: formatTime(item.dueDate),
-            status: isPastOrToday ? "ONGOING" : "PENDING"
+            status: isPastOrToday ? "OVERDUE" : "PENDING"
           };
         });
 
@@ -144,13 +146,17 @@ const TeacherDashboard: React.FC = () => {
   // ── Dependent Data Fetch (Attendance Calendar) ────────────────────────────
   useEffect(() => {
     if (!token) return;
+    const sectionId = teacherData?.classTeacherOf?.id || teacherData?.teachingAssignments?.[0]?.section?.id;
+    if (!sectionId) {
+      setAttendanceLoading(false);
+      return;
+    }
 
     const fetchAttendance = async () => {
       setAttendanceLoading(true);
       try {
         const month = currentAttendanceDate.getMonth() + 1;
         const year = currentAttendanceDate.getFullYear();
-        const sectionId = "b7ffe974-a889-408e-886f-7a8109501ee2"; 
 
         const res = await axios.get(
           `http://localhost:5000/api/attendance/attendanceData/section/${sectionId}/weekly-trends`,
@@ -172,7 +178,7 @@ const TeacherDashboard: React.FC = () => {
     };
 
     fetchAttendance();
-  }, [token, currentAttendanceDate]);
+  }, [token, currentAttendanceDate, teacherData]);
 
   // ── Navigation Handlers ──────────────────────────────────────
   const handlePrevMonth = () => {
@@ -195,6 +201,12 @@ const TeacherDashboard: React.FC = () => {
     currentAttendanceDate.getMonth() === new Date().getMonth() && 
     currentAttendanceDate.getFullYear() === new Date().getFullYear();
 
+  const classNameLabel = teacherData?.classTeacherOf 
+    ? `${teacherData.classTeacherOf.academicClass.name} - ${teacherData.classTeacherOf.name}`
+    : teacherData?.teachingAssignments?.[0]?.section
+      ? `${teacherData.teachingAssignments[0].section.academicClass.name} - ${teacherData.teachingAssignments[0].section.name}`
+      : "No Class Assigned";
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen overflow-hidden bg-[#F0F2F5]">
@@ -213,7 +225,7 @@ const TeacherDashboard: React.FC = () => {
             <div className="flex gap-5 items-start pb-2">
               <div className="flex flex-col gap-2 flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-gray-700 px-1">
-                  Class - X (A)
+                  Class - {classNameLabel}
                 </p>
                 <AttendanceWeekly 
                   trends={attendanceTrends}
@@ -238,8 +250,8 @@ const TeacherDashboard: React.FC = () => {
                   <Homework 
                     assignments={homeworkList} 
                     tab1Label="Pending" 
-                    tab2Label="Ongoing" 
-                    tab2StatusKey="ONGOING" 
+                    tab2Label="Overdue" 
+                    tab2StatusKey="OVERDUE" 
                   />
                 )}
               </div>

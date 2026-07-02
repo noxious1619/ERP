@@ -23,12 +23,24 @@ export const admitStudent = async (req: Request, res: Response) => {
     phoneNumber, 
     sectionId, 
     admissionNumber,
-    rollNumber
+    rollNumber,
+     fatherName,
+    fatherPhone,
+    motherName,
+    motherPhone,
+    parentEmail,
   } = req.body;
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Fallback: if no valid password was sent, derive one from
+      // roll number + admission number so onboarding never fails silently.
+      const finalPassword =
+        password && password.length >= 8
+          ? password
+          : `Roll${rollNumber}@${admissionNumber}`;
+
+      const hashedPassword = await bcrypt.hash(finalPassword, 10);
       const user = await tx.user.create({
         data: {
           name: `${firstName} ${lastName}`.trim(),
@@ -38,24 +50,38 @@ export const admitStudent = async (req: Request, res: Response) => {
         },
       });
 
+      const parent = await tx.parent.create({
+    data: {
+        fatherName: fatherName || null,
+        fatherPhone: fatherPhone || null,
+        motherName: motherName || null,
+        motherPhone: motherPhone || null,
+        email: parentEmail || null,
+    }
+});
+
       const student = await tx.student.create({
-        data: {
-          admissionNumber,
-          rollNumber: rollNumber || null,
-          firstName,
-          lastName,
-          dateOfBirth: new Date(dateOfBirth),
-          gender,
-          address: address || null,    
-          city: city || null,
-state: state || null,    
-          phoneNumber: phoneNumber || null,
-          bloodGroup: bloodGroup || null,
-profileImage: profileImage || null,    
-          sectionId,
-          userId: user.id
-        }
-      });
+    data: {
+        admissionNumber,
+        rollNumber: rollNumber || null,
+        firstName,
+        lastName,
+        dateOfBirth: new Date(dateOfBirth),
+        gender,
+
+        address: address || null,
+        city: city || null,
+        state: state || null,
+        phoneNumber: phoneNumber || null,
+        bloodGroup: bloodGroup || null,
+        profileImage: profileImage || null,
+
+        sectionId,
+        userId: user.id,
+
+        parentId: parent.id,
+    }
+});
 
       return student;
     });
@@ -204,17 +230,19 @@ export const getAllStudents = async (req: Request, res: Response) => {
       skip,
       take: pageSize,
       include: {
-        section: {
-          include: {
+    section: {
+        include: {
             academicClass: true,
-          },
         },
-        user: {
-          select: {
+    },
+    user: {
+        select: {
             email: true,
-          },
         },
-      },
+    },
+
+    parent: true,
+},
       orderBy: {
         createdAt: "desc",
       },
@@ -277,8 +305,13 @@ export const bulkAdmitStudents = async (req: Request, res: Response) => {
         for (const row of results) {
           // Use the same Transaction logic as single admission
           const student = await prisma.$transaction(async (tx) => {
-            const hashedPassword = await bcrypt.hash(row.password || "Student@123", 10);
-            
+            const derivedPassword =
+              row.password && row.password.length >= 8
+                ? row.password
+                : `Roll${row.rollNumber}@${row.admissionNumber}`;
+
+            const hashedPassword = await bcrypt.hash(derivedPassword, 10);
+
             const user = await tx.user.create({
               data: {
                 email: row.email,
@@ -291,6 +324,7 @@ export const bulkAdmitStudents = async (req: Request, res: Response) => {
             return await tx.student.create({
              data: {
   admissionNumber: row.admissionNumber,
+  rollNumber: row.rollNumber || null,
   firstName: row.firstName,
   lastName: row.lastName,
   dateOfBirth: new Date(row.dateOfBirth),
@@ -379,6 +413,11 @@ export const updateStudent = async (req: Request, res: Response) => {
     sectionId,
     admissionNumber,
     rollNumber,
+     fatherName,
+    fatherPhone,
+    motherName,
+    motherPhone,
+    parentEmail,
     isActive
   } = req.body;
 
@@ -413,6 +452,21 @@ export const updateStudent = async (req: Request, res: Response) => {
           });
         }
       }
+
+      if (existingStudent.parentId) {
+    await tx.parent.update({
+        where: {
+            id: existingStudent.parentId,
+        },
+        data: {
+            fatherName,
+            fatherPhone,
+            motherName,
+            motherPhone,
+            email: parentEmail,
+        },
+    });
+}
 
       // Update Student profile
       const updatedStudent = await tx.student.update({
@@ -491,5 +545,3 @@ export const bulkDeleteStudents = async (req: Request, res: Response) => {
     });
   }
 };
-
-

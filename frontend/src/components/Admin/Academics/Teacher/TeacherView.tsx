@@ -39,15 +39,16 @@ export default function TeacherView() {
   );
 
   // Delete state
-  const [deletingTeacher, setDeletingTeacher] = useState<TeacherRowType | null>(
-    null,
-  );
+  const [deletingTeacher, setDeletingTeacher] = useState<TeacherRowType[]>([]);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   // Filters
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [classFilter, setClassFilter] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchTeachers = useCallback(async () => {
@@ -59,6 +60,9 @@ export default function TeacherView() {
         limit: String(ITEMS_PER_PAGE),
         ...(search && { search }),
         ...(statusFilter && { status: statusFilter }),
+        ...(genderFilter && { gender: genderFilter }),
+        ...(classFilter && { classId: classFilter }),
+        ...(subjectFilter && { subjectId: subjectFilter }),
       });
 
       const res = await fetch(`http://localhost:5000/api/teachers?${params}`, {
@@ -75,7 +79,14 @@ export default function TeacherView() {
       setLoading(false);
       setIsInitialLoad(false);
     }
-  }, [currentPage, search, statusFilter]);
+  }, [
+    currentPage,
+    search,
+    statusFilter,
+    genderFilter,
+    classFilter,
+    subjectFilter,
+  ]);
 
   useEffect(() => {
     fetchTeachers();
@@ -89,6 +100,18 @@ export default function TeacherView() {
     setStatusFilter(val);
     setCurrentPage(1);
   };
+  const handleGenderChange = (val: string) => {
+    setGenderFilter(val);
+    setCurrentPage(1);
+  };
+  const handleClassChange = (val: string) => {
+    setClassFilter(val);
+    setCurrentPage(1);
+  };
+  const handleSubjectChange = (val: string) => {
+    setSubjectFilter(val);
+    setCurrentPage(1);
+  };
 
   const handleExportCSV = async () => {
     const params = new URLSearchParams({
@@ -96,6 +119,9 @@ export default function TeacherView() {
       limit: "9999",
       ...(search && { search }),
       ...(statusFilter && { status: statusFilter }),
+      ...(genderFilter && { gender: genderFilter }),
+      ...(classFilter && { classId: classFilter }),
+      ...(subjectFilter && { subjectId: subjectFilter }),
     });
     const res = await fetch(`http://localhost:5000/api/teachers?${params}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -127,35 +153,68 @@ export default function TeacherView() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deletingTeacher) return;
+    if (deletingTeacher.length === 0) return;
+
     setDeleteLoading(true);
+
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/teachers/${deletingTeacher.id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        },
-      );
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
+      const isSingle = deletingTeacher.length === 1;
+
+      if (isSingle) {
+        const res = await fetch(
+          `http://localhost:5000/api/teachers/${deletingTeacher[0].id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+
+        const json = await res.json();
+
+        if (!json.success) {
+          throw new Error(json.message);
+        }
+      } else {
+        const res = await fetch(
+          "http://localhost:5000/api/teachers/bulk-delete",
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({
+              ids: deletingTeacher.map((teacher) => teacher.id),
+            }),
+          },
+        );
+
+        const json = await res.json();
+
+        if (!json.success) {
+          throw new Error(json.message);
+        }
+      }
 
       setDeleteSuccess(true);
+
       setTimeout(() => {
         setDeleteSuccess(false);
-        setDeletingTeacher(null);
+        setDeletingTeacher([]);
         fetchTeachers();
       }, 1500);
     } catch (err: any) {
       setError(err.message);
-      setDeletingTeacher(null);
+      setDeletingTeacher([]);
     } finally {
       setDeleteLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden gap-5 h-full">
+    <div className="flex flex-col gap-5">
       <TeacherHeader
         totalCount={meta?.total ?? 0}
         search={search}
@@ -163,10 +222,15 @@ export default function TeacherView() {
         onAddClick={() => setIsAddModalOpen(true)}
         onExportCSV={handleExportCSV}
       />
-      <TeacherFilters onStatusChange={handleStatusChange} />
+      <TeacherFilters
+        onStatusChange={handleStatusChange}
+        onGenderChange={handleGenderChange}
+        onClassChange={handleClassChange}
+        onSubjectChange={handleSubjectChange}
+      />
       <TeacherStatsCards stats={meta?.stats ?? null} loading={loading} />
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 min-h-[430px] overflow-hidden">
         {error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-600">
             {error}
@@ -176,7 +240,7 @@ export default function TeacherView() {
             teacherList={teacherList}
             loading={isInitialLoad}
             onEdit={handleEdit}
-            onDelete={(t) => setDeletingTeacher(t)}
+            onDelete={(teachers) => setDeletingTeacher(teachers)}
           />
         )}
       </div>
@@ -193,11 +257,11 @@ export default function TeacherView() {
       )}
 
       {/* Delete confirmation */}
-      {deletingTeacher && (
+      {deletingTeacher.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4">
           <div
             className="absolute inset-0"
-            onClick={() => !deleteLoading && setDeletingTeacher(null)}
+            onClick={() => !deleteLoading && setDeletingTeacher([])}
           />
           <div className="relative w-full max-w-md rounded-[24px] bg-white shadow-2xl z-10 p-6 flex flex-col gap-4">
             {deleteSuccess ? (
@@ -218,7 +282,9 @@ export default function TeacherView() {
                   </svg>
                 </div>
                 <p className="text-sm font-semibold text-gray-800">
-                  Teacher deleted successfully
+                  {deletingTeacher.length === 1
+                    ? "Teacher deleted successfully"
+                    : `${deletingTeacher.length} teachers deleted successfully`}
                 </p>
               </div>
             ) : (
@@ -229,9 +295,15 @@ export default function TeacherView() {
                   </h3>
                   <p className="text-sm text-gray-500">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold text-gray-800">
-                      {deletingTeacher.name}
-                    </span>
+                    {deletingTeacher.length === 1 ? (
+                      <span className="font-semibold text-gray-800">
+                        {deletingTeacher[0].name}
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-gray-800">
+                        {deletingTeacher.length} teachers
+                      </span>
+                    )}
                     ? This action cannot be undone.
                   </p>
                 </div>
@@ -241,7 +313,7 @@ export default function TeacherView() {
                 </div>
                 <div className="flex gap-3 pt-1">
                   <button
-                    onClick={() => setDeletingTeacher(null)}
+                    onClick={() => setDeletingTeacher([])}
                     disabled={deleteLoading}
                     className="flex-1 rounded-2xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-colors cursor-pointer"
                   >

@@ -30,7 +30,10 @@ function LollipopBar({ percentage }: { percentage: number }) {
   const isEmpty = percentage === 0;
 
   return (
-    <div className="relative flex-shrink-0 transition-all duration-500" style={{ width: "24px", height: `${CHART_HEIGHT}px` }}>
+    <div
+      className="relative flex-shrink-0 transition-all duration-500"
+      style={{ width: "24px", height: `${CHART_HEIGHT}px` }}
+    >
       <span
         className={`absolute left-1/2 -translate-x-1/2 text-[13px] font-semibold whitespace-nowrap leading-none transition-colors duration-500 ${isEmpty ? "text-gray-300" : "text-gray-700"}`}
         style={{ bottom: `${stemHeight + DOT_SIZE + 2}px` }}
@@ -41,8 +44,12 @@ function LollipopBar({ percentage }: { percentage: number }) {
       <div
         className="absolute left-1/2 -translate-x-1/2 rounded-full z-10 transition-all duration-500"
         style={{
-          width: `${DOT_SIZE}px`, height: `${DOT_SIZE}px`, bottom: `${stemHeight}px`,
-          background: isEmpty ? "#E5E7EB" : "radial-gradient(circle at 40% 35%, #6baeff, #3B82F6)",
+          width: `${DOT_SIZE}px`,
+          height: `${DOT_SIZE}px`,
+          bottom: `${stemHeight}px`,
+          background: isEmpty
+            ? "#E5E7EB"
+            : "radial-gradient(circle at 40% 35%, #6baeff, #3B82F6)",
           boxShadow: isEmpty ? "none" : "0 2px 8px rgba(59,130,246,0.5)",
         }}
       />
@@ -50,8 +57,13 @@ function LollipopBar({ percentage }: { percentage: number }) {
       <div
         className="absolute left-1/2 -translate-x-1/2 transition-all duration-500"
         style={{
-          width: "6px", height: `${stemHeight}px`, bottom: 0, borderRadius: "2px",
-          background: isEmpty ? "#F3F4F6" : "linear-gradient(to bottom, rgba(59,130,246,0.80), rgba(59,130,246,0.04))",
+          width: "6px",
+          height: `${stemHeight}px`,
+          bottom: 0,
+          borderRadius: "2px",
+          background: isEmpty
+            ? "#F3F4F6"
+            : "linear-gradient(to bottom, rgba(59,130,246,0.80), rgba(59,130,246,0.04))",
         }}
       />
     </div>
@@ -59,26 +71,30 @@ function LollipopBar({ percentage }: { percentage: number }) {
 }
 
 // --- Main UI Component ---
-export default function AttendanceWeekly({ 
-  trends, 
-  loading, 
-  monthLabel, 
-  yearLabel, 
-  onPrev, 
-  onNext, 
-  isNextDisabled 
+export default function AttendanceWeekly({
+  trends,
+  loading,
+  monthLabel,
+  yearLabel,
+  onPrev,
+  onNext,
+  isNextDisabled,
 }: AttendanceWeeklyProps) {
-
+    const safeTrends = trends ?? [];
   // Render Skeleton Loader
-  if (loading || !trends.length) {
+  if (loading || !safeTrends.length) {
     return (
       <div className="rounded-[30px] bg-white shadow-[0px_15px_25px_10px_rgba(0,0,0,0.04)] p-6 w-full min-h-[350px] animate-pulse">
         <div className="h-6 w-48 bg-gray-200 rounded mb-6" />
         <div className="flex items-end justify-around h-[200px] gap-8">
-          {[1, 2, 3, 4].map(i => <div key={i} className="w-6 h-3/4 bg-gray-100 rounded-t-full" />)}
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="w-6 h-3/4 bg-gray-100 rounded-t-full" />
+          ))}
         </div>
         <div className="border-t border-gray-100 mt-4 pt-4 flex justify-around">
-           {[1, 2, 3, 4].map(i => <div key={i} className="h-3 w-12 bg-gray-200 rounded" />)}
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-3 w-12 bg-gray-200 rounded" />
+          ))}
         </div>
       </div>
     );
@@ -92,12 +108,15 @@ export default function AttendanceWeekly({
           {monthLabel} {yearLabel}
         </h2>
         <div className="flex items-center gap-1">
-          <button onClick={onPrev} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+          <button
+            onClick={onPrev}
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+          >
             <ChevronLeft className="w-5 h-5 text-gray-500" />
           </button>
-          <button 
-            onClick={onNext} 
-            disabled={isNextDisabled} 
+          <button
+            onClick={onNext}
+            disabled={isNextDisabled}
             className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronRight className="w-5 h-5 text-gray-500" />
@@ -115,7 +134,10 @@ export default function AttendanceWeekly({
 
       <div className="flex justify-around mt-2">
         {trends.map((week) => (
-          <span key={week.week} className="text-[13px] text-gray-500 font-medium">
+          <span
+            key={week.week}
+            className="text-[13px] text-gray-500 font-medium"
+          >
             {week.week}
           </span>
         ))}

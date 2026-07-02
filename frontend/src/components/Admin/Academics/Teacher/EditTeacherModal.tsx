@@ -21,6 +21,8 @@ const EMPTY_ASSIGNMENT = (): TeacherAssignment => ({
   loading: false,
 });
 
+const suggestedPassword = (id: string) => (id ? `${id}@123` : "");
+
 export default function EditTeacherModal({
   isOpen,
   onClose,
@@ -28,6 +30,7 @@ export default function EditTeacherModal({
   teacherId,
 }: EditTeacherModalProps) {
   // ── Personal fields ────────────────────────────────────────────────
+  const [employeeId, setEmployeeId] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [gender, setGender] = useState("");
@@ -45,6 +48,11 @@ export default function EditTeacherModal({
   const [city, setCity] = useState("");
   const [stateVal, setStateVal] = useState("");
   const [status, setStatus] = useState("");
+
+  // ── Password reset ─────────────────────────────────────────────────
+  const [resetPassword, setResetPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const passwordTouchedRef = useRef(false);
 
   // ── Assignment fields ──────────────────────────────────────────────
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
@@ -88,6 +96,7 @@ export default function EditTeacherModal({
         const t = teacherJson.data;
 
         // Personal fields
+        setEmployeeId(t.employeeId ?? "");
         setFirstName(t.firstName ?? "");
         setLastName(t.lastName ?? "");
         setGender(t.gender ?? "");
@@ -113,6 +122,11 @@ export default function EditTeacherModal({
         setCity(t.city ?? "");
         setStateVal(t.state ?? "");
         setStatus(t.status ?? "ACTIVE");
+
+        // Reset password-reset UI state on every fresh load
+        setResetPassword(false);
+        setPassword("");
+        passwordTouchedRef.current = false;
 
         // =============================
         // Convert teachingAssignments
@@ -195,14 +209,39 @@ export default function EditTeacherModal({
     };
   }, [isOpen]);
 
+  // Auto-suggest password from Employee ID while reset is toggled on,
+  // unless the admin has typed their own value
+  useEffect(() => {
+    if (resetPassword && !passwordTouchedRef.current) {
+      setPassword(suggestedPassword(employeeId));
+    }
+  }, [employeeId, resetPassword]);
+
+  const handleResetToggle = (checked: boolean) => {
+    setResetPassword(checked);
+    passwordTouchedRef.current = false;
+    setPassword(checked ? suggestedPassword(employeeId) : "");
+  };
+
+  const handlePasswordChange = (val: string) => {
+    passwordTouchedRef.current = true;
+    setPassword(val);
+  };
+
   if (!isOpen) return null;
 
   // ── Validation ─────────────────────────────────────────────────────
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+    if (!employeeId.trim()) newErrors.employeeId = "Employee ID is required";
     if (!firstName.trim()) newErrors.firstName = "First Name is required";
     if (!lastName.trim()) newErrors.lastName = "Last Name is required";
     if (!joiningDate) newErrors.joiningDate = "Joining Date is required";
+    if (resetPassword && !password.trim())
+      newErrors.password = "Enter a password or turn off reset";
+    else if (resetPassword && password.trim().length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0)
       scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -295,6 +334,7 @@ export default function EditTeacherModal({
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
+            employeeId,
             firstName,
             lastName,
             gender,
@@ -313,6 +353,9 @@ export default function EditTeacherModal({
             state: stateVal,
             status,
             assignments: validAssignments,
+            ...(resetPassword && password.trim()
+              ? { password: password.trim() }
+              : {}),
           }),
         },
       );
@@ -379,8 +422,29 @@ export default function EditTeacherModal({
                 </div>
               )}
 
-              {/* Name + Status */}
+              {/* Employee ID + Name + Status */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[#0a1c3a]">
+                    Employee ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
+                    className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition-all ${
+                      errors.employeeId
+                        ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
+                        : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    }`}
+                  />
+                  {errors.employeeId && (
+                    <span className="text-red-500 text-xs">
+                      {errors.employeeId}
+                    </span>
+                  )}
+                </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[#0a1c3a]">
                     First Name *
@@ -425,18 +489,6 @@ export default function EditTeacherModal({
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[#0a1c3a]">
-                    Designation
-                  </label>
-                  <input
-                    type="text"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-[#0a1c3a]">
                     Status
                   </label>
                   <select
@@ -447,6 +499,21 @@ export default function EditTeacherModal({
                     <option value="ACTIVE">Active</option>
                     <option value="ON_LEAVE">On Leave</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Designation (separate row now that Employee ID took its old slot) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[#0a1c3a]">
+                    Designation
+                  </label>
+                  <input
+                    type="text"
+                    value={designation}
+                    onChange={(e) => setDesignation(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  />
                 </div>
               </div>
 
@@ -583,6 +650,44 @@ export default function EditTeacherModal({
                     className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
+              </div>
+
+              {/* Password Reset */}
+              <div className="flex flex-col gap-2 rounded-xl border border-gray-200/80 bg-white p-4">
+                <label className="flex items-center gap-2 text-sm font-semibold text-[#0a1c3a] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={resetPassword}
+                    onChange={(e) => handleResetToggle(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  Reset password
+                </label>
+                {resetPassword && (
+                  <>
+                    <input
+                      type="text"
+                      value={password}
+                      onChange={(e) => handlePasswordChange(e.target.value)}
+                      placeholder="Auto-generated from Employee ID"
+                      className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
+                        errors.password
+                          ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
+                          : "border-gray-200/80 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      }`}
+                    />
+                    {errors.password ? (
+                      <span className="text-red-500 text-xs">
+                        {errors.password}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        Auto-filled from Employee ID — you can edit it. Share
+                        this with the teacher.
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Teaching Assignments */}

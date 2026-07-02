@@ -1,0 +1,8 @@
+Employee ID,Name,Subject,Sections,Qualification,Contact,Status
+EMP-002,"Priti Sharma","English","Class 10:C; Class 10:B","B.Ed.",123456789,Active
+EMP-003,"Raj Mehta","Physics","Class 8:8-A","M.Sc, B.Ed",9876543210,Active
+emp-023,"cvs  cd","Biology, Physics, Hindi","Class 10:B; Class 12:A; Class 10:B","wf",+91 8956347823,Active
+EMP-20,"Megha Apalia","Chemistry","Class 10:G; Class 12:A","M.Sc",+91 9834562718,Active
+EMP-22,"Riya Patel","Chemistry","Class 12:A","M.Sc",+91 9567231456,Active
+EMP-34,"Liza Patel","Maths, Biology","Class 10:G; Class 10:G","M.Sc",+91 9067452734,Active
+TCH_UNASSIGNED,"Unassigned","Social media, Advanced Mathematics","Class 8:8-A; Class 10:G; Class 10:B","-",-,INACTIVE

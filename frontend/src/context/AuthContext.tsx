@@ -294,6 +294,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     teacherData?.classTeacherOf?.academicClass?.name || null;
   const globalSectionName = teacherData?.classTeacherOf?.name || null;
   const globalSectionId = teacherData?.classTeacherOf?.id || null;
+  
 
   return (
     <AuthContext.Provider

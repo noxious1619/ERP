@@ -6,11 +6,13 @@ const BASE_URL = "http://localhost:5000/api/assignments";
 export interface AssignmentCard {
   id: string;
   title: string;
+  content?: string;
   dueDate: string;
   maxScore: number;
   class: { id: string; name: string };
   section: { id: string; name: string } | null;
   subject: { id: string; name: string };
+  fileUrl?: string | null;
   attachmentCount: number;
   submissionCount: number;
 }

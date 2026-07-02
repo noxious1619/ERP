@@ -10,6 +10,7 @@ import {
   getAllTeachers,
   getTeacherById,
   deleteTeacher,
+  deleteMultipleTeachers,
 } from "../controllers/teacherController.js";
 
 const router = Router();
@@ -19,6 +20,11 @@ router.use(protect);
 router.get(   "/",         restrictTo("SUPER_ADMIN", "ADMIN"), getAllTeachers);
 router.post(  "/onboard",  restrictTo("SUPER_ADMIN", "ADMIN"), registerTeacher);
 router.patch( "/:id",      restrictTo("SUPER_ADMIN", "ADMIN"), updateTeacher);
+router.delete(
+  "/bulk-delete",
+  restrictTo("SUPER_ADMIN", "ADMIN"),
+  deleteMultipleTeachers
+);
 router.delete("/:id",      restrictTo("SUPER_ADMIN", "ADMIN"), deleteTeacher);
 
 // ── Must come BEFORE /:id ──

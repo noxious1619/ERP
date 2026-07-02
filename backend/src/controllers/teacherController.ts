@@ -234,6 +234,8 @@ export const updateTeacher = async (req: Request, res: Response) => {
   const {
     firstName,
     lastName,
+    employeeId,
+    password,
     designation,
     qualification,
     specialization,
@@ -250,7 +252,7 @@ export const updateTeacher = async (req: Request, res: Response) => {
     email,
     status,
 
-    // NEW
+    // Teaching assignments
     assignments = [],
     classTeacherOfId,
   } = req.body;
@@ -265,86 +267,135 @@ export const updateTeacher = async (req: Request, res: Response) => {
         throw new Error("Teacher not found");
       }
 
-      // ==========================
-      // Update teacher details
-      // ==========================
-    const updateData: any = {};
+      // =====================================================
+      // Check Employee ID uniqueness (Teacher + Staff)
+      // =====================================================
+      if (
+        employeeId !== undefined &&
+        employeeId !== existing.employeeId
+      ) {
+        const [dupTeacher, dupStaff] = await Promise.all([
+          tx.teacher.findUnique({
+            where: { employeeId },
+          }),
+          tx.staff.findUnique({
+            where: { employeeId },
+          }),
+        ]);
 
-if (firstName !== undefined)
-  updateData.firstName = firstName;
+        if (dupTeacher || dupStaff) {
+          throw new Error(
+            `Employee ID "${employeeId}" is already in use. Please use a different ID.`
+          );
+        }
+      }
 
-if (lastName !== undefined)
-  updateData.lastName = lastName;
+      // =====================================================
+      // Update Teacher Details
+      // =====================================================
+      const updateData: any = {};
 
-if (designation !== undefined)
-  updateData.designation = designation;
+      if (employeeId !== undefined)
+        updateData.employeeId = employeeId;
 
-if (qualification !== undefined)
-  updateData.qualification = qualification;
+      if (firstName !== undefined)
+        updateData.firstName = firstName;
 
-if (specialization !== undefined)
-  updateData.specialization = specialization;
+      if (lastName !== undefined)
+        updateData.lastName = lastName;
 
-if (experience !== undefined) {
-  updateData.experience =
-    experience === "" || experience === null
-      ? null
-      : Number(experience);
-}
+      if (designation !== undefined)
+        updateData.designation = designation;
 
-if (joiningDate !== undefined) {
-  updateData.joiningDate = new Date(joiningDate);
-}
+      if (qualification !== undefined)
+        updateData.qualification = qualification;
 
-if (gender !== undefined)
-  updateData.gender = gender;
+      if (specialization !== undefined)
+        updateData.specialization = specialization;
 
-if (dateOfBirth !== undefined) {
-  updateData.dateOfBirth =
-    dateOfBirth
-      ? new Date(dateOfBirth)
-      : null;
-}
+      if (experience !== undefined) {
+        updateData.experience =
+          experience === "" || experience === null
+            ? null
+            : Number(experience);
+      }
 
-if (phone !== undefined)
-  updateData.phone = phone;
+      if (joiningDate !== undefined) {
+        updateData.joiningDate = joiningDate
+          ? new Date(joiningDate)
+          : null;
+      }
 
-if (address !== undefined)
-  updateData.address = address;
+      if (gender !== undefined)
+        updateData.gender = gender;
 
-if (city !== undefined)
-  updateData.city = city;
+      if (dateOfBirth !== undefined) {
+        updateData.dateOfBirth = dateOfBirth
+          ? new Date(dateOfBirth)
+          : null;
+      }
 
-if (state !== undefined)
-  updateData.state = state;
+      if (phone !== undefined)
+        updateData.phone = phone;
 
-if (bloodGroup !== undefined)
-  updateData.bloodGroup = bloodGroup;
+      if (address !== undefined)
+        updateData.address = address;
 
-if (bio !== undefined)
-  updateData.bio = bio;
+      if (city !== undefined)
+        updateData.city = city;
 
-if (email !== undefined)
-  updateData.email = email;
+      if (state !== undefined)
+        updateData.state = state;
 
-if (status !== undefined)
-  updateData.status = status;
+      if (bloodGroup !== undefined)
+        updateData.bloodGroup = bloodGroup;
 
-await tx.teacher.update({
-  where: { id },
-  data: updateData,
-});
+      if (bio !== undefined)
+        updateData.bio = bio;
 
-      // ==========================
+      if (email !== undefined)
+        updateData.email = email;
+
+      if (status !== undefined)
+        updateData.status = status;
+
+      await tx.teacher.update({
+        where: { id },
+        data: updateData,
+      });
+
+      // =====================================================
+      // Reset Password (updates linked User table)
+      // =====================================================
+      if (
+        password !== undefined &&
+        password.trim() !== ""
+      ) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await tx.user.update({
+          where: {
+            id: existing.userId,
+          },
+          data: {
+            passwordHash: hashedPassword,
+          },
+        });
+      }
+
+      // =====================================================
       // Replace Teaching Assignments
-      // ==========================
+      // =====================================================
       await tx.teacherSectionSubject.deleteMany({
         where: {
           teacherId: id,
         },
       });
 
-      if (Array.isArray(assignments) && assignments.length > 0) {
+      if (
+        Array.isArray(assignments) &&
+        assignments.length > 0
+      ) {
         const teacherAssignments = assignments.flatMap(
           (assignment: {
             subjectId: string;
@@ -365,9 +416,9 @@ await tx.teacher.update({
         }
       }
 
-      // ==========================
+      // =====================================================
       // Class Teacher Assignment
-      // ==========================
+      // =====================================================
       if (classTeacherOfId !== undefined) {
         await tx.section.updateMany({
           where: {
@@ -391,7 +442,9 @@ await tx.teacher.update({
       }
 
       return tx.teacher.findUnique({
-        where: { id },
+        where: {
+          id,
+        },
         select: teacherSelect,
       });
     });
@@ -403,6 +456,25 @@ await tx.teacher.update({
     });
   } catch (error: any) {
     console.error("[updateTeacher]", error);
+
+    const target = error?.meta?.target?.[0] ?? "";
+
+    if (error.code === "P2002") {
+      if (target.includes("employeeId")) {
+        return res.status(400).json({
+          success: false,
+          message: `Employee ID "${req.body.employeeId}" is already in use.`,
+        });
+      }
+
+      if (target.includes("email")) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Email is already registered to another user.",
+        });
+      }
+    }
 
     return res.status(
       error.message === "Teacher not found" ? 404 : 500
@@ -683,13 +755,21 @@ export const getTeacherTeachingAssignments = async (
 };
 
 // ── GET /api/teachers ─────────────────────────────────────────────────────────
+// ── GET /api/teachers ─────────────────────────────────────────────────────────
 export const getAllTeachers = async (req: Request, res: Response) => {
   try {
     const page         = Math.max(1, parseInt(req.query.page   as string) || 1);
     const limit        = Math.max(1, parseInt(req.query.limit  as string) || 10);
     const search       = (req.query.search as string)?.trim() || "";
     const statusFilter = (req.query.status as string)?.trim() || "";
+    const genderFilter = (req.query.gender as string)?.trim() || "";
+    const classId       = (req.query.classId as string)?.trim() || "";
+    const subjectId     = (req.query.subjectId as string)?.trim() || "";
     const skip         = (page - 1) * limit;
+
+    console.log("[getAllTeachers] query params:", {
+      search, statusFilter, genderFilter, classId, subjectId,
+    });
 
     const searchCondition = search ? {
       OR: [
@@ -704,7 +784,31 @@ export const getAllTeachers = async (req: Request, res: Response) => {
       statusFilter === "Active"   ? { status: "ACTIVE" }   :
       statusFilter === "On Leave" ? { status: "ON_LEAVE" } : {};
 
-    const where = { ...searchCondition, ...statusCondition };
+    // Case-insensitive so "MALE" (dropdown) matches "Male" (DB) regardless of casing
+    const genderCondition = genderFilter
+      ? { gender: { equals: genderFilter, mode: "insensitive" as const } }
+      : {};
+
+    const assignmentCondition =
+      classId || subjectId
+        ? {
+            teachingAssignments: {
+              some: {
+                ...(subjectId ? { subjectId } : {}),
+                ...(classId ? { section: { classId } } : {}),
+              },
+            },
+          }
+        : {};
+
+    const where = {
+      ...searchCondition,
+      ...statusCondition,
+      ...genderCondition,
+      ...assignmentCondition,
+    };
+
+    console.log("[getAllTeachers] final where:", JSON.stringify(where, null, 2));
 
     const [teachers, total] = await Promise.all([
       prisma.teacher.findMany({
@@ -718,6 +822,7 @@ export const getAllTeachers = async (req: Request, res: Response) => {
           status:        true,
           qualification: true,
           designation:   true,
+          gender:        true,
           teachingAssignments: {
             select: {
               subject: { select: { name: true } },
@@ -737,15 +842,17 @@ export const getAllTeachers = async (req: Request, res: Response) => {
       prisma.teacher.count({ where }),
     ]);
 
+    console.log("[getAllTeachers] matched count:", total);
+
     const normalizeStatus = (s: string) =>
       s === "ACTIVE" ? "Active" : s === "ON_LEAVE" ? "On Leave" : s;
 
     const data = teachers.map((t) => {
       const subjects = [
-  ...new Set(
-    t.teachingAssignments.map(a => a.subject.name)
-  ),
-];
+        ...new Set(
+          t.teachingAssignments.map((a) => a.subject.name)
+        ),
+      ];
       const sections = t.teachingAssignments.map(
         (a) => `${a.section.academicClass.name}:${a.section.name}`
       );
@@ -753,15 +860,15 @@ export const getAllTeachers = async (req: Request, res: Response) => {
         id:            t.id,
         employeeId:    t.employeeId,
         name:          `${t.firstName} ${t.lastName}`.trim(),
-       subject: subjects.join(", ") || "-",
+        subject:       subjects.join(", ") || "-",
         sections:      sections.length > 0 ? sections : ["-"],
         qualification: t.qualification ?? "-",
         contact:       t.phone ?? "-",
         status:        normalizeStatus(t.status),
+        gender:        t.gender ?? "-",
       };
     });
 
-    // Stats
     const monthStart = new Date(
       new Date().getFullYear(),
       new Date().getMonth(),
@@ -895,5 +1002,95 @@ export const deleteTeacher = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── DELETE /api/teachers/bulk-delete ──────────────────────────────────────────
+export const deleteMultipleTeachers = async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an array of teacher IDs.",
+      });
+    }
+
+    const teachers = await prisma.teacher.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    if (teachers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No teachers found.",
+      });
+    }
+
+    const teacherIds = teachers.map((t) => t.id);
+    const userIds = teachers.map((t) => t.userId);
+
+    await prisma.$transaction(async (tx) => {
+      // Remove teaching assignments
+      await tx.teacherSectionSubject.deleteMany({
+        where: {
+          teacherId: {
+            in: teacherIds,
+          },
+        },
+      });
+
+      // Remove class teacher references
+      await tx.section.updateMany({
+        where: {
+          classTeacherId: {
+            in: teacherIds,
+          },
+        },
+        data: {
+          classTeacherId: null,
+        },
+      });
+
+      // Delete teachers
+      await tx.teacher.deleteMany({
+        where: {
+          id: {
+            in: teacherIds,
+          },
+        },
+      });
+
+      // Delete login accounts
+      await tx.user.deleteMany({
+        where: {
+          id: {
+            in: userIds,
+          },
+        },
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      deletedCount: teachers.length,
+      message: `${teachers.length} teacher(s) deleted successfully.`,
+    });
+  } catch (error: any) {
+    console.error("[deleteMultipleTeachers]", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

@@ -7,11 +7,11 @@ import type {
   TeacherSection,
 } from "./TeacherTimetableHeader";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface TeacherWeeklyEntry {
   id: string;
   day: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY";
   startTime: string;
+  endTime?: string;
   isBreak?: boolean;
   code: string;
   subject: string;
@@ -96,6 +96,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
               id: row.id,
               day: row.day,
               startTime: row.startTime,
+              endTime: row.endTime,
               isBreak: row.isBreak,
               code: row.isBreak ? "" : row.subject?.code || "N/A",
               subject: row.isBreak ? (row.breakLabel || "Break") : (row.subject?.name || "No Subject"),
@@ -143,6 +144,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
               id: row.id,
               day: row.day,
               startTime: row.time, // Backend returns 'time' here
+              endTime: row.endTime,
               isBreak: false, // Teacher schedule doesn't have school breaks returned
               code: row.code || "",
               subject: row.sectionLabel || "Class", // e.g., "Class 10 - A"
@@ -228,6 +230,27 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
     );
   }
 
+  const isCardActive = (day: string, start?: string, end?: string) => {
+    if (!start) return false;
+    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const currentDay = days[new Date().getDay()];
+    if (day.toUpperCase() !== currentDay) return false;
+
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    let resolvedEnd = end;
+    if (!resolvedEnd) {
+      const [h, m] = start.split(":").map(Number);
+      const totalMin = h * 60 + m + 45;
+      const endHour = Math.floor(totalMin / 60) % 24;
+      const endMin = totalMin % 60;
+      resolvedEnd = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+    }
+
+    return currentTime >= start && currentTime <= resolvedEnd;
+  };
+
   return (
     <div className="mt-4 rounded-[40px] bg-[#F3F6FB] px-10 py-8 shadow-sm">
       {/* Day Headers */}
@@ -286,6 +309,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
             if (rowIndex === -1) return null;
 
             const columnWidth = 100 / COLUMN_COUNT;
+            const isActive = isCardActive(item.day, item.startTime, item.endTime);
 
             return (
               <div
@@ -298,13 +322,15 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
                 }}
               >
                 {!item.isBreak && (
-                  <WeeklyClassCard
-                    code={item.code}
-                    subject={item.subject}
-                    teacher={item.teacher}
-                    location={item.room}
-                    accentColor={item.color}
-                  />
+                  <div className={isActive ? "ring-4 ring-[#3B4FE8] rounded-[24px] shadow-lg animate-pulse" : ""}>
+                    <WeeklyClassCard
+                      code={item.code}
+                      subject={item.subject}
+                      teacher={item.teacher}
+                      location={item.room}
+                      accentColor={item.color}
+                    />
+                  </div>
                 )}
               </div>
             );

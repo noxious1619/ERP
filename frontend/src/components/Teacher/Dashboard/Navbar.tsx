@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
   { label: "Exams",     icon: exams,     href: "/teacher/exams" },
   { label: "Attendance",icon: attendance,href: "/teacher/attendance" },
   { label: "Notices",   icon: notice,    href: "/teacher/notices" },
-  { label: "Settings",  icon: setting,   href: "/teacher/settings" },
+  // { label: "Settings",  icon: setting,   href: "/teacher/settings" },
 ];
 
 const TeacherNavbar: React.FC = () => {

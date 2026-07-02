@@ -49,17 +49,17 @@ export const createClass = async (req: any, res: Response) => {
     res.status(500).json({ message: "Error creating class", error });
   }
 };
-
 export const createSection = async (req: any, res: Response) => {
   try {
-    const { name, classId, capacity, homeRoom } = req.body;
+    const { name, classId, capacity, homeRoom, classTeacherId } = req.body;
 
     const newSection = await prisma.section.create({
       data: {
         name,
         classId,
         capacity: capacity ? Number(capacity) : 50,
-        homeRoom: homeRoom || null
+        homeRoom: homeRoom || null,
+        classTeacherId: classTeacherId || null
       },
     });
 
@@ -70,7 +70,6 @@ export const createSection = async (req: any, res: Response) => {
     res.status(500).json({ message: "Error creating section", error });
   }
 };
-
 export const createSubject = async (req: any, res: Response) => {
   try {
     const { name, code, classId, icon } = req.body;
@@ -321,16 +320,16 @@ export const getStudentTimetable = async (req: Request, res: Response) => {
     }
 
     const timetableRows = await prisma.timetable.findMany({
-      where: {
-        sectionId: studentProfile.sectionId,
-        day: day.toUpperCase() as any
-      },
-      include: {
-        subject: { select: { name: true } },
-        teacher: { select: { name: true } }
-      },
-      orderBy: { period: 'asc' }
-    });
+  where: {
+    sectionId: studentProfile.sectionId,
+    day: day.toUpperCase() as any
+  },
+  include: {
+    subject: { select: { name: true } },
+    teacher: { select: { firstName: true, lastName: true } }
+  },
+  orderBy: { period: 'asc' }
+});
 
     const normalizedSchedule = normalizeTimetable(timetableRows, day);
 
@@ -584,7 +583,7 @@ export const getSectionsByClass = async (req: Request, res: Response) => {
       where: { classId },
       include: {
         academicClass: { select: { id: true, name: true } },
-        classTeacher:  { select: { firstName: true, lastName: true } },
+        classTeacher:  { select: { id: true, firstName: true, lastName: true } },
         _count:        { select: { students: true } }
       },
       orderBy: { name: 'asc' }
@@ -597,6 +596,7 @@ export const getSectionsByClass = async (req: Request, res: Response) => {
       className:        section.academicClass.name,
       capacity:         section.capacity,
       homeRoom:         section.homeRoom,
+      classTeacherId:   section.classTeacher?.id ?? null,
       classTeacherName: section.classTeacher
         ? `${section.classTeacher.firstName} ${section.classTeacher.lastName}`
         : "Not Assigned",
@@ -616,7 +616,7 @@ export const getSectionsByClass = async (req: Request, res: Response) => {
 export const updateSection = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const { name, homeRoom, capacity } = req.body;
+    const { name, homeRoom, capacity, classTeacherId } = req.body;
 
     const existing = await prisma.section.findUnique({ where: { id } });
     if (!existing) {
@@ -626,9 +626,10 @@ export const updateSection = async (req: Request, res: Response) => {
     const updated = await prisma.section.update({
       where: { id },
       data: {
-        ...(name     !== undefined && { name }),
-        ...(homeRoom !== undefined && { homeRoom: homeRoom || null }),
-        ...(capacity !== undefined && { capacity: Number(capacity) }),
+        ...(name           !== undefined && { name }),
+        ...(homeRoom        !== undefined && { homeRoom: homeRoom || null }),
+        ...(capacity        !== undefined && { capacity: Number(capacity) }),
+        ...(classTeacherId  !== undefined && { classTeacherId: classTeacherId || null }),
       }
     });
 

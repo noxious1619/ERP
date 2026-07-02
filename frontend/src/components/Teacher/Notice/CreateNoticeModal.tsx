@@ -138,6 +138,10 @@ const CreateNoticeModal = ({
       setError("Please select a class or section.");
       return;
     }
+    if (expiresAt && expiresAt < new Date().toISOString().split("T")[0]) {
+      setError("Expiry date cannot be in the past.");
+      return;
+    }
     setError(null);
     setView("preview");
   };
@@ -334,8 +338,9 @@ const CreateNoticeModal = ({
                 <input
                   type="date"
                   value={expiresAt}
+                  min={new Date().toISOString().split("T")[0]}
                   onChange={(e) => setExpiresAt(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-[14px] text-[#111111] outline-none focus:border-[#3A71FF] transition-colors"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-gray-700 cursor-pointer"
                 />
               </div>
             </div>

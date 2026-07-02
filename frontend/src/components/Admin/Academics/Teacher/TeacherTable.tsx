@@ -15,8 +15,6 @@ export type TeacherRowType = {
   status: string;
 };
 
-type StatusType = "Active" | "On Leave";
-
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     Active: "bg-green-100 text-green-700",
@@ -45,7 +43,7 @@ interface TeacherTableProps {
   teacherList: TeacherRowType[];
   loading?: boolean;
   onEdit: (teacher: TeacherRowType) => void;
-  onDelete: (teacher: TeacherRowType) => void;
+  onDelete: (teacher: TeacherRowType[]) => void;
 }
 
 export default function TeacherTable({
@@ -67,10 +65,11 @@ export default function TeacherTable({
     );
 
   const selectedTeachers = teacherList.filter((t) => selected.includes(t.id));
-  const canAct = selectedTeachers.length === 1;
+  const canEdit = selectedTeachers.length === 1;
+  const canDelete = selectedTeachers.length >= 1;
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-auto h-full rounded-xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full min-w-[900px] text-sm">
         <thead>
           <tr className="border-b border-gray-100">
@@ -93,11 +92,15 @@ export default function TeacherTable({
             <th className="px-4 py-4 text-right">
               <div className="flex items-center justify-end gap-2">
                 <button
-                  onClick={() => canAct && onEdit(selectedTeachers[0])}
-                  disabled={!canAct}
-                  title={canAct ? "Edit teacher" : "Select one teacher to edit"}
+                  onClick={() => canEdit && onEdit(selectedTeachers[0])}
+                  disabled={!canEdit}
+                  title={
+                    canEdit
+                      ? "Edit teacher"
+                      : "Select exactly one teacher to edit"
+                  }
                   className={`p-1.5 rounded-lg transition-colors ${
-                    canAct
+                    canEdit
                       ? "text-blue-600 hover:bg-blue-50 cursor-pointer"
                       : "text-gray-300 cursor-not-allowed"
                   }`}
@@ -105,13 +108,15 @@ export default function TeacherTable({
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => canAct && onDelete(selectedTeachers[0])}
-                  disabled={!canAct}
+                  onClick={() => canDelete && onDelete(selectedTeachers)}
+                  disabled={!canDelete}
                   title={
-                    canAct ? "Delete teacher" : "Select one teacher to delete"
+                    canDelete
+                      ? `Delete ${selectedTeachers.length} teacher(s)`
+                      : "Select at least one teacher"
                   }
                   className={`p-1.5 rounded-lg transition-colors ${
-                    canAct
+                    canDelete
                       ? "text-red-500 hover:bg-red-50 cursor-pointer"
                       : "text-gray-300 cursor-not-allowed"
                   }`}

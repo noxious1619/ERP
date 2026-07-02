@@ -8,7 +8,7 @@ export default function AdminTeachersPage() {
       <AdminSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <AdminNavbar />
-        <main className="flex-1 overflow-hidden p-6">
+        <main className="flex-1 overflow-auto p-6">
           <TeacherView />
         </main>
       </div>

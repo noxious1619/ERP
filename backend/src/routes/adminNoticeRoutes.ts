@@ -9,8 +9,7 @@ import { createNotice } from '../controllers/noticeController.js';
 import { getAdminDashboardStats } from '../controllers/dashboardController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
-import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/prisma.js';
+
 
 const router = express.Router();
 

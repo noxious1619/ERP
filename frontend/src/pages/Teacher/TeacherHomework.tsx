@@ -18,6 +18,7 @@ interface Filters {
 
 const TeacherHomework = () => {
   const [openModal, setOpenModal] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<AssignmentCard | null>(null);
   const { teacherData, loading: authLoading } = useAuth();
 
   const [filters, setFilters] = useState<Filters>({
@@ -65,7 +66,7 @@ const TeacherHomework = () => {
             <div
               className={`
                 bg-[#F8F9FE] px-10 pt-4
-                ${!openModal ? "sticky top-0 z-20" : ""}
+                ${!openModal && !editingAssignment ? "sticky top-0 z-20" : ""}
               `}
             >
               <HomeworkHeader
@@ -90,6 +91,7 @@ const TeacherHomework = () => {
                 assignments={assignments}
                 loading={loading || authLoading}
                 error={error}
+                onEditClick={(task) => setEditingAssignment(task)}
               />
 
               {/* Pagination */}
@@ -138,9 +140,12 @@ const TeacherHomework = () => {
 
       {/* Modal */}
       <CreateAssignmentForm
-        open={openModal}
+        open={openModal || !!editingAssignment}
+        editingAssignment={editingAssignment}
+        teachingAssignments={teacherData?.teachingAssignments ?? []}
         onClose={() => {
           setOpenModal(false);
+          setEditingAssignment(null);
           refetch();
         }}
       />

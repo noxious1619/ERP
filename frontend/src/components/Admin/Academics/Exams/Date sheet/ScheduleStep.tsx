@@ -191,12 +191,6 @@ export default function ScheduleStep({
               — {scheduleRows.length} papers
             </span>
           </div>
-          <button
-            onClick={handleAddRow}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#4285F4] font-semibold text-xs rounded-lg border border-blue-100 transition cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5" /> ADD ANOTHER EXAM
-          </button>
         </div>
 
         <div className="overflow-x-auto">

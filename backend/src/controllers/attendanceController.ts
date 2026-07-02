@@ -734,11 +734,14 @@ export const getAdminAttendanceSummary = async (req: Request, res: Response) => 
 
     // Fetch all sections to do section-wise aggregation for charts
     const sectionWhere: any = {};
-    if (classId) {
-      sectionWhere.classId = String(classId);
-    }
-    const allSections = await prisma.section.findMany({
-      where: sectionWhere,
+if (classId) {
+  sectionWhere.classId = String(classId);
+}
+if (sectionId) {
+  sectionWhere.id = String(sectionId);
+}
+const allSections = await prisma.section.findMany({
+  where: sectionWhere,
       select: {
         id: true,
         name: true,
@@ -768,17 +771,14 @@ export const getAdminAttendanceSummary = async (req: Request, res: Response) => 
     const sectionChartsData = [];
     const sectionDefaultersData = [];
 
-    // Define date range array for trends (default to the 1 week of seeded logs if dates are not specified)
-    let trendDates = [
-      new Date("2026-06-08T00:00:00.000Z"),
-      new Date("2026-06-09T00:00:00.000Z"),
-      new Date("2026-06-10T00:00:00.000Z"),
-      new Date("2026-06-11T00:00:00.000Z"),
-      new Date("2026-06-12T00:00:00.000Z"),
-      new Date("2026-06-13T00:00:00.000Z"),
-      new Date("2026-06-14T00:00:00.000Z"),
-    ];
-
+    let trendDates: Date[] = [];
+const today = new Date();
+for (let i = 6; i >= 0; i--) {
+  const d = new Date(today);
+  d.setUTCDate(d.getUTCDate() - i);
+  d.setUTCHours(0, 0, 0, 0);
+  trendDates.push(d);
+}
     if (startDate && endDate) {
       const start = new Date(startDate as string);
       const end = new Date(endDate as string);
@@ -829,7 +829,7 @@ export const getAdminAttendanceSummary = async (req: Request, res: Response) => 
         secPresent += present;
       });
 
-      const secPct = secTotal > 0 ? Math.round((secPresent / secTotal) * 100) : 100;
+      const secPct = secTotal > 0 ? Math.round((secPresent / secTotal) * 100) : null;
       const labelName = classId ? `Sec ${sec.name}` : `${sec.academicClass?.name} - ${sec.name}`;
 
       sectionChartsData.push({
@@ -862,8 +862,8 @@ export const getAdminAttendanceSummary = async (req: Request, res: Response) => 
 
         const totalDayLogs = dayLogs.length;
         const presentDayLogs = dayLogs.filter(l => l.status === 'PRESENT' || l.status === 'LATE').length;
-        const dayPct = totalDayLogs > 0 ? Math.round((presentDayLogs / totalDayLogs) * 100) : 100;
-        sectionDataTrends.push(dayPct);
+       const dayPct = totalDayLogs > 0 ? Math.round((presentDayLogs / totalDayLogs) * 100) : null;
+sectionDataTrends.push(dayPct);
       }
 
       trendSections.push({

@@ -7,6 +7,7 @@ import {
   getStaffById,
   updateStaff,
   deleteStaff,
+  deleteMultipleStaff,
 } from "../controllers/staffController.js";
 
 const router = Router();
@@ -14,6 +15,11 @@ router.use(protect);
 
 router.get("/",           restrictTo("SUPER_ADMIN", "ADMIN"), getAllStaff);
 router.post("/onboard",   restrictTo("SUPER_ADMIN", "ADMIN"), registerStaff);
+router.delete(
+  "/bulk-delete",
+  restrictTo("SUPER_ADMIN", "ADMIN"),
+  deleteMultipleStaff
+);
 router.get("/:id",        restrictTo("SUPER_ADMIN", "ADMIN"), getStaffById);
 router.patch("/:id",      restrictTo("SUPER_ADMIN", "ADMIN"), updateStaff);
 router.delete("/:id",     restrictTo("SUPER_ADMIN", "ADMIN"), deleteStaff);

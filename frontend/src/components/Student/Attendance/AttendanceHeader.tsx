@@ -51,7 +51,7 @@ const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
       {/* Right Side Icons */}
       <div className="flex items-center gap-10 pt-2">
         {/* Notification */}
-        <div className="relative " ref={notificationRef}>
+        {/* <div className="relative " ref={notificationRef}>
           <button
             onClick={() => setShowNotifications((prev) => !prev)}
             className="relative flex items-center justify-center cursor-pointer"
@@ -66,18 +66,24 @@ const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
           {showNotifications && (
             <NotificationDropdown onClose={() => setShowNotifications(false)} />
           )}
-        </div>
+        </div> */}
 
         {/* Profile Avatar */}
         <button
           onClick={onProfileClick ?? (() => navigate("/student/profile"))}
-          className="overflow-hidden rounded-full cursor-pointer"
+          className="overflow-hidden rounded-full cursor-pointer h-[52px] w-[52px]"
         >
-          <img
-            src={studentAvatar}
-            alt="Student"
-            className="h-[52px] w-[52px] rounded-full object-cover"
-          />
+          {localStorage.getItem("role") === "TEACHER" ? (
+            <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
+              P
+            </div>
+          ) : (
+            <img
+              src={studentAvatar}
+              alt="Student"
+              className="h-full w-full object-cover rounded-full"
+            />
+          )}
         </button>
       </div>
     </div>

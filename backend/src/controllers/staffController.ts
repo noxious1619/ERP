@@ -8,7 +8,7 @@ import type { Role } from "../../generated/prisma/index.js";
 const ROLE_MAP: Record<string, { prismaRole: Role; designation: string }> = {
  Principal:    { prismaRole: "PRINCIPAL",   designation: "Principal"        },
   Accountant:   { prismaRole: "ACCOUNTANT",  designation: "Accountant"       },
-  "Front Desk": { prismaRole: "FRONT_DESK",  designation: "Front Desk Staff" },
+  "Front Desk": { prismaRole: "FRONT_DESK",  designation: "Front Desk" },
   Finance:      { prismaRole: "FINANCE",     designation: "Finance"          },
   Admin:        { prismaRole: "ADMIN",       designation: "Admin"            },
 };
@@ -127,15 +127,15 @@ export const getAllStaff = async (req: Request, res: Response) => {
     const skip         = (page - 1) * limit;
 
     const requestingRole = (req as any).user?.role as string;
-const excludeAdmin   = requestingRole === "ADMIN";
+    const excludeAdmin   = requestingRole === "ADMIN";
 
     // ── Map UI role to designation ────────────────────────────────────────────
     const designationFilter =
-  roleFilter === "Principal"  ? "Principal"        :
-  roleFilter === "Accountant" ? "Accountant"       :
-  roleFilter === "Front Desk" ? "Front Desk Staff" :
-  roleFilter === "Finance"    ? "Finance"          :
-  roleFilter === "Admin"      ? "Admin"            : undefined;
+      roleFilter === "Principal"  ? "Principal"        :
+      roleFilter === "Accountant" ? "Accountant"       :
+      roleFilter === "Front Desk" ? "Front Desk Staff" :
+      roleFilter === "Finance"    ? "Finance"          :
+      roleFilter === "Admin"      ? "Admin"            : undefined;
 
     // ── Search condition ──────────────────────────────────────────────────────
     const nameSearch = search
@@ -154,15 +154,23 @@ const excludeAdmin   = requestingRole === "ADMIN";
       statusFilter === "Active"   ? { status: "ACTIVE" }    :
       statusFilter === "On Leave" ? { status: "ON_LEAVE" }  : {};
 
+    // ── Designation conditions (role filter + admin exclusion) ─────────────────
+    // Built as an AND array so these two conditions never collide on the same key
+    const designationConditions = [
+      ...(designationFilter ? [{ designation: designationFilter }] : []),
+      ...(excludeAdmin ? [{ designation: { not: "Admin" } }] : []),
+    ];
+
+    const where = {
+      ...nameSearch,
+      ...statusCondition,
+      ...(designationConditions.length ? { AND: designationConditions } : {}),
+    };
+
     // ── Fetch Staff only (no Teachers) ────────────────────────────────────────
     const [staffRows, total] = await Promise.all([
       prisma.staff.findMany({
-        where: {
-          ...nameSearch,
-          ...statusCondition,
-          ...(designationFilter ? { designation: designationFilter } : {}),
-             ...(excludeAdmin ? { designation: { not: "Admin" } } : {}),
-        },
+        where,
         select: {
           id:          true,
           firstName:   true,
@@ -179,36 +187,29 @@ const excludeAdmin   = requestingRole === "ADMIN";
         skip,
         take: limit,
       }),
-      prisma.staff.count({
-  where: {
-    ...nameSearch,
-    ...statusCondition,
-    ...(designationFilter ? { designation: designationFilter } : {}),
-    ...(excludeAdmin ? { designation: { not: "Admin" } } : {}),
-  },
-}),
+      prisma.staff.count({ where }),
     ]);
 
     // ── Normalize ─────────────────────────────────────────────────────────────
-const normalizeStatus = (s: string) =>
-  s === "ACTIVE" ? "Active" : s === "ON_LEAVE" ? "On Leave" : s;
+    const normalizeStatus = (s: string) =>
+      s === "ACTIVE" ? "Active" : s === "ON_LEAVE" ? "On Leave" : s;
 
-const data = staffRows.map((s) => ({
-  id:          s.id,
-  employeeId:  s.employeeId,
-  name:        `${s.firstName} ${s.lastName}`.trim(),
-  role:        s.designation,
-  department:  s.department ?? "-",
-  joiningDate: s.joiningDate
-    ? new Date(s.joiningDate).toLocaleDateString("en-IN", {
-        day:   "2-digit",
-        month: "2-digit",
-        year:  "numeric",
-      })
-    : "-",
-  contact: s.phone ?? "-",
-  status:  normalizeStatus(s.status) as "Active" | "On Leave",
-}));
+    const data = staffRows.map((s) => ({
+      id:          s.id,
+      employeeId:  s.employeeId,
+      name:        `${s.firstName} ${s.lastName}`.trim(),
+      role:        s.designation,
+      department:  s.department ?? "-",
+      joiningDate: s.joiningDate
+        ? new Date(s.joiningDate).toLocaleDateString("en-IN", {
+            day:   "2-digit",
+            month: "2-digit",
+            year:  "numeric",
+          })
+        : "-",
+      contact: s.phone ?? "-",
+      status:  normalizeStatus(s.status) as "Active" | "On Leave",
+    }));
 
     // ── Stats ─────────────────────────────────────────────────────────────────
     const [allStaff, activeCount, onLeaveCount, newThisMonth] = await Promise.all([
@@ -304,10 +305,11 @@ export const updateStaff = async (req: Request, res: Response) => {
   try {
      const id = req.params.id as string; 
     const {
+      employeeId,
       firstName, lastName, gender, dateOfBirth,
       phone, email, address, city, state,
       bloodGroup, department, joiningDate, bio, status,
-      qualification, experience
+      qualification, experience, password,
     } = req.body;
 
     const existing = await prisma.staff.findUnique({ where: { id } });
@@ -316,6 +318,20 @@ export const updateStaff = async (req: Request, res: Response) => {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
+      // ── Check Employee ID uniqueness (Teacher + Staff) ──────────────
+      if (employeeId !== undefined && employeeId !== existing.employeeId) {
+        const [dupTeacher, dupStaff] = await Promise.all([
+          tx.teacher.findUnique({ where: { employeeId } }),
+          tx.staff.findUnique({ where: { employeeId } }),
+        ]);
+
+        if (dupTeacher || dupStaff) {
+          throw new Error(
+            `Employee ID "${employeeId}" is already in use. Please use a different ID.`
+          );
+        }
+      }
+
       // Update User name + email if changed
       if (firstName || lastName || email) {
         await tx.user.update({
@@ -329,23 +345,24 @@ export const updateStaff = async (req: Request, res: Response) => {
         });
       }
 
-      return tx.staff.update({
+      const result = await tx.staff.update({
         where: { id },
         data: {
-          ...(firstName   !== undefined && { firstName }),
-          ...(lastName    !== undefined && { lastName }),
-          ...(gender      !== undefined && { gender }),
-          ...(dateOfBirth !== undefined && { dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null }),
-          ...(phone       !== undefined && { phone }),
-          ...(email       !== undefined && { email }),
-          ...(address     !== undefined && { address }),
-          ...(city        !== undefined && { city }),
-          ...(state       !== undefined && { state }),
-          ...(bloodGroup  !== undefined && { bloodGroup }),
-          ...(department  !== undefined && { department }),
-          ...(joiningDate !== undefined && { joiningDate: new Date(joiningDate) }),
-          ...(bio         !== undefined && { bio }),
-          ...(status      !== undefined && { status }),
+          ...(employeeId   !== undefined && { employeeId }),
+          ...(firstName    !== undefined && { firstName }),
+          ...(lastName     !== undefined && { lastName }),
+          ...(gender       !== undefined && { gender }),
+          ...(dateOfBirth  !== undefined && { dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null }),
+          ...(phone        !== undefined && { phone }),
+          ...(email        !== undefined && { email }),
+          ...(address      !== undefined && { address }),
+          ...(city         !== undefined && { city }),
+          ...(state        !== undefined && { state }),
+          ...(bloodGroup   !== undefined && { bloodGroup }),
+          ...(department   !== undefined && { department }),
+          ...(joiningDate  !== undefined && { joiningDate: new Date(joiningDate) }),
+          ...(bio          !== undefined && { bio }),
+          ...(status       !== undefined && { status }),
           ...(qualification !== undefined && { qualification }),
 
 ...(experience !== undefined && {
@@ -353,6 +370,18 @@ export const updateStaff = async (req: Request, res: Response) => {
 }),
         },
       });
+
+      // ── Reset Password (updates linked User table) ──────────────────
+      if (password !== undefined && password.trim() !== "") {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await tx.user.update({
+          where: { id: existing.userId },
+          data: { passwordHash: hashedPassword },
+        });
+      }
+
+      return result;
     });
 
     return res.status(200).json({
@@ -361,10 +390,28 @@ export const updateStaff = async (req: Request, res: Response) => {
       data: updated,
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: error.message });
+    const target = error?.meta?.target?.[0] ?? "";
+
+    if (error.code === "P2002") {
+      if (target.includes("employeeId")) {
+        return res.status(400).json({
+          success: false,
+          message: `Employee ID "${req.body.employeeId}" is already in use.`,
+        });
+      }
+      if (target.includes("email")) {
+        return res.status(400).json({
+          success: false,
+          message: "Email is already registered to another user.",
+        });
+      }
+    }
+
+    return res.status(
+      error.message === "Staff not found" ? 404 : 500
+    ).json({ success: false, message: error.message });
   }
 };
-
 // ── DELETE /api/staff/:id ─────────────────────────────────────────────────────
 export const deleteStaff = async (req: Request, res: Response) => {
   try {
@@ -385,6 +432,51 @@ export const deleteStaff = async (req: Request, res: Response) => {
       message: "Staff member deleted successfully",
     });
   } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ── DELETE /api/staff/bulk-delete ─────────────────────────────────────────────
+export const deleteMultipleStaff = async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body; // array of staff ids
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide an array of staff IDs to delete.",
+      });
+    }
+
+    // Fetch all staff records to get their userIds
+    const staffRecords = await prisma.staff.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, userId: true },
+    });
+
+    if (staffRecords.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No staff records found for the provided IDs.",
+      });
+    }
+
+    const userIds = staffRecords.map((s) => s.userId);
+
+    await prisma.$transaction(async (tx) => {
+      // Delete staff records first
+      await tx.staff.deleteMany({ where: { id: { in: ids } } });
+      // Then delete associated user accounts
+      await tx.user.deleteMany({ where: { id: { in: userIds } } });
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `${staffRecords.length} staff member(s) deleted successfully.`,
+      deletedCount: staffRecords.length,
+    });
+  } catch (error: any) {
+    console.error("[deleteMultipleStaff] Error:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

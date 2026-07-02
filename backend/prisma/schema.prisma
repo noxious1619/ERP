@@ -81,6 +81,7 @@ model Student {
   calculatedResults CalculatedResult[]
   feeRecords        MonthlyFeeRecord[]
   submissions       Submission[]
+   @@unique([sectionId, rollNumber])
 }
 
 model Parent {
@@ -133,7 +134,7 @@ model Teacher {
   timetables        Timetable[]  
 }
 
-// Replace Staff model
+
 model Staff {
   id           String    @id @default(uuid())
   employeeId   String    @unique

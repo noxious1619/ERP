@@ -156,7 +156,7 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
         </div>
 
         {/* Notification */}
-        <div className="relative" ref={notificationRef}>
+        {/* <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setShowNotifications((prev) => !prev)}
             className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] cursor-pointer"
@@ -167,18 +167,14 @@ const TeacherTimetableHeader: React.FC<TeacherTimetableHeaderProps> = ({
           {showNotifications && (
             <NotificationDropdown onClose={() => setShowNotifications(false)} />
           )}
-        </div>
+        </div> */}
 
         {/* Profile */}
         <div
           onClick={() => navigate("/teacher/profile")}
-          className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer"
+          className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer flex items-center justify-center bg-blue-500 text-white text-lg font-bold"
         >
-          <img
-            src={profileImage}
-            alt="Teacher"
-            className="h-full w-full object-cover"
-          />
+          P
         </div>
       </div>
     </div>

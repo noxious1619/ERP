@@ -7,6 +7,7 @@ import {
   Book,
   Code,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export interface Assignment {
   id: string;
@@ -18,9 +19,6 @@ export interface Assignment {
   dueTime: string;
   fileUrl?: string;
   givenBy?: string;
-  // Status field — value depends on which module uses this:
-  // Student: "OVERDUE" / "PENDING"
-  // Teacher: "ONGOING" / "PENDING"  (or whatever backend sends)
   status: string;
   statusClass?: string;
 }
@@ -28,42 +26,35 @@ export interface Assignment {
 interface HomeworkProps {
   assignments: Assignment[];
   loading?: boolean;
-  /**
-   * Configurable tab labels.
-   * Tab 1 = "primary" tab (left). Everything NOT matching tab2StatusKey goes here.
-   * Tab 2 = "secondary" tab (right). Filtered by tab2StatusKey.
-   *
-   * Defaults to student behaviour: ["Pending", "Overdue"] with key "OVERDUE"
-   */
   tab1Label?: string;
   tab2Label?: string;
-  /**
-   * The status value (case-insensitive) that separates tab2 items from tab1.
-   * e.g. "OVERDUE" for students, "ONGOING" for teachers.
-   */
   tab2StatusKey?: string;
 }
 
 const getSubjectStyling = (subjectName: string = "") => {
   const lowerSub = subjectName.toLowerCase();
+
   if (lowerSub.includes("bio") || lowerSub.includes("science")) {
     return {
       icon: <Microscope size={18} className="text-pink-600" />,
       bg: "bg-pink-100",
     };
   }
+
   if (lowerSub.includes("math")) {
     return {
       icon: <Sigma size={18} className="text-indigo-700" />,
       bg: "bg-indigo-100",
     };
   }
+
   if (lowerSub.includes("eng") || lowerSub.includes("lang")) {
     return {
       icon: <Languages size={18} className="text-blue-600" />,
       bg: "bg-blue-100",
     };
   }
+
   if (
     lowerSub.includes("comp") ||
     lowerSub.includes("code") ||
@@ -74,6 +65,7 @@ const getSubjectStyling = (subjectName: string = "") => {
       bg: "bg-emerald-100",
     };
   }
+
   return {
     icon: <Book size={18} className="text-gray-600" />,
     bg: "bg-gray-100",
@@ -88,11 +80,13 @@ const Homework: React.FC<HomeworkProps> = ({
   tab2StatusKey = "OVERDUE",
 }) => {
   const [activeTab, setActiveTab] = useState<string>(tab1Label);
+  const navigate = useNavigate();
 
   // Split into two buckets using the configurable status key
   const tab2Assignments = assignments.filter(
     (a) => a.status?.toUpperCase() === tab2StatusKey.toUpperCase(),
   );
+
   const tab1Assignments = assignments.filter(
     (a) => a.status?.toUpperCase() !== tab2StatusKey.toUpperCase(),
   );
@@ -104,8 +98,11 @@ const Homework: React.FC<HomeworkProps> = ({
     <div className="w-full rounded-3xl bg-white px-5 py-5 shadow-[0px_15px_25px_10px_rgba(0,0,0,0.08)]">
       {/* Header */}
       <div className="flex items-center">
-        <h2 className="text-[20px] mx-auto font-bold text-black">Homework</h2>
-        <div className="rounded-full bg-pink-800/10 px-2 py-[2px] flex items-end">
+        <h2 className="mx-auto text-[20px] font-bold text-black">
+          Homework
+        </h2>
+
+        <div className="flex items-end rounded-full bg-pink-800/10 px-2 py-[2px]">
           <span className="text-[11px] font-semibold text-[#AC3149]">
             {tab1Assignments.length} New
           </span>
@@ -118,10 +115,10 @@ const Homework: React.FC<HomeworkProps> = ({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-2 text-[14px] transition-colors cursor-pointer ${
+            className={`cursor-pointer pb-2 text-[14px] transition-colors ${
               activeTab === tab
                 ? "border-b-2 border-[#141B7A] font-semibold text-[#141B7A]"
-                : "font-medium text-[#8B8B8B] border-b-2 border-transparent"
+                : "border-b-2 border-transparent font-medium text-[#8B8B8B]"
             }`}
           >
             {tab}
@@ -130,9 +127,9 @@ const Homework: React.FC<HomeworkProps> = ({
       </div>
 
       {/* Homework Cards */}
-      <div className="mt-2 flex flex-col gap-2 overflow-y-auto h-[240px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-1">
+      <div className="mt-2 flex h-[240px] flex-col gap-2 overflow-y-auto pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {loading ? (
-          <div className="text-sm text-gray-500 text-center mt-4 p-4">
+          <div className="mt-4 p-4 text-center text-sm text-gray-500">
             Loading assignments...
           </div>
         ) : displayData.length > 0 ? (
@@ -143,7 +140,8 @@ const Homework: React.FC<HomeworkProps> = ({
             return (
               <div
                 key={item.id}
-                className="flex h-[70px] mt-2 shrink-0 items-center justify-between rounded-[20px]  bg-[#F8F9FE] px-6 cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => navigate("/student/homework")}
+                className="mt-2 flex h-[70px] shrink-0 cursor-pointer items-center justify-between rounded-[20px] bg-[#F8F9FE] px-6 transition-colors hover:bg-gray-100"
               >
                 {/* Left Content */}
                 <div className="flex items-center gap-4">
@@ -152,13 +150,16 @@ const Homework: React.FC<HomeworkProps> = ({
                   >
                     {styling.icon}
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <h3 className="text-[14px] font-semibold leading-[20px] text-[#1E1E1E] truncate max-w-[140px]">
+
+                  <div className="flex min-w-0 flex-col">
+                    <h3 className="max-w-[140px] truncate text-[14px] font-semibold leading-[20px] text-[#1E1E1E]">
                       {subjectName}
                     </h3>
+
                     <p className="text-[10px] leading-[16px] text-[#7A7A7A]">
                       Due: {item.dueDate},
                     </p>
+
                     <p className="text-[10px] leading-[16px] text-[#7A7A7A]">
                       {item.dueTime}
                     </p>
@@ -177,7 +178,7 @@ const Homework: React.FC<HomeworkProps> = ({
             );
           })
         ) : (
-          <div className="text-sm text-gray-500 text-center mt-6 mb-4">
+          <div className="mb-4 mt-6 text-center text-sm text-gray-500">
             No {activeTab.toLowerCase()} assignments!
           </div>
         )}

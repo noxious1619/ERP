@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import useAuth from "../../hooks/useAuth";
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import HomeworkHeader from "../../components/Student/Homework/HomeworkHeader";
 import StatusCard from "../../components/Student/Homework/StatusCard";
@@ -9,6 +10,7 @@ import WeeklyProgressCard from "../../components/Student/Homework/WeeklyProgress
 import DeadlinesCard from "../../components/Student/Homework/DeadlinesCard";
 
 const Homework = () => {
+  const { studentData, loading: authLoading } = useAuth();
   const [showDeadlines, setShowDeadlines] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,8 @@ const Homework = () => {
   const [activeTab, setActiveTab] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  console.log("Current user:", studentData);
 
   useEffect(() => {
     const fetchHomeworkFeed = async () => {
@@ -38,6 +42,7 @@ const Homework = () => {
         );
         
         if (response.data.success) {
+          // console.log("Fetched student homework feed:", response.data);
           setTasks(response.data.data);
           // 4. Save the total pages from your new backend pagination object
           if (response.data.pagination) {
@@ -129,7 +134,7 @@ const Homework = () => {
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <div
+        {/* <div
           className="w-[360px] shrink-0 bg-gray-100"
           style={{
             position: "sticky",
@@ -142,15 +147,10 @@ const Homework = () => {
           <style>{`.sidebar-hidden-scroll::-webkit-scrollbar { display: none; }`}</style>
           <div className="sidebar-hidden-scroll h-full overflow-y-auto py-4 px-6">
             <div className="flex flex-col gap-6">
-              <WeeklyProgressCard />
-              {!showDeadlines ? (
-                <StatusCard onOpenDeadlines={() => setShowDeadlines(true)} />
-              ) : (
-                <DeadlinesCard onBack={() => setShowDeadlines(false)} />
-              )}
+              <StatusCard onOpenDeadlines={() => setShowDeadlines(true)} />              
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

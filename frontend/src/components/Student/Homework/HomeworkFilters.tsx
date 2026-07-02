@@ -16,9 +16,9 @@ const HomeworkFilters: React.FC<HomeworkFiltersProps> = ({ activeTab, onTabChang
   return (
     <div className="mt-14">
       {/* Search Bar Only */}
-      <div className="w-full">
+      {/* <div className="w-full">
         <SearchBar />
-      </div>
+      </div> */}
       {/* Tabs + Actions Row */}
       <div className="mt-8 flex items-center justify-between border-b border-[#E8E8E8] ">
         {/* Tabs */}
@@ -59,8 +59,7 @@ const HomeworkFilters: React.FC<HomeworkFiltersProps> = ({ activeTab, onTabChang
         </div>
         
         {/* Right Actions */}
-        <div className="flex items-center gap-5">
-          {/* Filter */}
+        {/* <div className="flex items-center gap-5">
           <button
             className="
               flex h-[58px] min-w-[110px] items-center justify-center gap-3 rounded-[20px] bg-white px-5 mb-2 shadow-[0px_4px_10px_rgba(0,0,0,0.08)]
@@ -70,7 +69,6 @@ const HomeworkFilters: React.FC<HomeworkFiltersProps> = ({ activeTab, onTabChang
             <span className="text-[18px] font-medium text-[#5D5D5D]">Filter</span>
           </button>
 
-          {/* Sort */}
           <button
             className="
               flex h-[58px] min-w-[110px] items-center justify-center gap-3 rounded-[20px] bg-white px-5 shadow-[0px_4px_10px_rgba(0,0,0,0.08)]
@@ -79,7 +77,8 @@ const HomeworkFilters: React.FC<HomeworkFiltersProps> = ({ activeTab, onTabChang
             <img src={sortIcon} alt="Sort" className="h-[18px] w-[18px]" />
             <span className="text-[18px] font-medium text-[#5D5D5D]">Sort</span>
           </button>
-        </div>
+        </div> */}
+
       </div>
     </div>
   );

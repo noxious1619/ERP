@@ -71,17 +71,9 @@ const HomeworkHeader = ({
           onClick={() => navigate(profileRoute)}
           className="h-[58px] w-[58px] overflow-hidden rounded-full border-[3px] border-white shadow-[0px_4px_14px_rgba(0,0,0,0.12)] cursor-pointer"
         >
-          {localStorage.getItem("role") === "TEACHER" ? (
-            <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
-              P
-            </div>
-          ) : (
-            <img
-              src={profileImage}
-              alt="Profile"
-              className="h-full w-full object-cover"
-            />
-          )}
+          <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
+            P
+          </div>
         </div>
       </div>
     </div>

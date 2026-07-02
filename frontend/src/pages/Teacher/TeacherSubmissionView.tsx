@@ -11,7 +11,6 @@ import { useSubmissionDetail } from "../../hooks/useSubmissionDetails";
 const SIDEBAR_WIDTH = 360;
 
 const TeacherSubmissionView = () => {
-  // 🚨 THE FIX: Grab 'id' from the router and pass it to our hook
   const { id: submissionId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);

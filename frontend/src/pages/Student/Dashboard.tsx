@@ -147,7 +147,6 @@ const Dashboard = () => {
               lastName={lastName || ""}
               studentId={displayId}
               grade={grade}
-              profileImageUrl={profileImage}
             />
           </div>
         </div>

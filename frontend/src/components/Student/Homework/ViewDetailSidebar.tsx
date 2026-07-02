@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react"; 
+import useAuth from "../../../hooks/useAuth";
 import {
   X,
   ChevronLeft,
@@ -18,9 +19,9 @@ export interface HomeworkTask {
   givenBy: string;
   description: string;
   teacherImages?: string[];
-  attachments: string;   
+  attachments: string;
   statusClass: string;
-  maxScore: number;  
+  maxScore: number;
 }
 
 interface UploadedFile {
@@ -65,6 +66,13 @@ const ViewDetailSidebar = ({
   const [uploads, setUploads] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [visible, setVisible] = useState(false);
+  const { studentData } = useAuth();
+  console.log("Current user in sidebar:", studentData?.id);
+  
+  // Submission States
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -72,6 +80,7 @@ const ViewDetailSidebar = ({
       setImgIndex(0);
       setExpanded(false);
       setUploads([]);
+      setSubmitMessage(null);
       requestAnimationFrame(() => setVisible(true));
     } else {
       setVisible(false);
@@ -88,16 +97,28 @@ const ViewDetailSidebar = ({
   const nextImg = () => setImgIndex((i) => (i + 1) % images.length);
 
   const addFiles = (files: FileList | null) => {
-    if (!files) return;
-    const next: UploadedFile[] = Array.from(files).map((file) => {
-      const isPdf = file.type === "application/pdf";
-      const previewUrl =
-        !isPdf && file.type.startsWith("image/")
-          ? URL.createObjectURL(file)
-          : null;
-      return { id: crypto.randomUUID(), file, previewUrl, isPdf };
-    });
-    setUploads((prev) => [...prev, ...next]);
+    if (!files || files.length === 0) return;
+    const file = files[0]; // Strictly grab only the first file
+
+    if (file.type !== "application/pdf") {
+      setSubmitMessage({ type: 'error', text: 'Only PDF files are allowed.' });
+      return;
+    }
+
+    // Clear previous URL if one exists (though PDFs don't use it here, good practice)
+    if (uploads[0]?.previewUrl) URL.revokeObjectURL(uploads[0].previewUrl);
+
+    setSubmitMessage(null); // Clear previous errors
+    
+    // Override the state with ONLY the new file
+    setUploads([
+      {
+        id: crypto.randomUUID(),
+        file,
+        previewUrl: null, 
+        isPdf: true,
+      },
+    ]);
   };
 
   const removeUpload = (id: string) => {
@@ -106,7 +127,51 @@ const ViewDetailSidebar = ({
       if (entry?.previewUrl) URL.revokeObjectURL(entry.previewUrl);
       return prev.filter((u) => u.id !== id);
     });
+    setSubmitMessage(null);
   };
+
+  const handleSubmitAssignment = async () => {
+    if (uploads.length === 0) return;
+
+    setIsSubmitting(true);
+    setSubmitMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("assignmentId", task!.id.toString());
+      formData.append("file", uploads[0].file); 
+      formData.append("student", JSON.stringify({ id: studentData.id }));
+
+      const token = localStorage.getItem("token"); 
+
+      const response = await fetch("http://localhost:5000/api/assignments/submit", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to submit assignment");
+      }
+
+      setSubmitMessage({ type: 'success', text: result.message || 'Submitted successfully!' });
+      
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+
+    } catch (error: any) {
+      console.error("Submission error:", error);
+      setSubmitMessage({ type: 'error', text: error.message || 'Something went wrong.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   const openFilePicker = () => fileInputRef.current?.click();
   const handleDragOver = (e: React.DragEvent) => {
@@ -309,20 +374,12 @@ const ViewDetailSidebar = ({
                         key={u.id}
                         className="relative group h-[70px] w-[70px] rounded-xl overflow-hidden border-2 border-white shadow-sm"
                       >
-                        {u.previewUrl ? (
-                          <img
-                            src={u.previewUrl}
-                            alt={u.file.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="h-full w-full flex flex-col items-center justify-center bg-red-50 gap-1">
-                            <FileText size={22} className="text-red-400" />
-                            <span className="text-[9px] font-bold text-red-400 uppercase">
-                              PDF
-                            </span>
-                          </div>
-                        )}
+                        <div className="h-full w-full flex flex-col items-center justify-center bg-red-50 gap-1">
+                          <FileText size={22} className="text-red-400" />
+                          <span className="text-[9px] font-bold text-red-400 uppercase">
+                            PDF
+                          </span>
+                        </div>
                         <button
                           onClick={() => removeUpload(u.id)}
                           className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 group-hover:opacity-100 transition duration-150"
@@ -332,16 +389,9 @@ const ViewDetailSidebar = ({
                         </button>
                       </div>
                     ))}
-                    <button
-                      onClick={openFilePicker}
-                      className="h-[70px] w-[70px] rounded-xl border-2 border-dashed border-[#4F52A3]/30 bg-white/60 flex items-center justify-center hover:border-[#4F52A3]/60 hover:bg-white transition text-[#4F52A3]/50"
-                    >
-                      <span className="text-2xl leading-none font-light">
-                        +
-                      </span>
-                    </button>
                   </div>
                 )}
+                
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -357,24 +407,17 @@ const ViewDetailSidebar = ({
                     <Upload size={16} className="text-[#4F52A3]" />
                   </div>
                   <p className="text-[12px] text-gray-500 text-center leading-snug px-3">
-                    {isDragging ? (
-                      "Drop files here"
-                    ) : (
-                      <>
-                        Drag & drop or{" "}
-                        <span className="text-[#4F52A3] font-semibold">
-                          browse
-                        </span>
-                      </>
+                    {isDragging ? "Drop PDF here" : (
+                      <>Drag & drop or <span className="text-[#4F52A3] font-semibold">browse</span></>
                     )}
                   </p>
-                  <p className="text-[11px] text-gray-400">Images · PDF</p>
+                  <p className="text-[11px] text-gray-400">PDF only (Max 1 file)</p>
                 </div>
+                
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,application/pdf"
-                  multiple
+                  accept="application/pdf"
                   className="hidden"
                   onChange={(e) => {
                     addFiles(e.target.files);
@@ -387,24 +430,57 @@ const ViewDetailSidebar = ({
         </div>
 
         {/* Bottom button */}
-        <div className="px-5 pt-3 pb-6 shrink-0 border-t border-gray-100">
+        <div className="px-5 pt-3 pb-6 shrink-0 border-t border-gray-100 flex flex-col gap-2">
+          
+          {submitMessage && (
+            <div className={`text-[12px] font-semibold text-center rounded-lg py-2 ${
+              submitMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            }`}>
+              {submitMessage.text}
+            </div>
+          )}
+
           {isTeacherView ? (
-            <button 
+            <button
               onClick={onEditClick}
               className="w-full rounded-2xl py-3.5 bg-[#4285F4] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3f4290] active:scale-[0.98] transition shadow"
             >
               EDIT
             </button>
           ) : (
-            <button
-              onClick={openFilePicker}
-              className="w-full rounded-2xl py-3.5 bg-[#4285F4] text-white font-semibold text-[14px] tracking-wide hover:bg-[#3f4290] active:scale-[0.98] transition shadow flex items-center justify-center gap-2"
-            >
-              <Upload size={15} />
-              {uploads.length > 0
-                ? `${uploads.length} file${uploads.length > 1 ? "s" : ""} selected - Upload`
-                : "UPLOAD"}
-            </button>
+            uploads.length === 0 ? (
+              // STATE 1: NO FILE
+              <button
+                onClick={openFilePicker}
+                className="w-full rounded-2xl py-3.5 bg-white border-2 border-[#4285F4] text-[#4285F4] font-semibold text-[14px] tracking-wide hover:bg-blue-50 active:scale-[0.98] transition shadow flex items-center justify-center gap-2"
+              >
+                <Upload size={15} />
+                UPLOAD PDF
+              </button>
+            ) : (
+              // STATE 2: FILE READY TO SUBMIT
+              <button
+                onClick={handleSubmitAssignment}
+                disabled={isSubmitting}
+                className={`w-full rounded-2xl py-3.5 text-white font-semibold text-[14px] tracking-wide transition shadow flex items-center justify-center gap-2 ${
+                  isSubmitting 
+                    ? "bg-gray-400 cursor-not-allowed" 
+                    : "bg-[#4285F4] hover:bg-[#3f4290] active:scale-[0.98]"
+                }`}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    SUBMITTING...
+                  </>
+                ) : (
+                  <>
+                    <FileText size={15} />
+                    SUBMIT ASSIGNMENT
+                  </>
+                )}
+              </button>
+            )
           )}
         </div>
       </div>

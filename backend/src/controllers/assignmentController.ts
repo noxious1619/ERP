@@ -162,12 +162,13 @@ export const getStudentAssignments = async (req: Request, res: Response) => {
 
 export const submitAssignment = async (req: Request, res: Response) => {
   try {
-    const { assignmentId, content } = req.body;
-    const userId = (req as any).user.id;
+    // 1. Change 'studentString' to 'student' to match the frontend
+    const { student, assignmentId, content } = req.body;
 
-    // 1. Get Student ID from the logged-in User
-    const student = await prisma.student.findUnique({ where: { userId } });
     if (!student) return res.status(404).json({ success: false, message: "Student record not found" });
+    
+    // 2. Parse the 'student' string
+    const parsedStudent = JSON.parse(student);
 
     // 2. Verify Assignment exists and check deadline
     const assignment = await prisma.assignment.findUnique({ where: { id: assignmentId } });
@@ -179,9 +180,9 @@ export const submitAssignment = async (req: Request, res: Response) => {
     const submission = await prisma.submission.create({
       data: {
         assignmentId,
-        studentId: student.id,
+        studentId: parsedStudent.id, // Use the parsed ID
         content: content || null,
-        fileUrl: req.file ? req.file.path : null, // The PDF from Multer
+        fileUrl: req.file ? req.file.path : null,
         status: isLate ? 'LATE' : 'SUBMITTED',
         submittedAt: new Date()
       }
@@ -194,7 +195,6 @@ export const submitAssignment = async (req: Request, res: Response) => {
     });
 
   } catch (error: any) {
-    // Prisma Unique Constraint Error (P2002) - Student already submitted
     if (error.code === 'P2002') {
       return res.status(400).json({ success: false, message: "You have already submitted this assignment." });
     }

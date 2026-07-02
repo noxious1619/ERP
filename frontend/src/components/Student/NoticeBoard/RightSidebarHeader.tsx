@@ -52,17 +52,9 @@ const RightSidebarHeader = ({
         onClick={() => navigate(profileRoute)}
         className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer"
       >
-        {localStorage.getItem("role") === "TEACHER" ? (
-          <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
-            P
-          </div>
-        ) : (
-          <img
-            src={profileImage}
-            alt="Profile"
-            className="h-full w-full object-cover"
-          />
-        )}
+        <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
+          P
+        </div>
       </div>
     </div>
   );

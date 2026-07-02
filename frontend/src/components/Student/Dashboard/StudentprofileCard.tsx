@@ -1,4 +1,5 @@
 import React from "react";
+import { CircleUserRound } from "lucide-react";
 import studentPhoto from "../../../assets/Student/Dashboard/StudentprofileCard/student.png";
 import { useNavigate } from "react-router-dom";
 
@@ -8,7 +9,6 @@ interface StudentProfileCardProps {
   lastName: string;
   studentId: string;
   grade: string;
-  profileImageUrl?: string;
 }
 
 const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
@@ -16,7 +16,6 @@ const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
   lastName,
   studentId,
   grade,
-  profileImageUrl,
 }) => {
   const navigate = useNavigate();
 
@@ -40,12 +39,21 @@ const StudentProfileCard: React.FC<StudentProfileCardProps> = ({
       </div>
 
       {/* Student Image */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
+      {/* <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
         <img
           // Prioritize dynamic image, fallback to your local static asset if null
           src={profileImageUrl || studentPhoto}
           alt={`${firstName} ${lastName}`}
           className="h-[205px] max-w-none object-contain"
+        />
+      </div> */}
+
+      {/* Large User Icon */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+        <CircleUserRound
+          size={120}
+          strokeWidth={1.5}
+          className="text-white/30"
         />
       </div>
       

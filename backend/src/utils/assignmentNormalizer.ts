@@ -72,6 +72,7 @@ export const normalizeAssignmentsForStudent = (assignments: RawAssignmentInput[]
       title: task.title,
       description: task.content, // Maps 'content' directly to UI 'description'
       subject: task.subject.name,
+      maxScore: task.maxScore,
       attachments: task.fileUrl ? "1 attachment" : "No attachments",
       fileUrl: task.fileUrl ? task.fileUrl.replace(/\\/g, '/') : null, // Normalize Windows backslashes for web paths
       status,

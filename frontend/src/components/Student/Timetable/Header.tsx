@@ -61,19 +61,18 @@ const TimetableHeader = () => {
         </div>
 
         {/*  Notification  */}
-        <div className="relative" ref={notificationRef}>
+        {/* <div className="relative" ref={notificationRef}>
           <button
             onClick={() => setShowNotifications((prev) => !prev)}
             className="text-[#5C5C5C] transition-colors hover:text-[#3F5BF6] cursor-pointer"
           >
             <img src={notification} alt="Notification" className="h-6 w-6" />
-            {/* Unread dot */}
             <div className="absolute right-[1px] top-[2px] h-[8px] w-[8px] rounded-full bg-[#FF4B6E]" />
           </button>
           {showNotifications && (
             <NotificationDropdown onClose={() => setShowNotifications(false)} />
           )}
-        </div>
+        </div> */}
 
         {/* Profile */}
         <div

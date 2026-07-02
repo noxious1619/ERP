@@ -106,7 +106,6 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
       });
     }
 
-    // Wrap everything in a transaction for clean atomicity
     const result = await prisma.$transaction(async (tx) => {
       const createdEntries = [];
 
@@ -129,35 +128,37 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
         const periodNumber = Number(period);
         const treatAsBreak = Boolean(isBreak);
 
-        // Resolve teacherId (Teacher.id) to User.id for database storage
-        let targetUserId = null;
+        // Optional: Verify teacher exists
         if (!treatAsBreak && teacherId) {
-          const teacherProfile = await tx.teacher.findFirst({
+          const teacherExists = await tx.teacher.findUnique({
             where: {
-              OR: [
-                { id: teacherId },
-                { userId: teacherId }
-              ]
+              id: teacherId
             }
           });
-          targetUserId = teacherProfile ? teacherProfile.userId : teacherId;
+
+          if (!teacherExists) {
+            throw new Error(`Teacher with ID ${teacherId} not found.`);
+          }
         }
 
-        // 1. Conflict check for Teacher (Skip if it's a structural break)
-        if (!treatAsBreak && targetUserId) {
+        // Teacher conflict check
+        if (!treatAsBreak && teacherId) {
           const teacherConflict = await tx.timetable.findFirst({
             where: {
               day: formattedDay as any,
               period: periodNumber,
-              teacherId: targetUserId
+              teacherId
             }
           });
+
           if (teacherConflict) {
-            throw new Error(`Conflict: Teacher is already assigned at ${formattedDay}, Period ${periodNumber}.`);
+            throw new Error(
+              `Conflict: Teacher is already assigned at ${formattedDay}, Period ${periodNumber}.`
+            );
           }
         }
 
-        // 2. Conflict check for Section
+        // Section conflict check
         const sectionConflict = await tx.timetable.findFirst({
           where: {
             day: formattedDay as any,
@@ -165,11 +166,14 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
             sectionId
           }
         });
+
         if (sectionConflict) {
-          throw new Error(`Conflict: Section already has a class scheduled at ${formattedDay}, Period ${periodNumber}.`);
+          throw new Error(
+            `Conflict: Section already has a class scheduled at ${formattedDay}, Period ${periodNumber}.`
+          );
         }
 
-        // 3. Stage the record creation
+        // Create timetable entry
         const newEntry = await tx.timetable.create({
           data: {
             day: formattedDay as any,
@@ -182,7 +186,7 @@ export const createWeeklyTimetable = async (req: Request, res: Response) => {
             breakLabel: treatAsBreak ? (breakLabel || "Recess") : null,
             sectionId,
             subjectId: treatAsBreak ? null : subjectId,
-            teacherId: treatAsBreak ? null : targetUserId
+            teacherId: treatAsBreak ? null : teacherId
           }
         });
 
@@ -438,7 +442,6 @@ export const getDailyTeacherTimetable = async (
   res: Response
 ) => {
   try {
-    // Grab the IDs straight from the route params and query
     const teacherId = req.params.teacherId as string;
     const day = req.query.day as string;
 
@@ -458,63 +461,89 @@ export const getDailyTeacherTimetable = async (
 
     const formattedDay = day.toUpperCase() as any;
 
-    // Resolve teacher profile to get User.id for database query
-    const teacherProfile = await prisma.teacher.findFirst({
+    // Verify teacher exists
+    const teacherProfile = await prisma.teacher.findUnique({
       where: {
-        OR: [
-          { id: teacherId },
-          { userId: teacherId }
-        ]
-      }
+        id: teacherId,
+      },
     });
+
     if (!teacherProfile) {
       return res.status(404).json({
         success: false,
-        message: "Teacher profile not found."
+        message: "Teacher profile not found.",
       });
     }
-    const targetUserId = teacherProfile.userId;
 
     const filter = req.query.filter as string | undefined;
 
-    // Fetch strictly the actual classes this teacher is taking today
     const whereClause: any = {
-      teacherId: targetUserId, 
+      teacherId: teacherProfile.id,
       day: formattedDay,
       isBreak: false,
     };
 
     if (filter === "mySubject") {
-      // Fetch strictly the subjects assigned to this teacher in their profile (TeacherSectionSubject)
       const assignments = await prisma.teacherSectionSubject.findMany({
-        where: { teacherId: teacherProfile.id },
-        select: { subject: { select: { name: true } } }
+        where: {
+          teacherId: teacherProfile.id,
+        },
+        select: {
+          subject: {
+            select: {
+              name: true,
+            },
+          },
+        },
       });
-      const assignedSubjectNames = Array.from(new Set(assignments.map((a) => a.subject?.name).filter(Boolean)));
 
-      // Find all subject IDs matching those names
+      const assignedSubjectNames = Array.from(
+        new Set(
+          assignments
+            .map((a) => a.subject?.name)
+            .filter(Boolean)
+        )
+      );
+
       const matchingSubjects = await prisma.subject.findMany({
-        where: { name: { in: assignedSubjectNames as string[] } },
-        select: { id: true }
+        where: {
+          name: {
+            in: assignedSubjectNames as string[],
+          },
+        },
+        select: {
+          id: true,
+        },
       });
-      const assignedSubjectIds = matchingSubjects.map((s) => s.id);
-      whereClause.subjectId = { in: assignedSubjectIds };
+
+      whereClause.subjectId = {
+        in: matchingSubjects.map((s) => s.id),
+      };
     }
 
-    // Fetch strictly the actual classes this teacher is taking today
     const teacherPeriods = await prisma.timetable.findMany({
       where: whereClause,
       include: {
-        subject: { select: { name: true, code: true } },
+        subject: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
         section: {
           select: {
             name: true,
-            academicClass: { select: { name: true } },
+            academicClass: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
-      // Sort chronologically by start time
-      orderBy: { startTime: "asc" },
+      orderBy: {
+        startTime: "asc",
+      },
     });
 
     const formattedSchedule = teacherPeriods.map((row) => ({
@@ -522,22 +551,25 @@ export const getDailyTeacherTimetable = async (
       time: row.startTime,
       endTime: row.endTime,
       period: row.period,
-      isActive: isCurrentPeriodActive(row.startTime, row.endTime, day), // Assumes you have this helper imported
+      isActive: isCurrentPeriodActive(
+        row.startTime,
+        row.endTime,
+        day
+      ),
       room: row.room || null,
       color: row.color || null,
       subject: row.subject?.name || "Unknown Subject",
-      sectionLabel: row.section 
-        ? `${row.section.academicClass.name} - ${row.section.name}` 
+      sectionLabel: row.section
+        ? `${row.section.academicClass.name} - ${row.section.name}`
         : "Unassigned",
-      duration: getDuration(row.startTime, row.endTime), 
+      duration: getDuration(row.startTime, row.endTime),
     }));
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       count: formattedSchedule.length,
-      data: formattedSchedule 
+      data: formattedSchedule,
     });
-
   } catch (error: any) {
     return res.status(500).json({
       success: false,
@@ -547,9 +579,11 @@ export const getDailyTeacherTimetable = async (
   }
 };
 
-export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => {
+export const getWeeklyTeacherTimetable = async (
+  req: Request,
+  res: Response
+) => {
   try {
-    // 1. Grab the exact Teacher Profile ID from the URL
     const teacherId = req.params.teacherId as string;
 
     if (!teacherId) {
@@ -559,71 +593,103 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
       });
     }
 
-    // Resolve teacher profile to get User.id for database query
-    const teacherProfile = await prisma.teacher.findFirst({
+    // Verify teacher exists
+    const teacherProfile = await prisma.teacher.findUnique({
       where: {
-        OR: [
-          { id: teacherId },
-          { userId: teacherId }
-        ]
-      }
+        id: teacherId,
+      },
     });
+
     if (!teacherProfile) {
       return res.status(404).json({
         success: false,
-        message: "Teacher profile not found."
+        message: "Teacher profile not found.",
       });
     }
-    const targetUserId = teacherProfile.userId;
 
     const filter = req.query.filter as string | undefined;
 
     const whereClause: any = {
-      teacherId: targetUserId, 
-      isBreak: false,       // ✅ Completely ignoring school breaks
+      teacherId: teacherProfile.id,
+      isBreak: false,
     };
 
     if (filter === "mySubject") {
-      // Fetch strictly the subjects assigned to this teacher in their profile (TeacherSectionSubject)
       const assignments = await prisma.teacherSectionSubject.findMany({
-        where: { teacherId: teacherProfile.id },
-        select: { subject: { select: { name: true } } }
+        where: {
+          teacherId: teacherProfile.id,
+        },
+        select: {
+          subject: {
+            select: {
+              name: true,
+            },
+          },
+        },
       });
-      const assignedSubjectNames = Array.from(new Set(assignments.map((a) => a.subject?.name).filter(Boolean)));
 
-      // Find all subject IDs matching those names
+      const assignedSubjectNames = Array.from(
+        new Set(
+          assignments
+            .map((a) => a.subject?.name)
+            .filter(Boolean)
+        )
+      );
+
       const matchingSubjects = await prisma.subject.findMany({
-        where: { name: { in: assignedSubjectNames as string[] } },
-        select: { id: true }
+        where: {
+          name: {
+            in: assignedSubjectNames as string[],
+          },
+        },
+        select: {
+          id: true,
+        },
       });
-      const assignedSubjectIds = matchingSubjects.map((s) => s.id);
-      whereClause.subjectId = { in: assignedSubjectIds };
+
+      whereClause.subjectId = {
+        in: matchingSubjects.map((s) => s.id),
+      };
     }
 
-    // 2. Fetch strictly the actual classes this teacher is taking for the entire week
     const weeklyPeriods = await prisma.timetable.findMany({
       where: whereClause,
       include: {
-        subject: { select: { name: true, code: true } },
+        subject: {
+          select: {
+            name: true,
+            code: true,
+          },
+        },
         section: {
           select: {
             name: true,
-            academicClass: { select: { name: true } },
+            academicClass: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
       orderBy: [
-        { day: "asc" },
-        { startTime: "asc" }
+        {
+          day: "asc",
+        },
+        {
+          startTime: "asc",
+        },
       ],
     });
 
-    // Exit early if the schedule is empty
     if (weeklyPeriods.length === 0) {
-      return res.status(200).json({ success: true, count: 0, data: [] });
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+      });
     }
 
-    // 3. Clean up the payload for the frontend
     const formattedSchedule = weeklyPeriods.map((row) => ({
       id: row.id,
       day: row.day,
@@ -634,17 +700,16 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
       color: row.color || null,
       subject: row.subject?.name || "Unknown Subject",
       code: row.subject?.code || "N/A",
-      sectionLabel: row.section 
-        ? `${row.section.academicClass.name} - ${row.section.name}` 
+      sectionLabel: row.section
+        ? `${row.section.academicClass.name} - ${row.section.name}`
         : "Unassigned",
     }));
 
-    return res.status(200).json({ 
-      success: true, 
+    return res.status(200).json({
+      success: true,
       count: formattedSchedule.length,
-      data: formattedSchedule 
+      data: formattedSchedule,
     });
-
   } catch (error: any) {
     return res.status(500).json({
       success: false,
@@ -653,6 +718,7 @@ export const getWeeklyTeacherTimetable = async (req: Request, res: Response) => 
     });
   }
 };
+
 
 export const updateTimetableEntry = async (req: Request, res: Response) => {
   try {

@@ -47,7 +47,7 @@ router.get('/admin-summary',
     getAdminAttendanceSummary
 );
 
-router.get('/attendanceData/student/:studentId/totalPercetage', 
+router.get('/attendanceData/student/:studentId/totalPercentage',
     restrictTo('STUDENT', 'TEACHER', 'ADMIN', 'SUPER_ADMIN'), 
     getStudentAttendancePercentage
 );

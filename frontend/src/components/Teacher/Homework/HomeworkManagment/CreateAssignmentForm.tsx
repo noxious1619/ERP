@@ -1,23 +1,27 @@
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   X,
   FileText,
-  Upload,
   Calendar,
   Clock3,
   ChevronDown,
-  Trash2,
 } from "lucide-react";
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface AssignHomeworkModalProps {
   open: boolean;
   onClose: () => void;
   // Passing the teachingAssignments from the parent's useAuth hook
-  teachingAssignments: any[]; 
+  teachingAssignments: any[];
   editingAssignment?: any | null;
 }
 
-const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssignment }: AssignHomeworkModalProps) => {
+const AssignHomeworkModal = ({
+  open,
+  onClose,
+  teachingAssignments,
+  editingAssignment,
+}: AssignHomeworkModalProps) => {
   // Form State - Notice we removed selectedClassId!
   const [selectedSectionId, setSelectedSectionId] = useState("");
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
@@ -29,16 +33,16 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
   const [maxScore, setMaxScore] = useState(100);
   const [file, setFile] = useState<File | null>(null);
   const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  console.log("TEACHING ASSIGNMENTS DATA:", teachingAssignments);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
+
   // --- Derived Data for Dropdowns ---
-  
+
   // 1. Get unique Class-Section combos
   const availableClassSections = useMemo(() => {
     if (!teachingAssignments) return [];
-    
+
     const sectionMap = new Map();
     teachingAssignments.forEach((ta) => {
       const sec = ta?.section;
@@ -46,7 +50,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
         sectionMap.set(sec.id, sec);
       }
     });
-    
+
     return Array.from(sectionMap.values());
   }, [teachingAssignments]);
 
@@ -70,7 +74,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
     if (editingAssignment) {
       setSelectedSectionId(editingAssignment.section?.id || "");
       setSelectedSubjectId(editingAssignment.subject?.id || "");
-      
+
       const title = editingAssignment.title || "";
       const parts = title.split(" - ");
       if (parts.length > 1) {
@@ -82,16 +86,16 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
       }
 
       setDescription(editingAssignment.content || "");
-      
+
       if (editingAssignment.dueDate) {
         const d = new Date(editingAssignment.dueDate);
         const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
         setDueDate(`${yyyy}-${mm}-${dd}`);
-        
-        const hrs = String(d.getHours()).padStart(2, '0');
-        const mins = String(d.getMinutes()).padStart(2, '0');
+
+        const hrs = String(d.getHours()).padStart(2, "0");
+        const mins = String(d.getMinutes()).padStart(2, "0");
         setTime(`${hrs}:${mins}`);
       } else {
         setDueDate("");
@@ -133,21 +137,23 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
   if (!open) return null;
 
   // --- Handlers ---
-  const handleFile = (selectedFiles: FileList | null) => {
-    if (!selectedFiles || selectedFiles.length === 0) return;
-    setFile(selectedFiles[0]); // Only take the first file
-  };
+  // const handleFile = (selectedFiles: FileList | null) => {
+  //   if (!selectedFiles || selectedFiles.length === 0) return;
+  //   setFile(selectedFiles[0]); // Only take the first file
+  // };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    handleFile(e.dataTransfer.files);
-  };
+  // const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  //   e.preventDefault();
+  //   handleFile(e.dataTransfer.files);
+  // };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
+
     if (!selectedSectionId || !selectedSubjectId || !chapter || !dueDate) {
-      alert("Please fill out the required fields (Class/Section, Subject, Chapter, Due Date).");
+      alert(
+        "Please fill out the required fields (Class/Section, Subject, Chapter, Due Date).",
+      );
       return;
     }
 
@@ -155,11 +161,15 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
 
     try {
       // Find the selected section object to extract the Class ID for the backend
-      const selectedSection = availableClassSections.find(s => s.id === selectedSectionId);
+      const selectedSection = availableClassSections.find(
+        (s) => s.id === selectedSectionId,
+      );
       const classId = selectedSection?.academicClass?.id;
 
       if (!classId) {
-        alert("Error mapping Class ID. Please try selecting the section again.");
+        alert(
+          "Error mapping Class ID. Please try selecting the section again.",
+        );
         setIsSubmitting(false);
         return;
       }
@@ -172,10 +182,10 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
       formData.append("content", description);
       formData.append("classId", classId); // Extracted from the section!
       formData.append("sectionId", selectedSectionId);
-      formData.append("subjectId", selectedSubjectId); 
+      formData.append("subjectId", selectedSubjectId);
       formData.append("dueDate", combinedDateTime.toISOString());
       formData.append("maxScore", maxScore.toString());
-      
+
       if (file) {
         formData.append("file", file);
       } else if (!existingFileUrl && editingAssignment) {
@@ -183,8 +193,8 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
       }
 
       const url = editingAssignment
-        ? `http://localhost:5000/api/assignments/${editingAssignment.id}`
-        : "http://localhost:5000/api/assignments";
+        ? `${API_BASE_URL}/api/assignments/${editingAssignment.id}`
+        : `${API_BASE_URL}/api/assignments`;
 
       const response = await fetch(url, {
         method: editingAssignment ? "PATCH" : "POST",
@@ -245,7 +255,6 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
 
           {/* Row 1: Combined Class/Section + Subject (2 columns instead of 3) */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            
             {/* Combined Class & Section Dropdown */}
             <div className="relative">
               <select
@@ -263,7 +272,10 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
                   </option>
                 ))}
               </select>
-              <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <ChevronDown
+                size={16}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              />
             </div>
 
             {/* Dynamic Subject Field */}
@@ -288,7 +300,10 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
                       </option>
                     ))}
                   </select>
-                  <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <ChevronDown
+                    size={16}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
                 </>
               ) : (
                 // ZERO SUBJECTS (Fallback before they select a class)
@@ -367,7 +382,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
 
           {/* Attachments */}
           <div className="mb-6">
-            <h3 className="flex items-center gap-2 text-[16px] font-semibold text-gray-800 mb-3">
+            {/* <h3 className="flex items-center gap-2 text-[16px] font-semibold text-gray-800 mb-3">
               <Upload className="w-5 h-5 text-[#4D8DFF]" />
               Attachment (Max 1)
             </h3>
@@ -377,8 +392,8 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
               type="file"
               className="hidden"
               onChange={(e) => handleFile(e.target.files)}
-            />
-
+            /> */}
+            {/* 
             {!file && !existingFileUrl ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -388,7 +403,10 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
               >
                 <Upload className="w-9 h-9 text-gray-400 mb-3" />
                 <p className="text-[15px] text-gray-700">
-                  <span className="text-[#4D8DFF] font-medium">Click to upload</span> or drag and drop
+                  <span className="text-[#4D8DFF] font-medium">
+                    Click to upload
+                  </span>{" "}
+                  or drag and drop
                 </p>
                 <p className="text-[13px] text-[#667085] mt-1">
                   PDFs, Images, or Documents
@@ -399,7 +417,9 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
                 <div className="flex items-center gap-3">
                   <FileText size={20} className="text-[#4D8DFF]" />
                   <span className="text-[15px] font-medium text-gray-700 truncate">
-                    {file ? file.name : existingFileUrl?.split("/").pop() || "Attached File"}
+                    {file
+                      ? file.name
+                      : existingFileUrl?.split("/").pop() || "Attached File"}
                   </span>
                 </div>
                 <button
@@ -413,7 +433,7 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
                   <Trash2 size={18} />
                 </button>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
@@ -428,14 +448,18 @@ const AssignHomeworkModal = ({ open, onClose, teachingAssignments, editingAssign
               SAVE AS DRAFT
             </button>
           )}
-          <button 
+          <button
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="h-[46px] px-8 rounded-full bg-[#4D8DFF] text-white text-[14px] font-semibold shadow-md hover:bg-[#3d7dee] transition-colors disabled:opacity-50"
           >
-            {isSubmitting 
-              ? (editingAssignment ? "SAVING..." : "ASSIGNING...") 
-              : (editingAssignment ? "SAVE CHANGES" : "ASSIGN HOMEWORK")}
+            {isSubmitting
+              ? editingAssignment
+                ? "SAVING..."
+                : "ASSIGNING..."
+              : editingAssignment
+                ? "SAVE CHANGES"
+                : "ASSIGN HOMEWORK"}
           </button>
         </div>
       </div>

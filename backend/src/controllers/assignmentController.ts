@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { normalizeAssignmentsForStudent } from '../utils/assignmentNormalizer.js';
+import { uploadPdfToCloudinary } from "../helper/uploadToCloudinary.js";
 
 export const createAssignment = async (req: Request, res: Response) => {
   try {
@@ -164,25 +165,27 @@ export const submitAssignment = async (req: Request, res: Response) => {
   try {
     // 1. Change 'studentString' to 'student' to match the frontend
     const { student, assignmentId, content } = req.body;
-
     if (!student) return res.status(404).json({ success: false, message: "Student record not found" });
-    
+  
     // 2. Parse the 'student' string
     const parsedStudent = JSON.parse(student);
-
     // 2. Verify Assignment exists and check deadline
     const assignment = await prisma.assignment.findUnique({ where: { id: assignmentId } });
     if (!assignment) return res.status(404).json({ success: false, message: "Assignment not found" });
-
     const isLate = new Date() > new Date(assignment.dueDate);
-
+    let fileUrl: string | null = null;
+if (req.file) {
+  const uploadedFile = await uploadPdfToCloudinary(req.file.buffer);
+  console.log(uploadedFile);
+  fileUrl = uploadedFile.secure_url;
+}
     // 3. Save Submission
     const submission = await prisma.submission.create({
       data: {
         assignmentId,
         studentId: parsedStudent.id, // Use the parsed ID
         content: content || null,
-        fileUrl: req.file ? req.file.path : null,
+        fileUrl,
         status: isLate ? 'LATE' : 'SUBMITTED',
         submittedAt: new Date()
       }
@@ -317,6 +320,7 @@ const assignmentId: string = rawId;
       }
 
       return {
+        assignmentId, 
         studentId: student.id,
         rollNo: student.rollNumber,
         name: `${student.firstName} ${student.lastName}`,
@@ -371,29 +375,54 @@ export const gradeSubmission = async (req: Request, res: Response) => {
   try {
     const { submissionId } = req.params;
     const { score, remarks } = req.body;
-    const teacherId = (req as any).user.id;
+
+    const userId = (req as any).user.id;
 
     if (!submissionId || Array.isArray(submissionId)) {
-  return res.status(400).json({ success: false, message: 'Invalid submission id.' });
-}
+      return res.status(400).json({
+        success: false,
+        message: "Invalid submission id.",
+      });
+    }
+
+    // Find the teacher profile
+    const teacher = await prisma.teacher.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: "Teacher profile not found.",
+      });
+    }
 
     const updatedSubmission = await prisma.submission.update({
-      where: { id: submissionId },
+      where: {
+        id: submissionId,
+      },
       data: {
-        marksObtained: parseFloat(score),
+        marksObtained: Number(score),
         remarks,
-        status: 'GRADED',
-        gradedById: teacherId
-      }
+        status: "GRADED",
+        gradedById: teacher.id, // <-- use Teacher.id
+      },
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Submission graded successfully!",
-      data: updatedSubmission
+      data: updatedSubmission,
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -778,5 +807,103 @@ export const updateAssignment = async (req: Request, res: Response) => {
 
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+export const getSubmissionDetail = async (req: Request, res: Response) => {
+  try {
+    const rawId = req.params.submissionId;
+
+    if (!rawId || Array.isArray(rawId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid submission ID",
+      });
+    }
+
+    const submissionId = rawId;
+
+    const submission = await prisma.submission.findUnique({
+      where: {
+        id: submissionId,
+      },
+      include: {
+        student: {
+          include: {
+            section: {
+              include: {
+                academicClass: true,
+              },
+            },
+          },
+        },
+        assignment: {
+          include: {
+            subject: true,
+          },
+        },
+      },
+    });
+
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: "Submission not found",
+      });
+    }
+
+const attachmentUrls: string[] = [];
+
+if (submission.fileUrl) {
+  if (submission.fileUrl.startsWith("http")) {
+    attachmentUrls.push(submission.fileUrl);
+  } else {
+    attachmentUrls.push(
+      `${req.protocol}://${req.get("host")}/${submission.fileUrl}`
+    );
+  }
+}
+    return res.json({
+      success: true,
+      data: {
+        id: submission.id,
+
+        description:
+          submission.content ||
+          submission.assignment.content ||
+          "",
+
+        submittedAt: submission.submittedAt,
+
+        score: submission.marksObtained,
+
+        attachments: attachmentUrls,
+
+        student: {
+          id: submission.student.id,
+          name: `${submission.student.firstName} ${submission.student.lastName}`,
+          rollNo: submission.student.rollNumber,
+          classSection: `${submission.student.section?.academicClass?.name ?? ""} - ${
+            submission.student.section?.name ?? ""
+          }`,
+        },
+
+        assignment: {
+          id: submission.assignment.id,
+          title: submission.assignment.title,
+          maxScore: submission.assignment.maxScore,
+          content: submission.assignment.content,
+          subject: submission.assignment.subject.name,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("[getSubmissionDetail]", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

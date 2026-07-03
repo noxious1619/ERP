@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { X, CheckCircle } from "lucide-react";
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface SectionData {
   id: string;
@@ -69,12 +70,9 @@ export default function AddSectionModal({
     const fetchTeachers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(
-          "http://localhost:5000/api/teachers?limit=1000",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await fetch(`${API_BASE_URL}/api/teachers?limit=1000`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
 
         if (!res.ok) {
@@ -132,8 +130,8 @@ export default function AddSectionModal({
       const token = localStorage.getItem("token");
 
       const url = isEditMode
-        ? `http://localhost:5000/api/academic/sections/${editData!.id}`
-        : `http://localhost:5000/api/academic/sections`;
+        ? `${API_BASE_URL}/api/academic/sections/${editData!.id}`
+        : `${API_BASE_URL}/api/academic/sections`;
 
       const method = isEditMode ? "PATCH" : "POST";
 

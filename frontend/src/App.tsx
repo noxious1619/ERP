@@ -35,7 +35,6 @@ import StaffProfile from "./pages/Admin/Staff/StaffProfile";
 import Classes from "./pages/Admin/Academics/Classes";
 import Subjects from "./pages/Admin/Academics/Subjects";
 import AdminTimetable from "./pages/Admin/Academics/Timetable";
-import AdminDashboard from "./pages/Admin/Dashboard/Dashboard";
 import AdminNotices from "./pages/Admin/Communication/Notices";
 import AdminDatesheet from "./pages/Admin/Academics/Exams/Datesheet";
 import AdminAttendance from "./pages/Admin/Academics/Attendance";
@@ -53,18 +52,11 @@ const App = () => {
       <Routes>
         {/* Default Route */}
         <Route path="/login" element={<Login />} />
-        <Route
-          path="/"
-          element={<Navigate to="/student/dashboard" replace />}
-        />
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* ========================================== */}
         {/* STUDENT ROUTES                             */}
         {/* ========================================== */}
-        <Route
-          path="/"
-          element={<Navigate to="/student/dashboard" replace />}
-        />
         {/* Dashboard */}
         <Route path="/student/dashboard" element={<Dashboard />} />
         <Route path="/student/timetable" element={<Timetable />} />
@@ -116,7 +108,6 @@ const App = () => {
         <Route path="/admin/academics/classes" element={<Classes />} />
         <Route path="/admin/academics/subjects" element={<Subjects />} />
         <Route path="/admin/academics/timetable" element={<AdminTimetable />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/communication/notices" element={<AdminNotices />} />
         <Route
           path="/admin/academics/exams/datesheet"

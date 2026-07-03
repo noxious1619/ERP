@@ -8,6 +8,7 @@ import {
   FileText,
   Trash2,
 } from "lucide-react";
+import { API_BASE_URL } from "../../../lib/api";
 
 export interface HomeworkTask {
   id: number;
@@ -156,7 +157,7 @@ const ViewDetailSidebar = ({
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:5000/api/assignments/submit",
+        `${API_BASE_URL}/api/assignments/submit`,
         {
           method: "POST",
           headers: {

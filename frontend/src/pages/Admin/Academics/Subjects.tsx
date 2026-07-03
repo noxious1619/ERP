@@ -9,8 +9,7 @@ import SubjectsTable from "../../../components/Admin/Academics/Subjects/Subjects
 import SubjectsPagination from "../../../components/Admin/Academics/Subjects/SubjectsPagination";
 import AddSubjectModal from "../../../components/Admin/Academics/Subjects/AddSubjectModal";
 import ConfirmDeleteModal from "../../../components/Admin/Academics/Subjects/ConfirmDeleteModal";
-
-const API_BASE = "http://localhost:5000";
+import { API_BASE_URL } from "../../../lib/api";
 
 export default function Subjects() {
   const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
@@ -48,7 +47,7 @@ export default function Subjects() {
   const fetchClasses = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${API_BASE}/api/admin/subjects/classes`, {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
@@ -80,7 +79,7 @@ export default function Subjects() {
         params.type = selectedType;
       }
 
-      const res = await axios.get(`${API_BASE}/api/admin/subjects`, {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/subjects`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
@@ -153,7 +152,7 @@ export default function Subjects() {
       setIsDeleting(true);
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        `${API_BASE}/api/admin/subjects/bulk-delete`,
+        `${API_BASE_URL}/api/admin/subjects/bulk-delete`,
         { ids: selectedIds },
         { headers: { Authorization: `Bearer ${token}` } },
       );

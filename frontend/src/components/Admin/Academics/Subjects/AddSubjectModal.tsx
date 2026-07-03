@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { X, ChevronDown } from "lucide-react"
 import axios from "axios"
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface AddSubjectModalProps {
   isOpen: boolean
@@ -50,7 +51,7 @@ export default function AddSubjectModal({
     const fetchSections = async (classId: string) => {
       try {
         const token = localStorage.getItem("token")
-        const res = await axios.get(`http://localhost:5000/api/admin/subjects/classes/${classId}/sections`, {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes/${classId}/sections`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.data.success) {
@@ -64,7 +65,7 @@ export default function AddSubjectModal({
     const fetchSubjectDetails = async (id: string) => {
       try {
         const token = localStorage.getItem("token")
-        const res = await axios.get(`http://localhost:5000/api/admin/subjects/${id}`, {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (res.data.success) {
@@ -108,7 +109,7 @@ export default function AddSubjectModal({
     }
     try {
       const token = localStorage.getItem("token")
-      const res = await axios.get(`http://localhost:5000/api/admin/subjects/classes/${newClassId}/sections`, {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes/${newClassId}/sections`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.data.success) {
@@ -142,11 +143,11 @@ export default function AddSubjectModal({
       }
 
       if (isEditMode && subjectToEdit) {
-        await axios.patch(`http://localhost:5000/api/admin/subjects/${subjectToEdit.id}`, payload, {
+        await axios.patch(`${API_BASE_URL}/api/admin/subjects/${subjectToEdit.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         })
       } else {
-        await axios.post("http://localhost:5000/api/admin/subjects", payload, {
+        await axios.post(`${API_BASE_URL}/api/admin/subjects`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         })
       }

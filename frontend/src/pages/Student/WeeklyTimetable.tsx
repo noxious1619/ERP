@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import useAuth from "../../hooks/useAuth"; // ✅ 1. Bring in auth hook
+import useAuth from "../../hooks/useAuth"; 
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import TimetableHeader from "../../components/Student/Timetable/Header";
 import WeeklyTimetableGrid from "../../components/Student/Timetable/WeeklyTimetableGrid";
 import type { TimetableEntry } from "../../types";
-
+import { API_BASE_URL } from "../../lib/api";
 const WeeklyTimetable = () => {
   // ✅ 2. Extract studentData to get the dynamic section ID
   const { studentData, loading: authLoading } = useAuth();
@@ -30,9 +30,9 @@ const WeeklyTimetable = () => {
 
         const token = localStorage.getItem("token");
 
-        // ✅ 4. FIXED PATH: Added /weekly to match your Express router
+        //  4. FIXED PATH: Added /weekly to match your Express router
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`,
+          `${API_BASE_URL}/api/timetable/section/${targetSectionId}/weekly`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -41,7 +41,6 @@ const WeeklyTimetable = () => {
         );
 
         if (response.data.success) {
-          console.log("Loaded weekly timetable data:", response.data.data);
           setScheduleData(response.data.data);
           // Set the label from the backend response
           if (response.data.sectionLabel) {

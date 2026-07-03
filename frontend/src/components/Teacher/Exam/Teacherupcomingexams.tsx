@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ExamCard from "../../../components/Student/Exam/ExamCard";
+import { API_BASE_URL } from "../../../lib/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 export interface ExamData {
@@ -90,7 +91,7 @@ const TeacherUpcomingExams = ({
         if (subjectOnly) params.subjectOnly = "true";
 
         const response = await axios.get(
-          "http://localhost:5000/api/exams/datesheet",
+          `${API_BASE_URL}/api/exams/datesheet`,
           {
             params,
             headers: { Authorization: `Bearer ${token}` },

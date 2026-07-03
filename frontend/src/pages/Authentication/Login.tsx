@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Eye, EyeOff } from "lucide-react";
+import { API_BASE_URL } from "../../lib/api";
 
 const LOGO_SRC = "/assets/school-logo.png";
 const SCHOOL_NAME = "SCHOOL NAME";
-const API_BASE_URL = "http://localhost:5000";
 
 // Maps a backend role string to the dashboard route it should land on.
 const ROLE_REDIRECTS: Record<string, string> = {
@@ -73,7 +73,7 @@ export default function Login() {
         <div className="hidden md:flex md:w-1/2 bg-gradient-to-b from-[#e3edfc] to-[#dbe7fa] items-center justify-center p-10">
           {/* Placeholder illustration — swap ILLUSTRATION_SRC above with your own image */}
           <img
-            src="../public/login.png"
+            src="/login.png"
             alt="Student login illustration"
             className="w-full max-w-sm object-contain select-none"
             draggable={false}

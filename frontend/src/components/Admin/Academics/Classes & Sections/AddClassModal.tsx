@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { X, CheckCircle } from "lucide-react";
+import { API_BASE_URL, getAuthHeaders } from "../../../../lib/api";
 
 interface AddClassModalProps {
   isOpen: boolean;
@@ -67,13 +68,9 @@ export default function AddClassModal({
     setSuccess(null);
 
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/academic/classes", {
+      const res = await fetch(`${API_BASE_URL}/api/academic/classes`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           name: classNameVal.trim(),
           academicYearId: yearId,

@@ -6,6 +6,7 @@ import TimetableHeader from "../../components/Student/Timetable/Header";
 import TimetableSchedule from "../../components/Student/Timetable/ScheduleSection";
 import CalendarSection from "../../components/Student/Dashboard/Calendar";
 import DateScheduleCard from "../../components/Student/Timetable/DateScheduleCard ";
+import { API_BASE_URL } from "../../lib/api";
 
 interface TimetableEntry {
   id: string;
@@ -42,14 +43,13 @@ const Timetable = () => {
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`,
+          `${API_BASE_URL}/api/timetable/section/${targetSectionId}/weekly`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
 
         if (response.data.success) {
-          console.log("Fetched Timetable Data:", response.data.data);
           setScheduleData(response.data.data);
         } else {
           setError("Failed to load timetable dataset.");

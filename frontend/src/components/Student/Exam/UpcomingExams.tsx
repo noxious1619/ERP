@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ExamCard from "./ExamCard";
+import { API_BASE_URL } from "../../../lib/api";
 
 export interface ExamData {
   id: string;
@@ -75,7 +76,7 @@ const UpcomingExams = ({ onMetaReady }: Props) => {
         setError(null);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/exams/upcoming",
+          `${API_BASE_URL}/api/exams/upcoming`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (response.data.success) {

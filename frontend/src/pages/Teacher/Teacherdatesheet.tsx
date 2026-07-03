@@ -6,6 +6,7 @@ import TeacherUpcomingExams from "../../components/Teacher/Exam/Teacherupcominge
 import type { ExamData } from "../../components/Teacher/Exam/Teacherupcomingexams";
 import { getDynamicHeaderDate } from "../../utils/dateHelpers";
 import { downloadDatesheetPdf } from "../../utils/Downloaddatesheet";
+import { API_BASE_URL } from "../../lib/api";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface ClassOption {
@@ -81,7 +82,7 @@ const TeacherDatesheet = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/teachers/me", {
+        const res = await axios.get(`${API_BASE_URL}/api/teachers/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success) {

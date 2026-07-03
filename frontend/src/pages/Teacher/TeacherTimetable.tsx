@@ -10,6 +10,7 @@ import TeacherTimetableHeader, {
 } from "../../components/Teacher/Timetable/TeacherTimetableHeader";
 import TeacherTimetableSchedule from "../../components/Teacher/Timetable/Teachertimetableschedule";
 import { getCurrentAPIDay } from "../../utils/dateHelpers";
+import { API_BASE_URL } from "../../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface MySubjectApiItem {
@@ -68,9 +69,9 @@ const TeacherTimetablePage = () => {
   const [filterMode, setFilterMode] = useState<TeacherFilterMode>("class");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // ✅ Extract teacherData from auth context
+  //  Extract teacherData from auth context
   const { teacherData } = useAuth();
-  console.log("Teacher Data from Auth Context:", teacherData);
+  // console.log("Teacher Data from Auth Context:", teacherData);
 
   // ─── Sections from teacher profile ───────────────────────────────────────
   const [teacherSections, setTeacherSections] = useState<TeacherSection[]>([]);
@@ -146,7 +147,7 @@ const TeacherTimetablePage = () => {
         setClassError(null);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/section/${selectedSection.id}/daily`,
+          `${API_BASE_URL}/api/timetable/section/${selectedSection.id}/daily`,
           {
             params: { day: ACTIVE_DAY },
             headers: { Authorization: `Bearer ${token}` },
@@ -173,7 +174,7 @@ const TeacherTimetablePage = () => {
         setClassWeeklyLoading(true);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/section/${selectedSection.id}/weekly`,
+          `${API_BASE_URL}/api/timetable/section/${selectedSection.id}/weekly`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (response.data.success) setClassWeeklyData(response.data.data);
@@ -195,14 +196,13 @@ const TeacherTimetablePage = () => {
         setMySubjectError(null);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/teacher/${teacherData.id}/daily`,
+          `${API_BASE_URL}/api/timetable/teacher/${teacherData.id}/daily`,
           {
             params: { day: ACTIVE_DAY },
             headers: { Authorization: `Bearer ${token}` },
           },
         );
         if (response.data.success) {
-          console.log("My Subject Daily Response:", response.data.data);
           setMySubjectItems(response.data.data);
         }
         else setMySubjectError("Failed to load timetable.");
@@ -225,7 +225,7 @@ const TeacherTimetablePage = () => {
         setMySubjectWeeklyLoading(true);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/teacher/${teacherData.id}/weekly`,
+          `${API_BASE_URL}/api/timetable/teacher/${teacherData.id}/weekly`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },

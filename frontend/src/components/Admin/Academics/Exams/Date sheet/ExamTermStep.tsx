@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { BookOpen, ArrowRight, Loader2 } from "lucide-react"
 import axios from "axios"
+import { API_BASE_URL } from "../../../../../lib/api";
 
 interface ExamTermStepProps {
   termName: string
@@ -28,7 +29,7 @@ export default function ExamTermStep({
     try {
       const token = localStorage.getItem("token")
       const res = await axios.post(
-        "http://localhost:5000/api/exam-terms",
+        `${API_BASE_URL}/api/exam-terms`,
         { name: termName.trim() },
         { headers: { Authorization: `Bearer ${token}` } }
       )

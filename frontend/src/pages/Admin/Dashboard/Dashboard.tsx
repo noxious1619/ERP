@@ -6,6 +6,7 @@ import DashboardHeader from "../../../components/Admin/Dashboard/DashboardHeader
 import DashboardStatsGrid from "../../../components/Admin/Dashboard/DashboardStatsGrid";
 import NoticeBoardCard from "../../../components/Admin/Dashboard/NoticeBoardCard";
 import AttendanceSnapshotCard from "../../../components/Admin/Dashboard/AttendanceSnapshotCard";
+import { API_BASE_URL } from "../../../lib/api";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -20,7 +21,7 @@ export default function Dashboard() {
         const token = localStorage.getItem("token");
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const response = await axios.get(
-          "http://localhost:5000/api/admin/dashboard/stats",
+          `${API_BASE_URL}/api/admin/dashboard/stats`,
           { headers },
         );
 

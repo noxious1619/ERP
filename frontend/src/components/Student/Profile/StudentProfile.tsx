@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../../../lib/api";
 interface StudentProfileData {
   id: string;
   admissionNumber: string;
@@ -33,7 +34,7 @@ const StudentProfile = () => {
         setError(null);
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/students/me",
+          `${API_BASE_URL}/api/students/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -42,11 +43,6 @@ const StudentProfile = () => {
         );
         if (response.data.success) {
           setStudent(response.data.data);
-
-          console.log(
-            "Student profile fetched successfully:",
-            response.data.data,
-          );
         } else {
           setError("Failed to fetch student profile.");
         }

@@ -1,11 +1,12 @@
 import React, { useMemo, useEffect, useState } from "react";
 import axios from "axios";
 import WeeklyClassCard from "../../../components/Student/Timetable/WeeklyCard";
-import useAuth from "../../../hooks/useAuth"; // ✅ 1. Bring in the auth hook
+import useAuth from "../../../hooks/useAuth"; 
 import type {
   TeacherFilterMode,
   TeacherSection,
 } from "./TeacherTimetableHeader";
+import { API_BASE_URL } from "../../../lib/api";
 
 interface TeacherWeeklyEntry {
   id: string;
@@ -88,7 +89,7 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
 
         // ✅ FIXED PATH: Pointing to the new Section Weekly endpoint
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/section/${selectedSection.id}/weekly`,
+          `${API_BASE_URL}/api/timetable/section/${selectedSection.id}/weekly`,
 
           {
             params: { filter: "mySubject" },
@@ -141,14 +142,14 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
         setMySubjectError(null);
         const token = localStorage.getItem("token");
 
-        // ✅ FIXED PATH: Pointing to the new Teacher Weekly endpoint
+        //  FIXED PATH: Pointing to the new Teacher Weekly endpoint
         const response = await axios.get(
-          `http://localhost:5000/api/timetable/teacher/${teacherData.id}/weekly`,
+          `${API_BASE_URL}/api/timetable/teacher/${teacherData.id}/weekly`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
 
         if (response.data.success) {
-          // ✅ Map the custom backend properties so the WeeklyCard renders perfectly
+          // Map the custom backend properties so the WeeklyCard renders perfectly
           const apiEntries: TeacherWeeklyEntry[] = response.data.data.map(
             (row: any) => ({
               id: row.id,

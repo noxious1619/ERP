@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
 import TeacherHeader from "./TeacherHeader";
 import TeacherFilters from "./TeacherFilters";
@@ -8,6 +7,7 @@ import TeacherTable, { type TeacherRowType } from "./TeacherTable";
 import StaffPagination from "../Staff/StaffPagination";
 import AddNewTeacherModal from "./AddNewTeacherModal";
 import EditTeacherModal from "./EditTeacherModal";
+import { API_BASE_URL } from "../../../../lib/api";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -65,7 +65,7 @@ export default function TeacherView() {
         ...(subjectFilter && { subjectId: subjectFilter }),
       });
 
-      const res = await fetch(`http://localhost:5000/api/teachers?${params}`, {
+      const res = await fetch(`${API_BASE_URL}/api/teachers?${params}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const json = await res.json();
@@ -123,7 +123,7 @@ export default function TeacherView() {
       ...(classFilter && { classId: classFilter }),
       ...(subjectFilter && { subjectId: subjectFilter }),
     });
-    const res = await fetch(`http://localhost:5000/api/teachers?${params}`, {
+    const res = await fetch(`${API_BASE_URL}/api/teachers?${params}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
     const json = await res.json();
@@ -162,7 +162,7 @@ export default function TeacherView() {
 
       if (isSingle) {
         const res = await fetch(
-          `http://localhost:5000/api/teachers/${deletingTeacher[0].id}`,
+          `${API_BASE_URL}/api/teachers/${deletingTeacher[0].id}`,
           {
             method: "DELETE",
             headers: {
@@ -177,19 +177,16 @@ export default function TeacherView() {
           throw new Error(json.message);
         }
       } else {
-        const res = await fetch(
-          "http://localhost:5000/api/teachers/bulk-delete",
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({
-              ids: deletingTeacher.map((teacher) => teacher.id),
-            }),
+        const res = await fetch(`${API_BASE_URL}/api/teachers/bulk-delete`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        );
+          body: JSON.stringify({
+            ids: deletingTeacher.map((teacher) => teacher.id),
+          }),
+        });
 
         const json = await res.json();
 

@@ -6,6 +6,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "../../../../../lib/api";
 
 interface ClassOption {
   id: string;
@@ -70,10 +71,10 @@ export default function ConfigureStep({
         // Since backend now defaults to current academic year,
         // we don't need to pass yearId.
         const [classRes, yearRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/academic/classes", {
+          axios.get(`${API_BASE_URL}/api/academic/classes`, {
             headers,
           }),
-          axios.get("http://localhost:5000/api/academic/years", {
+          axios.get(`${API_BASE_URL}/api/academic/years`, {
             headers,
           }),
         ]);
@@ -138,7 +139,7 @@ export default function ConfigureStep({
         };
 
         const res = await axios.get(
-          "http://localhost:5000/api/academic/classes",
+          `${API_BASE_URL}/api/academic/classes`,
           {
             headers,
             params: {

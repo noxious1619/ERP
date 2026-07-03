@@ -11,6 +11,8 @@ import AttendanceStatusTable from "../../components/Teacher/Attendance/Attendanc
 import AttendanceStats from "../../components/Teacher/Attendance/Attendancestats";
 import AttendanceFilter from "../../components/Teacher/Attendance/Attendancefilter";
 import { AuthContext } from "../../context/AuthContext";
+import { API_BASE_URL } from "../../lib/api";
+
 
 interface DynamicStudent {
   rollNo: string;
@@ -58,7 +60,7 @@ const AttendanceManagement = () => {
         const headers = { Authorization: `Bearer ${auth.token}` };
 
         const res = await axios.get(
-          `http://localhost:5000/api/attendance/daily?sectionId=${sectionId}&date=${selectedDate}`,
+          `${API_BASE_URL}/api/attendance/daily?sectionId=${sectionId}&date=${selectedDate}`,
           { headers },
         );
 
@@ -120,7 +122,7 @@ const AttendanceManagement = () => {
       };
 
       const res = await axios.post(
-        "http://localhost:5000/api/attendance/daily",
+        `${API_BASE_URL}/api/attendance/daily`,
         payload,
         { headers },
       );

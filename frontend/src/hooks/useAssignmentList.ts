@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../lib/api";
 
-const BASE_URL = "http://localhost:5000/api/assignments";
+const BASE_URL = `${API_BASE_URL}/api/assignments`;
 
 export interface AssignmentCard {
   id: string;

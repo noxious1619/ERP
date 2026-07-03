@@ -7,6 +7,8 @@ import homework from "../../../assets/Student/Dashboard/Navbar/homework.png";
 import attendance from "../../../assets/Student/Dashboard/Navbar/attendance.png";
 import exams from "../../../assets/Student/Dashboard/Navbar/exam.png";
 import notice from "../../../assets/Student/Dashboard/Navbar/notice.png";
+import { LogOut } from "lucide-react";
+import useAuth from "../../../hooks/useAuth";
 
 type NavItem = {
   label: string;
@@ -26,6 +28,7 @@ const navItems: NavItem[] = [
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
   const { pathname } = useLocation();
+  const { logout } = useAuth();
 
   return (
     <aside
@@ -107,6 +110,27 @@ const Sidebar: React.FC = () => {
           );
         })}
       </nav>
+
+      <button
+        onClick={logout}
+        className={`
+    mt-auto
+    flex items-center rounded-3xl text-sm h-[46px]
+    ${collapsed ? "justify-center px-0" : "gap-3 px-3"}
+    text-red-500 hover:bg-red-50
+  `}
+      >
+        <LogOut className="w-6 h-6 shrink-0" />
+
+        <span
+          className={`
+      whitespace-nowrap transition-all duration-300
+      ${collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"}
+    `}
+        >
+          Logout
+        </span>
+      </button>
     </aside>
   );
 };

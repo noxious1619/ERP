@@ -45,9 +45,6 @@ const TeacherHomeworkDetail = () => {
     fileUrl: data.assignmentInfo.fileUrl,
   } : null;
 
-  console.log("1. URL Param (assignmentId):", assignmentId);
-  console.log("2. Hook Output Data:", data);
-  console.log("3. Hook Output Status:", { loading, error });
 
   // 4. Handlers to ensure we go back to page 1 when filtering
   const handleTabChange = (tab: "ALL" | "SUBMITTED" | "LATE" | "MISSING") => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { API_BASE_URL } from "../../../../lib/api"
 
 interface EditStaffModalProps {
   isOpen: boolean;
@@ -51,7 +52,7 @@ export default function EditStaffModal({
     const fetchStaff = async () => {
       setFetching(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/staff/${staffId}`, {
+        const res = await fetch(`${API_BASE_URL}/api/staff/${staffId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -161,7 +162,7 @@ export default function EditStaffModal({
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/staff/${staffId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/staff/${staffId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

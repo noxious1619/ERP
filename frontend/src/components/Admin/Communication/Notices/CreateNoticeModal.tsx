@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { X, Eye, ChevronLeft } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface ClassOption {
   id: string;
@@ -88,7 +89,7 @@ export default function CreateNoticeModal({
     if (!isOpen) return;
     const token = localStorage.getItem("token");
     axios
-      .get("http://localhost:5000/api/admin/notices/classes", {
+      .get(`${API_BASE_URL}/api/admin/notices/classes`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -168,7 +169,7 @@ export default function CreateNoticeModal({
       const token = localStorage.getItem("token");
       const { targetType, targetId } = getTarget();
       await axios.post(
-        "http://localhost:5000/api/admin/notices",
+        `${API_BASE_URL}/api/admin/notices`,
         {
           title,
           content,

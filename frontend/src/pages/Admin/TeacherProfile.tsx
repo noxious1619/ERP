@@ -7,6 +7,7 @@ import TeacherProfileCard  from "../../components/Teacher/Profile/TeacherProfile
 import ProfessionalInfoCard from "../../components/Teacher/Profile/ProfessionalInfoCard"
 import ContactCard         from "../../components/Teacher/Profile/Contactcard"
 import type { TeacherProfileData } from "../../types/teacherprofile"
+import { API_BASE_URL } from "../../lib/api";
 
 export default function AdminTeacherProfilePage() {
   const { id }     = useParams<{ id: string }>()
@@ -18,7 +19,7 @@ export default function AdminTeacherProfilePage() {
   useEffect(() => {
     const fetchTeacher = async () => {
       try {
-        const res  = await fetch(`http://localhost:5000/api/teachers/${id}`, {
+        const res  = await fetch(`${API_BASE_URL}/api/teachers/${id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         })
         const json = await res.json()

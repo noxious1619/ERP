@@ -71,9 +71,7 @@ export function useStudents({
       params.set("page", page.toString())
       params.set("limit", limit.toString())
 
-      const url = `${API_BASE_URL}/students?${params.toString()}`
-
-      console.log("Students API:", url)
+      const url = `${API_BASE_URL}/api/students?${params.toString()}`
 
       const res = await fetch(url, {
         headers: getAuthHeaders(),

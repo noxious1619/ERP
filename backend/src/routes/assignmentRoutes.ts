@@ -9,6 +9,7 @@ import {
   getAssignmentDetails,
   getAssignmentSummary,
   updateAssignment,
+   getSubmissionDetail, 
 } from '../controllers/assignmentController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { restrictTo } from '../middleware/roleMiddleware.js';
@@ -43,6 +44,13 @@ router
   .get(
     restrictTo('TEACHER', 'ADMIN', 'SUPER_ADMIN'),
     getAssignmentList
+  );
+
+  router
+  .route("/submissions/:submissionId")
+  .get(
+    restrictTo("TEACHER", "ADMIN", "SUPER_ADMIN"),
+    getSubmissionDetail
   );
 
 router

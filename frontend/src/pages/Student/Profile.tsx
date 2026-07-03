@@ -6,8 +6,8 @@ import StudentProfile from "../../components/Student/Profile/StudentProfile";
 import GuardianCard, {
   type ParentData,
 } from "../../components/Student/Profile/GuardianCard";
-// import AcademicPerformance from "../../components/Student/Profile/AcademicPerformance";
-// import AttendanceCard from "../../components/Student/Profile/AttendanceCard";
+import { API_BASE_URL } from "../../lib/api";
+
 import axios from "axios";
 const Profile = () => {
   const [parent, setParent] = useState<ParentData | null>(null);
@@ -16,7 +16,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/students/me", {
+        const res = await axios.get(`${API_BASE_URL}/api/students/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.data;

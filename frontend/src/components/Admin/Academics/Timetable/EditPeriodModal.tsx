@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { X, ChevronDown } from "lucide-react"
 import axios from "axios"
 import { type TimetableBlock } from "./TimetableGrid"
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface EditPeriodModalProps {
   isOpen: boolean
@@ -12,7 +13,7 @@ interface EditPeriodModalProps {
   sectionId: string
 }
 
-const API_BASE = "http://localhost:5000"
+
 
 export default function EditPeriodModal({
   isOpen,
@@ -49,11 +50,11 @@ export default function EditPeriodModal({
         const headers = { Authorization: `Bearer ${token}` }
 
         const [subjectsRes, teachersRes] = await Promise.all([
-          axios.get(`${API_BASE}/api/admin/subjects`, {
+          axios.get(`${API_BASE_URL}/api/admin/subjects`, {
             params: { classId },
             headers,
           }),
-          axios.get(`${API_BASE}/api/admin/subjects/teachers`, {
+          axios.get(`${API_BASE_URL}/api/admin/subjects/teachers`, {
             headers,
           }),
         ])
@@ -147,9 +148,9 @@ export default function EditPeriodModal({
       }
 
       if (isEditMode) {
-        await axios.patch(`${API_BASE}/api/timetable/${block.id}`, payload, { headers })
+        await axios.patch(`${API_BASE_URL}/api/timetable/${block.id}`, payload, { headers })
       } else {
-        await axios.post(`${API_BASE}/api/timetable`, payload, { headers })
+        await axios.post(`${API_BASE_URL}/api/timetable`, payload, { headers })
       }
 
       setIsSubmitting(false)
@@ -169,7 +170,7 @@ export default function EditPeriodModal({
       const token = localStorage.getItem("token")
       const headers = { Authorization: `Bearer ${token}` }
 
-      await axios.delete(`${API_BASE}/api/timetable/${block.id}`, { headers })
+      await axios.delete(`${API_BASE_URL}/api/timetable/${block.id}`, { headers })
       
       setIsDeleting(false)
       onSuccess()

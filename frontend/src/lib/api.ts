@@ -1,10 +1,9 @@
-export const API_BASE_URL = "http://localhost:5000/api"
+export const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Returns headers with the JWT token from localStorage.
  * Call this only inside client components / hooks.
  */
-
 export function getAuthHeaders(): HeadersInit {
   const token =
     typeof window !== "undefined"

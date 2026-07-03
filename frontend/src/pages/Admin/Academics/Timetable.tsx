@@ -6,8 +6,7 @@ import TimetableHeader from "../../../components/Admin/Academics/Timetable/Timet
 import TimetableGrid, { type TimetableBlock } from "../../../components/Admin/Academics/Timetable/TimetableGrid"
 import EditPeriodModal from "../../../components/Admin/Academics/Timetable/EditPeriodModal"
 import ManagePeriodsModal from "../../../components/Admin/Academics/Timetable/ManagePeriodsModal"
-
-const API_BASE = "http://localhost:5000"
+import { API_BASE_URL } from "../../../lib/api";
 
 export default function Timetable() {
   const [activeTab, setActiveTab] = useState<"Teacher" | "Student">("Teacher")
@@ -42,8 +41,8 @@ export default function Timetable() {
         const headers = { Authorization: `Bearer ${token}` }
 
         const [classesRes, teachersRes] = await Promise.all([
-          axios.get(`${API_BASE}/api/admin/subjects/classes`, { headers }),
-          axios.get(`${API_BASE}/api/admin/subjects/teachers`, { headers })
+          axios.get(`${API_BASE_URL}/api/admin/subjects/classes`, { headers }),
+          axios.get(`${API_BASE_URL}/api/admin/subjects/teachers`, { headers })
         ])
 
         if (classesRes.data.success) {
@@ -71,7 +70,7 @@ export default function Timetable() {
 
     try {
       const token = localStorage.getItem("token")
-      const res = await axios.get(`${API_BASE}/api/admin/subjects/classes/${classId}/sections`, {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes/${classId}/sections`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (res.data.success) {
@@ -96,7 +95,7 @@ export default function Timetable() {
       try {
         setIsLoading(true)
         setError(null)
-        const res = await axios.get(`${API_BASE}/api/timetable/section/${selectedSectionId}/weekly`, { headers })
+        const res = await axios.get(`${API_BASE_URL}/api/timetable/section/${selectedSectionId}/weekly`, { headers })
         if (res.data.success) {
           setScheduleData(res.data.data)
         }
@@ -115,7 +114,7 @@ export default function Timetable() {
       try {
         setIsLoading(true)
         setError(null)
-        const res = await axios.get(`${API_BASE}/api/timetable/teacher/${selectedTeacherId}/weekly`, { headers })
+        const res = await axios.get(`${API_BASE_URL}/api/timetable/teacher/${selectedTeacherId}/weekly`, { headers })
         if (res.data.success) {
           // Format keys to match standard Timetable fields
           const mapped = res.data.data.map((item: any) => ({

@@ -1,7 +1,7 @@
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
+import { API_BASE_URL } from "../../../../lib/api";
 
 function FilterSelect({
   label,
@@ -113,7 +113,7 @@ export default function TeacherFilters({
     const token = localStorage.getItem("token");
 
     // Confirmed mount path from server.ts: app.use('/api/academic', academicRoutes)
-    fetch("http://localhost:5000/api/academic/classes", {
+    fetch(`${API_BASE_URL}/api/academic/classes`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
@@ -130,7 +130,7 @@ export default function TeacherFilters({
       })
       .catch(() => {});
 
-    fetch("http://localhost:5000/api/academic/subjects", {
+    fetch(`${API_BASE_URL}/api/academic/subjects`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())

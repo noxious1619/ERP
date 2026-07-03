@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, CheckCircle, CalendarDays, BadgeCheck } from "lucide-react";
 import AdminSidebar from "../../../components/Admin/sidebar";
 import AdminNavbar from "../../../components/Admin/Navbar";
+import { API_BASE_URL } from "../../../lib/api";
 
 interface AcademicYear {
   id: string;
@@ -27,7 +28,7 @@ export default function AcademicYears() {
 
   const fetchYears = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/academic/years", {
+      const res = await fetch(`${API_BASE_URL}/api/academic/years`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -88,7 +89,7 @@ export default function AcademicYears() {
     setFormSuccess(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/academic/years", {
+      const res = await fetch(`${API_BASE_URL}/api/academic/years`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

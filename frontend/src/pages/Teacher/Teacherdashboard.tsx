@@ -13,6 +13,7 @@ import TeacherNavbar from "../../components/Teacher/Dashboard/Navbar";
 import TeacherTimetableSection from "../../components/Teacher/Dashboard/Teachertimetablesection";
 import type { TeacherTimetableItem } from "../../components/Teacher/Dashboard/Teachertimetablesection";
 import QuickActions from "../../components/Teacher/Dashboard/Quickactions";
+import { API_BASE_URL } from "../../lib/api";
 
 const TeacherDashboard: React.FC = () => {
   // ── Auth Data ─────────────────────────────────────────────────────────────
@@ -46,7 +47,7 @@ const TeacherDashboard: React.FC = () => {
     const fetchNotices = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/notices/teacher",
+          `${API_BASE_URL}/api/notices/teacher`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         const raw = res.data?.data ?? res.data?.notices ?? res.data ?? [];
@@ -76,7 +77,7 @@ const TeacherDashboard: React.FC = () => {
 
         if (today === "Sunday") today = "Monday"; // Fallback to Monday schedule on Sunday
         const res = await axios.get(
-          `http://localhost:5000/api/timetable/teacher/${teacherData.id}/daily?day=${today}`,
+          `${API_BASE_URL}/api/timetable/teacher/${teacherData.id}/daily?day=${today}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         const rawData = res.data?.data || [];
@@ -101,7 +102,7 @@ const TeacherDashboard: React.FC = () => {
     const fetchHomework = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/assignments/list",
+          `${API_BASE_URL}/api/assignments/list`,
           {
             headers: { Authorization: `Bearer ${token}` },
             params: {
@@ -183,7 +184,7 @@ const TeacherDashboard: React.FC = () => {
         const year = currentAttendanceDate.getFullYear();
 
         const res = await axios.get(
-          `http://localhost:5000/api/attendance/attendanceData/section/${sectionId}/weekly-trends`,
+          `${API_BASE_URL}/api/attendance/attendanceData/section/${sectionId}/weekly-trends`,
           {
             headers: { Authorization: `Bearer ${token}` },
             params: { month, year },

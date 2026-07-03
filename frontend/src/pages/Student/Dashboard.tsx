@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import useAuth from "../../hooks/useAuth";
-
+import { API_BASE_URL } from "../../lib/api";
 import Navbar from "../../components/Student/Dashboard/Navbar";
 import TopBar from "../../components/Student/Dashboard/TopBar";
 import WelcomeBanner from "../../components/Student/Dashboard/WelcomeBanner";
@@ -66,14 +66,14 @@ const Dashboard = () => {
           noticeResponse,
         ] = await Promise.all([
           axios.get(
-            `http://localhost:5000/api/attendance/attendanceData/student/${studentId}/heatmap`,
+            `${API_BASE_URL}/api/attendance/attendanceData/student/${studentId}/heatmap`,
             {
               params: { year: currentYear },
               headers: { Authorization: `Bearer ${token}` },
             },
           ),
           axios.get(
-            `http://localhost:5000/api/attendance/attendanceData/student/${studentId}/totalPercetage`,
+            `${API_BASE_URL}/api/attendance/attendanceData/student/${studentId}/totalPercentage`,
             {
               params: { year: currentYear },
               headers: { Authorization: `Bearer ${token}` },
@@ -81,7 +81,7 @@ const Dashboard = () => {
           ),
           targetSectionId
             ? axios.get(
-                `http://localhost:5000/api/timetable/section/${targetSectionId}/weekly`,
+                `${API_BASE_URL}/api/timetable/section/${targetSectionId}/weekly`,
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
@@ -89,10 +89,10 @@ const Dashboard = () => {
                 },
               )
             : Promise.resolve(null),
-          axios.get(`http://localhost:5000/api/assignments/my-feed`, {
+          axios.get(`${API_BASE_URL}/api/assignments/my-feed`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`http://localhost:5000/api/notices/my`, {
+          axios.get(`${API_BASE_URL}/api/notices/my`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);

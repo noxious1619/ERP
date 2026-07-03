@@ -4,6 +4,7 @@ import noticeIconBlue from "../../../assets/Student/NoticeBoard/blue.svg";
 import noticeIconPink from "../../../assets/Student/NoticeBoard/pink.svg";
 import noticeIconPurple from "../../../assets/Student/NoticeBoard/purple.svg";
 import type { Notice } from "../../../types/notice";
+import { API_BASE_URL } from "../../../lib/api";
 
 interface Section {
   id: string;
@@ -68,7 +69,7 @@ const CreateNoticeModal = ({
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/teachers/me", {
+        const res = await axios.get(`${API_BASE_URL}/api/teachers/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data.success) {
@@ -153,7 +154,7 @@ const CreateNoticeModal = ({
       const { targetType, targetId } = getTarget();
 
       await axios.post(
-        "http://localhost:5000/api/notices",
+        `${API_BASE_URL}/api/notices`,
         {
           title,
           content,

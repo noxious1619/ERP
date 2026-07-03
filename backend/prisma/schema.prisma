@@ -4,7 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  //url       = env("DATABASE_URL")
+  //directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -55,7 +57,6 @@ model Student {
   section           Section            @relation(fields: [sectionId], references: [id])
   user              User?              @relation(fields: [userId], references: [id])
   submissions       Submission[]
-   @@unique([sectionId, rollNumber])
 }
 
 model Parent {
@@ -104,15 +105,29 @@ model Teacher {
 }
 
 model Staff {
-  id          String   @id @default(uuid())
-  employeeId  String   @unique
-  department  String
-  designation String
-  joiningDate DateTime
-  userId      String   @unique
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id])
+  id            String    @id @default(uuid())
+  employeeId    String    @unique
+  firstName     String
+  lastName      String
+  gender        String?
+  dateOfBirth   DateTime?
+  phone         String?
+  email         String?   @unique
+  address       String?
+  city          String?
+  state         String?
+  bloodGroup    String?
+  department    String?
+  designation   String
+  joiningDate   DateTime
+  status        String    @default("ACTIVE")
+  bio           String?
+  qualification String?
+  experience    Int?
+  userId        String    @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id])
 }
 
 model AuditLog {
@@ -155,6 +170,8 @@ model Section {
   id                  String                  @id @default(uuid())
   name                String
   classId             String
+  capacity            Int                     @default(50)
+  homeRoom            String?
   classTeacherId      String?                 @unique
   assignments         Assignment[]
   attendances         Attendance[]
@@ -169,6 +186,7 @@ model Subject {
   id                   String                  @id @default(uuid())
   name                 String
   code                 String
+  type                 String                  @default("Theory")
   classId              String
   icon                 String?
   assessmentComponents AssessmentComponent[]
@@ -446,6 +464,9 @@ enum Role {
   STUDENT
   FINANCE
   PARENT
+  PRINCIPAL
+  ACCOUNTANT
+  FRONT_DESK
 }
 
 enum DayOfWeek {

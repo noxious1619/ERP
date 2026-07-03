@@ -11,12 +11,13 @@ import { useSubmissionDetail } from "../../hooks/useSubmissionDetails";
 const SIDEBAR_WIDTH = 360;
 
 const TeacherSubmissionView = () => {
-  const { id: submissionId } = useParams<{ id: string }>();
+  const { submissionId } = useParams<{ submissionId: string }>();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Fire the hook!
-  const { data, loading, error, saving, submitGrade } = useSubmissionDetail(submissionId);
+  const { data, loading, error, saving, submitGrade } =
+    useSubmissionDetail(submissionId);
 
   return (
     <div className="flex min-h-screen bg-[#F8F9FE]">
@@ -43,14 +44,16 @@ const TeacherSubmissionView = () => {
 
         {/* Dynamic State Handling */}
         {error ? (
-           <div className="flex-1 flex items-center justify-center bg-white rounded-[20px] border border-red-200 text-red-500 shadow-sm">
-             <p>{error}</p>
-           </div>
+          <div className="flex-1 flex items-center justify-center bg-white rounded-[20px] border border-red-200 text-red-500 shadow-sm">
+            <p>{error}</p>
+          </div>
         ) : loading || !data ? (
-           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-             <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#4D8DFF]" />
-             <p className="text-[14px] font-medium text-gray-500">Loading submission data...</p>
-           </div>
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+            <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#4D8DFF]" />
+            <p className="text-[14px] font-medium text-gray-500">
+              Loading submission data...
+            </p>
+          </div>
         ) : (
           <div className="flex-1 min-h-0">
             {/* Pass the images array down to the viewer */}
@@ -83,10 +86,10 @@ const TeacherSubmissionView = () => {
         <div className="h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Pass the data and the save function down to the sidebar */}
           {!loading && data && (
-            <SubmissionInfoCard 
-              data={data} 
+            <SubmissionInfoCard
+              data={data}
               saving={saving}
-              onSubmitGrade={submitGrade} 
+              onSubmitGrade={submitGrade}
             />
           )}
         </div>

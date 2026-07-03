@@ -8,8 +8,7 @@ import AttendanceStatsGrid from "../../../components/Admin/Academics/Attendance/
 import DailyAttendanceMatrix from "../../../components/Admin/Academics/Attendance/DailyAttendanceMatrix"
 import AttendanceAnalyticsSidebar from "../../../components/Admin/Academics/Attendance/AttendanceAnalyticsSidebar"
 import useAuth from "../../../hooks/useAuth"
-
-const API_BASE = "http://localhost:5000"
+import { API_BASE_URL } from "../../../lib/api";
 const PAGE_SIZE = 6
 
 export default function AdminAttendance() {
@@ -56,7 +55,7 @@ export default function AdminAttendance() {
     const fetchClasses = async () => {
       try {
         const token = localStorage.getItem("token")
-        const res = await axios.get(`${API_BASE}/api/admin/subjects/classes`, {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.data.success) {
@@ -80,7 +79,7 @@ export default function AdminAttendance() {
     const fetchSections = async () => {
       try {
         const token = localStorage.getItem("token")
-        const res = await axios.get(`${API_BASE}/api/admin/subjects/classes/${selectedClass}/sections`, {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes/${selectedClass}/sections`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         if (res.data.success) {
@@ -123,7 +122,7 @@ export default function AdminAttendance() {
       params.set("page", page.toString())
       params.set("limit", PAGE_SIZE.toString())
 
-      const res = await axios.get(`${API_BASE}/api/attendance/admin-summary?${params.toString()}`, {
+      const res = await axios.get(`${API_BASE_URL}/api/attendance/admin-summary?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 

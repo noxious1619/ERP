@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 // Assuming you have a hook to grab the user's token. Adjust the import if yours is named differently!
 import useAuth from "./useAuth"; 
+import { API_BASE_URL } from "../lib/api";
 
 interface FetchParams {
   assignmentId: string;
@@ -27,7 +28,7 @@ export const useSubmissionList = ({ assignmentId, search, status, page }: FetchP
       setLoading(true);
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/assignments/${assignmentId}/submissions`, 
+          `${API_BASE_URL}/api/assignments/${assignmentId}/submissions`, 
           {
             // These match the req.query parameters in your backend!
             params: { search, status, page, pageSize: 10 },

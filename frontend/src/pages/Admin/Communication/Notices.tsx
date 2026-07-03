@@ -9,8 +9,7 @@ import Calendar from "../../../components/Student/Dashboard/Calendar";
 import CreateNoticeModal from "../../../components/Admin/Communication/Notices/CreateNoticeModal";
 import ConfirmDeleteModal from "../../../components/Admin/Communication/Notices/ConfirmDeleteModal";
 import type { Notice } from "../../../types/notice";
-
-const API_BASE = "http://localhost:5000";
+import { API_BASE_URL } from "../../../lib/api";
 
 export default function Notices() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,7 +32,7 @@ export default function Notices() {
       setError(null);
       const token = localStorage.getItem("token");
       const params = category !== "ALL" ? { category } : {};
-      const res = await axios.get(`${API_BASE}/api/admin/notices`, {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/notices`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
@@ -70,7 +69,7 @@ export default function Notices() {
     try {
       setIsDeleting(true);
       const token = localStorage.getItem("token");
-      await axios.delete(`${API_BASE}/api/admin/notices/${noticeToDelete.id}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/notices/${noticeToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Update local state immediately

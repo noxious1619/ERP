@@ -5,6 +5,7 @@ import TeacherAssignmentCard, {
   type SectionOption,
   type TeacherAssignment,
 } from "./Teacherassignmentcard";
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface EditTeacherModalProps {
   isOpen: boolean;
@@ -79,8 +80,8 @@ export default function EditTeacherModal({
       setFetching(true);
       try {
         const [subjectsRes, teacherRes] = await Promise.all([
-          fetch("http://localhost:5000/api/academic/subjects", { headers }),
-          fetch(`http://localhost:5000/api/teachers/${teacherId}`, { headers }),
+          fetch(`${API_BASE_URL}/api/academic/subjects`, { headers }),
+          fetch(`${API_BASE_URL}/api/teachers/${teacherId}`, { headers }),
         ]);
 
         const subjectsJson = await subjectsRes.json();
@@ -159,7 +160,7 @@ export default function EditTeacherModal({
           [...groupedAssignments.values()].map(async (assignment) => {
             try {
               const res = await fetch(
-                `http://localhost:5000/api/academic/sections?classId=${assignment.classId}`,
+                `${API_BASE_URL}/api/academic/sections?classId=${assignment.classId}`,
                 { headers },
               );
 
@@ -271,7 +272,7 @@ export default function EditTeacherModal({
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/academic/sections?classId=${subject.classId}`,
+        `${API_BASE_URL}/api/academic/sections?classId=${subject.classId}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         },
@@ -326,7 +327,7 @@ export default function EditTeacherModal({
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/teachers/${teacherId}`,
+        `${API_BASE_URL}/api/teachers/${teacherId}`,
         {
           method: "PATCH",
           headers: {

@@ -19,6 +19,7 @@
     "react-calendar": "^6.0.1",
     "react-dom": "^19.2.5",
     "react-is": "^19.2.6",
+    "react-pdf": "^10.4.1",
     "react-router-dom": "^7.15.0",
     "recharts": "^3.8.1",
     "tailwindcss": "^4.3.0"

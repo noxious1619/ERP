@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { X, Plus, Trash2, GripVertical } from "lucide-react"
 import axios from "axios"
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface ManagePeriodsModalProps {
   isOpen: boolean
@@ -10,7 +11,6 @@ interface ManagePeriodsModalProps {
   currentPeriods: { period: number; startTime: string; endTime: string }[]
 }
 
-const API_BASE = "http://localhost:5000"
 
 export default function ManagePeriodsModal({
   isOpen,
@@ -150,7 +150,7 @@ export default function ManagePeriodsModal({
     try {
       const token = localStorage.getItem("token")
       const res = await axios.put(
-        `${API_BASE}/api/timetable/section/${sectionId}/periods`,
+        `${API_BASE_URL}/api/timetable/section/${sectionId}/periods`,
         { periods },
         { headers: { Authorization: `Bearer ${token}` } }
       )

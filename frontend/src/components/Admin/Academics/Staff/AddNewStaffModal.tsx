@@ -1,6 +1,7 @@
 import { X, Eye, EyeOff } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import useAuth from "../../../../hooks/useAuth";
+import { API_BASE_URL } from "../../../../lib/api";
 interface AddNewStaffModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -179,8 +180,8 @@ export default function AddNewStaffModal({
       const isTeacher = role === "Teacher";
 
       const endpoint = isTeacher
-        ? "http://localhost:5000/api/teachers/onboard"
-        : "http://localhost:5000/api/staff/onboard";
+        ? `${API_BASE_URL}/api/teachers/onboard`
+        : `${API_BASE_URL}/api/staff/onboard`;
 
       const body = isTeacher
         ? {

@@ -56,7 +56,6 @@ const getTaskStatus = (dueDate?: string): HomeworkTask["status"] => {
 
 const AssignmentInfoCard = ({ info, onEditClick }: AssignmentInfoProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  console.log("AssignmentInfoCard received info:", info);
 
   // Fallbacks if data is still loading
   const currentTitle = info?.title || "Loading Assignment...";

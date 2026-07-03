@@ -7,6 +7,7 @@ import StaffTable, { type StaffType } from "./StaffTable";
 import StaffPagination from "./StaffPagination";
 import AddNewStaffModal from "./AddNewStaffModal";
 import EditStaffModal from "./EditStaffModal";
+import { API_BASE_URL } from "../../../../lib/api";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -58,7 +59,7 @@ export default function StaffView() {
         ...(statusFilter && { status: statusFilter }),
       });
 
-      const res = await fetch(`http://localhost:5000/api/staff?${params}`, {
+      const res = await fetch(`${API_BASE_URL}/api/staff?${params}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const json = await res.json();
@@ -99,7 +100,7 @@ export default function StaffView() {
       ...(roleFilter && { role: roleFilter }),
       ...(statusFilter && { status: statusFilter }),
     });
-    const res = await fetch(`http://localhost:5000/api/staff?${params}`, {
+    const res = await fetch(`${API_BASE_URL}/api/staff?${params}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
     const json = await res.json();
@@ -139,7 +140,7 @@ export default function StaffView() {
       if (isSingle) {
         // Use existing single delete endpoint
         const res = await fetch(
-          `http://localhost:5000/api/staff/${deletingStaff[0].id}`,
+          `${API_BASE_URL}/api/staff/${deletingStaff[0].id}`,
           {
             method: "DELETE",
             headers: {
@@ -151,7 +152,7 @@ export default function StaffView() {
         if (!json.success) throw new Error(json.message);
       } else {
         // Use bulk delete endpoint
-        const res = await fetch(`http://localhost:5000/api/staff/bulk-delete`, {
+        const res = await fetch(`${API_BASE_URL}/api/staff/bulk-delete`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",

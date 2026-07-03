@@ -7,6 +7,7 @@ import TeacherProfileCard from "../../components/Teacher/Profile/TeacherProfileC
 import ProfessionalInfoCard from "../../components/Teacher/Profile/ProfessionalInfoCard";
 import ContactCard from "../../components/Teacher/Profile/Contactcard";
 import type { TeacherProfileData } from "../../types/teacherprofile";
+import { API_BASE_URL } from "../../lib/api";
 const TeacherProfilePage = () => {
   const [teacher, setTeacher] = useState<TeacherProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +17,7 @@ const TeacherProfilePage = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/teachers/me", {
+        const res = await axios.get(`${API_BASE_URL}/api/teachers/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTeacher(res.data.data);

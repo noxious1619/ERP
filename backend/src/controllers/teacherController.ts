@@ -767,9 +767,6 @@ export const getAllTeachers = async (req: Request, res: Response) => {
     const subjectId     = (req.query.subjectId as string)?.trim() || "";
     const skip         = (page - 1) * limit;
 
-    console.log("[getAllTeachers] query params:", {
-      search, statusFilter, genderFilter, classId, subjectId,
-    });
 
     const searchCondition = search ? {
       OR: [
@@ -808,8 +805,6 @@ export const getAllTeachers = async (req: Request, res: Response) => {
       ...assignmentCondition,
     };
 
-    console.log("[getAllTeachers] final where:", JSON.stringify(where, null, 2));
-
     const [teachers, total] = await Promise.all([
       prisma.teacher.findMany({
         where,
@@ -842,7 +837,6 @@ export const getAllTeachers = async (req: Request, res: Response) => {
       prisma.teacher.count({ where }),
     ]);
 
-    console.log("[getAllTeachers] matched count:", total);
 
     const normalizeStatus = (s: string) =>
       s === "ACTIVE" ? "Active" : s === "ON_LEAVE" ? "On Leave" : s;

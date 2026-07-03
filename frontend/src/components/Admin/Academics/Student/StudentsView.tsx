@@ -10,9 +10,10 @@ import StudentPagination from "./StudentPagination";
 import AddNewStudentModal from "./AddNewStudentModal";
 import ConfirmDeleteStudentModal from "./ConfirmDeleteStudentModal";
 import { useStudents } from "../../../../hooks/useStudents";
+import { API_BASE_URL } from "../../../../lib/api";
 
 const PAGE_SIZE = 6;
-const API_BASE = "http://localhost:5000";
+
 
 export default function StudentsView() {
   const [search, setSearch] = useState("");
@@ -60,7 +61,7 @@ export default function StudentsView() {
 
         // Fetch classes
         const classRes = await axios.get(
-          `${API_BASE}/api/admin/subjects/classes`,
+          `${API_BASE_URL}/api/admin/subjects/classes`,
           { headers },
         );
         if (classRes.data.success) {
@@ -68,7 +69,7 @@ export default function StudentsView() {
         }
 
         // Fetch academic years
-        const yearRes = await axios.get(`${API_BASE}/api/academic/years`, {
+        const yearRes = await axios.get(`${API_BASE_URL}/api/academic/years`, {
           headers,
         });
         if (Array.isArray(yearRes.data)) {
@@ -95,7 +96,7 @@ export default function StudentsView() {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `${API_BASE}/api/admin/subjects/classes/${selectedClass}/sections`,
+          `${API_BASE_URL}/api/admin/subjects/classes/${selectedClass}/sections`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -149,7 +150,7 @@ export default function StudentsView() {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
       const res = await axios.post(
-        `${API_BASE}/api/students/bulk-delete`,
+        `${API_BASE_URL}/api/students/bulk-delete`,
         { ids: selectedIds },
         { headers },
       );

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 // 1. Define exactly what the backend is sending us
 export interface SubmissionRecord {
+  assignmentId: string;
   studentId: string;
   rollNo: string;
   name: string;
@@ -47,14 +48,20 @@ const formatDateTime = (isoString: string) => {
 const COLS = "grid-cols-[140px_2fr_2fr_1fr_1fr_1.5fr]";
 
 // 3. Receive the dynamic data as props
-const SubmissionTable = ({ submissions, pagination, onPageChange }: SubmissionTableProps) => {
+const SubmissionTable = ({
+  submissions,
+  pagination,
+  onPageChange,
+}: SubmissionTableProps) => {
   const navigate = useNavigate();
 
   // If there's no data, show a clean empty state
   if (!submissions || submissions.length === 0) {
     return (
       <div className="w-full bg-white rounded-[10px] border border-[#EAECF0] py-16 flex items-center justify-center">
-        <p className="text-[14px] text-gray-400">No submissions found for this filter.</p>
+        <p className="text-[14px] text-gray-400">
+          No submissions found for this filter.
+        </p>
       </div>
     );
   }
@@ -62,8 +69,17 @@ const SubmissionTable = ({ submissions, pagination, onPageChange }: SubmissionTa
   return (
     <div className="w-full">
       {/* Table header */}
-      <div className={`grid ${COLS} px-14 py-3 bg-indigo-50 rounded-t-[10px] border border-[#EAECF0]`}>
-        {["Roll no.", "Student Name", "Submitted On", "Status", "Marks", "Actions"].map((h) => (
+      <div
+        className={`grid ${COLS} px-14 py-3 bg-indigo-50 rounded-t-[10px] border border-[#EAECF0]`}
+      >
+        {[
+          "Roll no.",
+          "Student Name",
+          "Submitted On",
+          "Status",
+          "Marks",
+          "Actions",
+        ].map((h) => (
           <span key={h} className="text-[13px] font-semibold text-gray-500">
             {h}
           </span>
@@ -80,12 +96,20 @@ const SubmissionTable = ({ submissions, pagination, onPageChange }: SubmissionTa
             <span className="text-[14px] text-gray-500">{s.rollNo}</span>
 
             <div className="flex items-center gap-2.5">
-              <span className={`w-2 h-2 rounded-full shrink-0 ${statusDot[s.status]}`} />
-              <span className="text-[14px] font-medium text-gray-800">{s.name}</span>
+              <span
+                className={`w-2 h-2 rounded-full shrink-0 ${statusDot[s.status]}`}
+              />
+              <span className="text-[14px] font-medium text-gray-800">
+                {s.name}
+              </span>
             </div>
 
             <span className="text-[14px] text-gray-500">
-              {s.submittedOn ? formatDateTime(s.submittedOn) : <span className="text-gray-300">–</span>}
+              {s.submittedOn ? (
+                formatDateTime(s.submittedOn)
+              ) : (
+                <span className="text-gray-300">–</span>
+              )}
             </span>
 
             <div>
@@ -100,19 +124,28 @@ const SubmissionTable = ({ submissions, pagination, onPageChange }: SubmissionTa
                   {s.result}
                 </span>
               ) : (
-                <span className="text-gray-300 text-[14px]">{s.status === "MISSING" ? "–" : "Pending"}</span>
+                <span className="text-gray-300 text-[14px]">
+                  {s.status === "MISSING" ? "–" : "Pending"}
+                </span>
               )}
             </div>
 
-            <span className={`text-[14px] font-medium ${s.result === "Fail" ? "text-[#A8364B]" : "text-gray-800"}`}>
-              {s.marks !== null ? s.marks : <span className="text-gray-300">–</span>}
+            <span
+              className={`text-[14px] font-medium ${s.result === "Fail" ? "text-[#A8364B]" : "text-gray-800"}`}
+            >
+              {s.marks !== null ? (
+                s.marks
+              ) : (
+                <span className="text-gray-300">–</span>
+              )}
             </span>
 
             <div>
               {s.submissionId && (
                 <button
-                  onClick={() => navigate(`/teacher/homework/submission/${s.submissionId}`)}
-                  className="text-[13px] font-semibold text-[#4D8DFF] hover:underline tracking-wide cursor-pointer"
+                  onClick={() => {
+                    navigate(`/teacher/homework/submission/${s.submissionId}`);
+                  }}
                 >
                   View Submission
                 </button>
@@ -132,20 +165,22 @@ const SubmissionTable = ({ submissions, pagination, onPageChange }: SubmissionTa
           >
             Previous
           </button>
-          
-          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => onPageChange(p)}
-              className={`w-[36px] h-[36px] rounded-lg text-[13px] font-semibold cursor-pointer ${
-                p === pagination.page
-                  ? "bg-[#4D8DFF] text-white"
-                  : "border border-[#EAECF0] text-gray-500 hover:bg-gray-50"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
+
+          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(
+            (p) => (
+              <button
+                key={p}
+                onClick={() => onPageChange(p)}
+                className={`w-[36px] h-[36px] rounded-lg text-[13px] font-semibold cursor-pointer ${
+                  p === pagination.page
+                    ? "bg-[#4D8DFF] text-white"
+                    : "border border-[#EAECF0] text-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                {p}
+              </button>
+            ),
+          )}
 
           <button
             onClick={() => onPageChange(pagination.page + 1)}

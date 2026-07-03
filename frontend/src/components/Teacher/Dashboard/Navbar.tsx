@@ -7,6 +7,8 @@ import homework from "../../../assets/Student/Dashboard/Navbar/homework.png";
 import attendance from "../../../assets/Student/Dashboard/Navbar/attendance.png";
 import exams from "../../../assets/Student/Dashboard/Navbar/exam.png";
 import notice from "../../../assets/Student/Dashboard/Navbar/notice.png";
+import { LogOut } from "lucide-react";
+import useAuth from "../../../hooks/useAuth";
 
 type NavItem = {
   label: string;
@@ -17,16 +19,17 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "Dashboard", icon: dashboard, href: "/teacher/dashboard" },
   { label: "Timetable", icon: timetable, href: "/teacher/timetable" },
-  { label: "Homework",  icon: homework,  href: "/teacher/homework" },
-  { label: "Exams",     icon: exams,     href: "/teacher/exams" },
-  { label: "Attendance",icon: attendance,href: "/teacher/attendance" },
-  { label: "Notices",   icon: notice,    href: "/teacher/notices" },
+  { label: "Homework", icon: homework, href: "/teacher/homework" },
+  { label: "Exams", icon: exams, href: "/teacher/exams" },
+  { label: "Attendance", icon: attendance, href: "/teacher/attendance" },
+  { label: "Notices", icon: notice, href: "/teacher/notices" },
   // { label: "Settings",  icon: setting,   href: "/teacher/settings" },
 ];
 
 const TeacherNavbar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
   const { pathname } = useLocation();
+  const { logout } = useAuth();
 
   return (
     <aside
@@ -82,7 +85,11 @@ const TeacherNavbar: React.FC = () => {
                 }
               `}
             >
-              <img src={item.icon} alt={item.label} className="w-6 h-6 shrink-0" />
+              <img
+                src={item.icon}
+                alt={item.label}
+                className="w-6 h-6 shrink-0"
+              />
               <span
                 className={`
                   whitespace-nowrap transition-all duration-300
@@ -95,6 +102,27 @@ const TeacherNavbar: React.FC = () => {
           );
         })}
       </nav>
+
+      <button
+        onClick={logout}
+        className={`
+    mt-auto
+    flex items-center rounded-3xl text-sm h-[46px]
+    ${collapsed ? "justify-center px-0" : "gap-3 px-3"}
+    text-red-500 hover:bg-red-50
+  `}
+      >
+        <LogOut className="w-6 h-6 shrink-0" />
+
+        <span
+          className={`
+      whitespace-nowrap transition-all duration-300
+      ${collapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"}
+    `}
+        >
+          Logout
+        </span>
+      </button>
     </aside>
   );
 };

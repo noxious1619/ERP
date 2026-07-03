@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "../../../../../lib/api";
 
 export interface ScheduleRow {
   id: string;
@@ -62,7 +63,7 @@ export default function ScheduleStep({
         setLoadingSubjects(true);
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `http://localhost:5000/api/academic/subjects?classId=${classId}`,
+          `${API_BASE_URL}/api/academic/subjects?classId=${classId}`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
         if (res.data.success) setSubjects(res.data.data);

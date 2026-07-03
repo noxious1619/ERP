@@ -5,6 +5,7 @@ import TeacherAssignmentCard, {
   type SectionOption,
   type TeacherAssignment,
 } from "./Teacherassignmentcard";
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface AddNewTeacherModalProps {
   isOpen: boolean;
@@ -65,7 +66,7 @@ export default function AddNewTeacherModal({
   // Fetch subjects when modal opens
   useEffect(() => {
     if (!isOpen) return;
-    fetch("http://localhost:5000/api/academic/subjects", {
+    fetch(`${API_BASE_URL}/api/academic/subjects`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     })
       .then((r) => r.json())
@@ -192,7 +193,7 @@ export default function AddNewTeacherModal({
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/academic/sections?classId=${subject.classId}`,
+        `${API_BASE_URL}/api/academic/sections?classId=${subject.classId}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         },
@@ -258,7 +259,7 @@ export default function AddNewTeacherModal({
       .map((a) => ({ subjectId: a.subjectId, sectionIds: a.sectionIds }));
 
     try {
-      const res = await fetch("http://localhost:5000/api/teachers/onboard", {
+      const res = await fetch(`${API_BASE_URL}/api/teachers/onboard`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

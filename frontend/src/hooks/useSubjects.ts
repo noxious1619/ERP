@@ -75,7 +75,7 @@ export function useSubjects({
       params.set("page", page.toString())
       params.set("limit", limit.toString())
 
-      const url = `${API_BASE_URL}/academic/subjects?${params.toString()}`
+      const url = `${API_BASE_URL}/api/academic/subjects?${params.toString()}`
 
       console.log("Subjects API call:", url)
 

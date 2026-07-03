@@ -16,6 +16,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
+import { API_BASE_URL } from "../../../../lib/api";
 
 export default function Datesheet() {
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -73,7 +74,7 @@ export default function Datesheet() {
       };
 
       const res = await axios.post(
-        "http://localhost:5000/api/exams/publish",
+        `${API_BASE_URL}/api/exams/publish`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } },
       );

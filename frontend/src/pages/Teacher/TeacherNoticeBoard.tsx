@@ -9,6 +9,7 @@ import NoticeCards from "../../components/Student/NoticeBoard/NoticeCards";
 import Calendar from "../../components/Student/Dashboard/Calendar";
 import RightSidebarHeader from "../../components/Student/NoticeBoard/RightSidebarHeader";
 import CreateNoticeModal from "../../components/Teacher/Notice/CreateNoticeModal";
+import { API_BASE_URL } from "../../lib/api";
 
 const TeacherNoticeBoard = () => {
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -30,7 +31,7 @@ const TeacherNoticeBoard = () => {
       setError(null);
       const token = localStorage.getItem("token");
       const params = filter !== "ALL" ? { category: filter } : {};
-      const res = await axios.get("http://localhost:5000/api/notices/teacher", {
+      const res = await axios.get(`${API_BASE_URL}/api/notices/teacher`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { X, Eye, EyeOff } from "lucide-react";
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface AddNewStudentModalProps {
   isOpen: boolean;
@@ -9,8 +10,6 @@ interface AddNewStudentModalProps {
   studentToEdit?: any | null;
   classes: any[];
 }
-
-const API_BASE = "http://localhost:5000";
 
 const formatDate = (dateStr: any) => {
   if (!dateStr) return "";
@@ -129,7 +128,7 @@ export default function AddNewStudentModal({
         setIsLoadingSections(true);
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `${API_BASE}/api/admin/subjects/classes/${classId}/sections`,
+          `${API_BASE_URL}/api/admin/subjects/classes/${classId}/sections`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -274,7 +273,7 @@ export default function AddNewStudentModal({
 
       if (isEdit) {
         const res = await axios.patch(
-          `${API_BASE}/api/students/${studentToEdit.id}`,
+          `${API_BASE_URL}/api/students/${studentToEdit.id}`,
           payload,
           { headers },
         );
@@ -285,7 +284,7 @@ export default function AddNewStudentModal({
         }
       } else {
         const res = await axios.post(
-          `${API_BASE}/api/students/admit`,
+          `${API_BASE_URL}/api/students/admit`,
           payload,
           { headers },
         );

@@ -35,7 +35,6 @@ const HEADERS = [
   "Section",
   "Contact",
   "Status",
-  "Fee Status",
 ];
 
 export default function StudentTable({
@@ -111,7 +110,7 @@ export default function StudentTable({
           {isLoading && (
             <tr>
               <td
-                colSpan={10}
+                colSpan={8}
                 className="px-6 py-12 text-center text-gray-500 font-medium"
               >
                 <div className="flex items-center justify-center gap-2">
@@ -126,7 +125,7 @@ export default function StudentTable({
           {!isLoading && error && (
             <tr>
               <td
-                colSpan={10}
+                colSpan={8}
                 className="px-6 py-12 text-center text-sm text-red-500 font-medium"
               >
                 {error}
@@ -138,7 +137,7 @@ export default function StudentTable({
           {!isLoading && !error && students.length === 0 && (
             <tr>
               <td
-                colSpan={10}
+                colSpan={8}
                 className="px-6 py-12 text-center text-sm text-gray-400 font-medium"
               >
                 No students found matching your filters.
@@ -181,9 +180,6 @@ export default function StudentTable({
                   </td>
                   <td className="px-4 py-5 text-gray-600">{className}</td>
                   <td className="px-4 py-5 text-gray-600">{sectionName}</td>
-                  <td className="px-4 py-5 text-gray-400 italic font-medium">
-                    N/A
-                  </td>
                   <td className="px-4 py-5 text-gray-600">{contact}</td>
                   <td className="px-4 py-5">
                     <StatusBadge
@@ -191,9 +187,6 @@ export default function StudentTable({
                         student.isActive !== false ? "Active" : "Inactive"
                       }
                     />
-                  </td>
-                  <td className="px-4 py-5 text-gray-400 italic font-medium">
-                    N/A
                   </td>
                   <td className="px-6 py-5 text-right" />
                 </tr>

@@ -87,7 +87,6 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
         setClassError(null);
         const token = localStorage.getItem("token");
 
-        // ✅ FIXED PATH: Pointing to the new Section Weekly endpoint
         const response = await axios.get(
           `${API_BASE_URL}/api/timetable/section/${selectedSection.id}/weekly`,
 
@@ -116,6 +115,17 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
               color: row.isBreak ? "" : row.color || "BLUE",
             }),
           );
+          const getSortValue = (time: string) => {
+          const [hour, minute] = (time || "00:00").split(":").map(Number);
+
+          const adjustedHour = hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+          return adjustedHour * 60 + minute;
+        };
+
+        transformed.sort(
+          (a, b) => getSortValue(a.startTime) - getSortValue(b.startTime)
+        );
           setClassEntries(transformed);
         } else {
           setClassError("Failed to load weekly timetable.");
@@ -202,11 +212,23 @@ const TeacherWeeklyTimetableGrid: React.FC<TeacherWeeklyTimetableGridProps> = ({
   const error = filterMode === "mySubject" ? mySubjectError : classError;
 
   // ─── Derive time slots ─────────────────────────────────────────────────────
+  // ─── Derive time slots ─────────────────────────────────────────────────────
   const dynamicTimeSlots = useMemo(() => {
+    const getSortValue = (time: string) => {
+      const [hour, minute] = (time || "00:00").split(":").map(Number);
+
+     
+      const adjustedHour = hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+      return adjustedHour * 60 + minute;
+    };
+
     const times = entries
-      .filter((e) => !e.isBreak || e.startTime === "12:00") // keep 12:00 break for lunch label
       .map((e) => e.startTime);
-    return Array.from(new Set(times)).sort((a, b) => a.localeCompare(b));
+
+    return Array.from(new Set(times)).sort(
+      (a, b) => getSortValue(a) - getSortValue(b)
+    );
   }, [entries]);
 
   // ─── Loading state ────────────────────────────────────────────────────────

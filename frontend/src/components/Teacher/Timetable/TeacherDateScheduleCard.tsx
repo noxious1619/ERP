@@ -124,14 +124,19 @@ const DateScheduleCard = ({
     return currentTime >= start && currentTime <= resolvedEnd;
   };
 
+  const getSortValue = (time: string) => {
+    const [hour, minute] = (time || "00:00").split(":").map(Number);
+
+    // Treat 01:00–07:59 as afternoon
+    const adjustedHour = hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+    return adjustedHour * 60 + minute;
+  };
+
   // ─── Filter full week data by selected date's day ─────────────────────────
   const classFilteredItems = classWeeklyData
-    .filter((item) => item.day?.toUpperCase() === targetDayEnum)
-    .sort((a, b) => {
-      const timeA = a.startTime || "00:00";
-      const timeB = b.startTime || "00:00";
-      return timeA.localeCompare(timeB);
-    });
+  .filter((item) => item.day?.toUpperCase() === targetDayEnum)
+  .sort((a, b) => getSortValue(a.startTime) - getSortValue(b.startTime));
 
   const mySubjectFilteredItems = mySubjectWeeklyData
     .filter((item) => item.day?.toUpperCase() === targetDayEnum)

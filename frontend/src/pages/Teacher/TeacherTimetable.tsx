@@ -56,7 +56,8 @@ interface WeeklyTimetableEntry {
 interface MySubjectWeeklyEntry {
   id: string;
   day: string;
-  time: string; // Used in your custom teacher controller
+  startTime: string;
+  time: string; 
   endTime: string;
   room: string;
   color: string;
@@ -103,6 +104,35 @@ const TeacherTimetablePage = () => {
   const [mySubjectWeeklyLoading, setMySubjectWeeklyLoading] = useState(false);
 
   const ACTIVE_DAY = getCurrentAPIDay();
+
+    const processTimetable = (items: any[]) => {
+    const getSortValue = (time: string) => {
+      const [hour, minute] = (time || "00:00").split(":").map(Number);
+
+      const adjustedHour =
+        hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+      return adjustedHour * 60 + minute;
+    };
+
+    // const processed = items
+    //   .filter((item) => item.isBreak || item.subject)
+    //   .sort((a, b) => getSortValue(a.startTime) - getSortValue(b.startTime));
+
+    // console.log(
+    //   "Processed:",
+    //   processed.map((i) => ({
+    //     time: i.startTime,
+    //     subject: i.subject?.name,
+    //   }))
+    // );
+
+    //  return processed;
+
+    return items
+      .filter((item) => item.isBreak || item.subject)
+      .sort((a, b) => getSortValue(a.startTime) - getSortValue(b.startTime));
+  };
 
   // ─── 1. Initialize Profile State from useAuth (NO API CALL NEEDED) ────────
   useEffect(() => {
@@ -177,7 +207,10 @@ const TeacherTimetablePage = () => {
           `${API_BASE_URL}/api/timetable/section/${selectedSection.id}/weekly`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
-        if (response.data.success) setClassWeeklyData(response.data.data);
+        if (response.data.success) {
+          setClassWeeklyData(processTimetable(response.data.data));
+          console.log("Class Weekly Data:", response.data.data);
+        }
       } catch (err) {
         console.error("Failed to fetch class weekly data", err);
       } finally {
@@ -203,7 +236,8 @@ const TeacherTimetablePage = () => {
           },
         );
         if (response.data.success) {
-          setMySubjectItems(response.data.data);
+          setMySubjectItems(processTimetable(response.data.data));
+          console.log("My Subject Daily Data:", response.data.data);
         }
         else setMySubjectError("Failed to load timetable.");
       } catch (err: any) {
@@ -230,7 +264,7 @@ const TeacherTimetablePage = () => {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
-        if (response.data.success) setMySubjectWeeklyData(response.data.data);
+        if (response.data.success) setMySubjectWeeklyData(processTimetable(response.data.data));
       } catch (err) {
         console.error("Failed to fetch my subject weekly data", err);
       } finally {

@@ -492,30 +492,79 @@ export const getSectionsByClass = async (req: Request, res: Response) => {
   }
 };
 
-// 7. GET ALL TEACHERS (for dynamic dropdown)
+
+// 7. GET ALL TEACHERS (for dynamic dropdown) — optionally filtered by subject/section
 export const getTeachers = async (req: Request, res: Response) => {
   try {
-    const teachers = await prisma.teacher.findMany({
+    const { subjectId, sectionId } = req.query as { subjectId?: string; sectionId?: string };
+
+    // No subject specified: fall back to the old "all teachers" behavior
+    if (!subjectId) {
+      const teachers = await prisma.teacher.findMany({
+        where: {
+          employeeId: {
+            not: "TCH_UNASSIGNED"
+          }
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+        orderBy: {
+          firstName: "asc",
+        },
+      });
+
+      const formattedTeachers = teachers.map((t) => ({
+        id: t.id,
+        name: `${t.firstName} ${t.lastName}`.trim() || t.email || "Unnamed Teacher",
+      }));
+
+      return res.status(200).json({
+        success: true,
+        data: formattedTeachers,
+      });
+    }
+
+    // Filter teachers to those actually assigned to teach this subject
+    // (optionally narrowed further to a specific section)
+    const assignments = await prisma.teacherSectionSubject.findMany({
       where: {
-        employeeId: {
-          not: "TCH_UNASSIGNED"
-        }
+        subjectId,
+        teacher: {
+          employeeId: { not: "TCH_UNASSIGNED" }
+        },
+        ...(sectionId ? { sectionId } : {}),
       },
       select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-      },
-      orderBy: {
-        firstName: "asc",
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
       },
     });
 
-    const formattedTeachers = teachers.map((t) => ({
-      id: t.id,
-      name: `${t.firstName} ${t.lastName}`.trim() || t.email || "Unnamed Teacher",
-    }));
+    // De-duplicate (a teacher may have multiple section assignments for the same subject)
+    const uniqueTeachersMap = new Map<string, { id: string; name: string }>();
+    for (const a of assignments) {
+      const t = a.teacher;
+      if (!uniqueTeachersMap.has(t.id)) {
+        uniqueTeachersMap.set(t.id, {
+          id: t.id,
+          name: `${t.firstName} ${t.lastName}`.trim() || t.email || "Unnamed Teacher",
+        });
+      }
+    }
+
+    const formattedTeachers = Array.from(uniqueTeachersMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
 
     return res.status(200).json({
       success: true,

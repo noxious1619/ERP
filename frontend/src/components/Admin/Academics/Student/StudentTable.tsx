@@ -33,7 +33,6 @@ const HEADERS = [
   "Name",
   "Class",
   "Section",
-  "Attendance",
   "Contact",
   "Status",
   "Fee Status",

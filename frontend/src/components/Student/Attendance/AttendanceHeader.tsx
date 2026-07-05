@@ -5,12 +5,16 @@ interface AttendanceHeaderProps {
   title: string;
   subtitle?: string;
   onProfileClick?: () => void;
+  profilePath?: string;
+  profileImageUrl?: string;
 }
 
 const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
   title,
   subtitle,
   onProfileClick,
+  profilePath = "/student/profile",
+  profileImageUrl,
 }) => {
   const navigate = useNavigate();
   return (
@@ -45,21 +49,24 @@ const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
           )}
         </div> */}
 
-        {/* Profile Avatar */}
+        {/* Profile Avatar — navigates to the path passed via prop */}
         <button
-          onClick={onProfileClick ?? (() => navigate("/student/profile"))}
-          className="overflow-hidden rounded-full cursor-pointer h-[52px] w-[52px]"
+          onClick={() => navigate(profilePath)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden
+                     ring-2 ring-white shadow-sm hover:ring-blue-300 transition-all cursor-pointer"
+          aria-label="Go to profile"
         >
-          {localStorage.getItem("role") === "TEACHER" ? (
-            <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-lg font-bold">
+          {profileImageUrl && localStorage.getItem("role") !== "TEACHER" ? (
+            <img
+              src={profileImageUrl}
+              alt="Profile"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            // Fallback: solid blue circle with first initial — replace when API is wired
+            <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-sm font-bold">
               P
             </div>
-          ) : (
-            <img
-              src={studentAvatar}
-              alt="Student"
-              className="h-full w-full object-cover rounded-full"
-            />
           )}
         </button>
       </div>

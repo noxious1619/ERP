@@ -40,41 +40,77 @@ const TimetableSchedule: React.FC<TimetableScheduleProps> = ({
   error,
 }) => {
   // ─── Filter & Sort ──────────────────────────────────────────────────────────
-  // Grab only the entries that match the day of the week selected in the calendar
   const dailyItems = useMemo(() => {
     const targetDayEnum = DAY_ENUM_MAP[selectedDate.getDay()];
 
+    const getSortValue = (time: string) => {
+      const [hour, minute] = (time || "00:00").split(":").map(Number);
+
+      // School timetable rule:
+      // Treat 01:00 - 07:59 as afternoon (13:00 - 19:59)
+      const adjustedHour =
+        hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+      return adjustedHour * 60 + minute;
+    };
+
     return scheduleData
       .filter((item) => item.day?.toUpperCase() === targetDayEnum)
-      .sort((a, b) => {
-        const timeA = a.startTime || "00:00";
-        const timeB = b.startTime || "00:00";
-        return timeA.localeCompare(timeB);
-      });
+       .filter((item) => item.isBreak || item.subject)
+      .sort((a, b) => getSortValue(a.startTime) - getSortValue(b.startTime));
   }, [scheduleData, selectedDate]);
+
+  
 
   // ─── Helper: Calculate "LIVE" Status ────────────────────────────────────────
   const isClassActive = (startTime: string, endTime: string) => {
     const today = new Date();
+
     // Only highlight as active if they are looking at today's schedule
     if (selectedDate.toDateString() !== today.toDateString()) return false;
 
-    const nowMinutes = today.getHours() * 60 + today.getMinutes();
-    const [startH, startM] = (startTime || "00:00").split(":").map(Number);
-    const [endH, endM] = (endTime || "00:00").split(":").map(Number);
+    const convertToMinutes = (time: string) => {
+      const [hour, minute] = (time || "00:00").split(":").map(Number);
 
-    const startTotal = startH * 60 + startM;
-    const endTotal = endH * 60 + endM;
+      const adjustedHour =
+        hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+      return adjustedHour * 60 + minute;
+    };
+
+    const now = new Date();
+    let currentHour = now.getHours();
+
+    // Convert current time to the same school-time format
+    if (currentHour >= 13 && currentHour <= 19) {
+      currentHour -= 12;
+    }
+
+    const nowMinutes = convertToMinutes(
+      `${String(currentHour).padStart(2, "0")}:${String(
+        now.getMinutes()
+      ).padStart(2, "0")}`
+    );
+
+    const startTotal = convertToMinutes(startTime);
+    const endTotal = convertToMinutes(endTime);
 
     return nowMinutes >= startTotal && nowMinutes < endTotal;
   };
 
-  // ─── Helper: Calculate "60 MINUTES" String ──────────────────────────────────
+  // ─── Helper: Calculate Duration ─────────────────────────────────────────────
   const calculateDuration = (startTime: string, endTime: string) => {
-    const [startH, startM] = (startTime || "00:00").split(":").map(Number);
-    const [endH, endM] = (endTime || "00:00").split(":").map(Number);
+    const convertToMinutes = (time: string) => {
+      const [hour, minute] = (time || "00:00").split(":").map(Number);
 
-    const diff = endH * 60 + endM - (startH * 60 + startM);
+      const adjustedHour =
+        hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+      return adjustedHour * 60 + minute;
+    };
+
+    const diff = convertToMinutes(endTime) - convertToMinutes(startTime);
+
     return diff > 0 ? `${diff} MINUTES` : undefined;
   };
 

@@ -12,7 +12,7 @@ interface TimetableEntry {
   room: string | null;
   color: string | null;
   subject?: { id: string; name: string; code: string } | null;
-  teacher?: { id: string; name: string } | null;
+  displayTeacherName?: string | null;
 }
 
 interface DateScheduleCardProps {
@@ -46,9 +46,21 @@ const DateScheduleCard = ({
   })();
 
   // 2. Client-side filter: Scan the whole week data array and grab only matching cards
-  const filteredSchedule = timetableData
-    .filter((item) => item.day?.toUpperCase() === targetDayEnum)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const getSortValue = (time: string) => {
+  const [hour, minute] = (time || "00:00").split(":").map(Number);
+
+  // School timetable rule:
+  // Treat 01:00–07:59 as afternoon (13:00–19:59)
+  const adjustedHour = hour >= 1 && hour <= 7 ? hour + 12 : hour;
+
+  return adjustedHour * 60 + minute;
+};
+
+const filteredSchedule = timetableData
+  .filter((item) => item.day?.toUpperCase() === targetDayEnum)
+  .filter((item) => item.isBreak || item.subject)
+  .sort((a, b) => getSortValue(a.startTime) - getSortValue(b.startTime));
+  console.log("Filtered Schedule:", filteredSchedule); // Debugging line
 
   const handleDownload = () => {
     if (filteredSchedule.length === 0) return;
@@ -63,7 +75,7 @@ const DateScheduleCard = ({
         isBreak: item.isBreak,
         breakLabel: item.breakLabel,
         subject: item.isBreak ? null : item.subject?.name || "No Subject",
-        professor: item.isBreak ? null : item.teacher?.name || "Faculty Staff",
+        professor: item.isBreak ? null : item.displayTeacherName || "Faculty Staff",
         room: item.room,
       })),
     });
@@ -133,7 +145,7 @@ const DateScheduleCard = ({
                 <p className="mt-2 text-[14px] text-[#6F6F6F]">
                   {item.isBreak
                     ? "Interval"
-                    : item.teacher?.name || "Faculty Staff"}
+                    : item.displayTeacherName || "Faculty Staff"}
                 </p>
               </div>
             </div>

@@ -1,4 +1,3 @@
-import studentAvatar from "../../../assets/Student/Timetable/Header/profile.png";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 import { useNavigate } from "react-router";
 interface AttendanceHeaderProps {
@@ -12,7 +11,6 @@ interface AttendanceHeaderProps {
 const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({
   title,
   subtitle,
-  onProfileClick,
   profilePath = "/student/profile",
   profileImageUrl,
 }) => {

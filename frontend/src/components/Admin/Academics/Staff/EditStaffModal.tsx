@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { API_BASE_URL } from "../../../../lib/api"
+import { API_BASE_URL } from "../../../../lib/api";
 
 interface EditStaffModalProps {
   isOpen: boolean;
@@ -34,6 +34,7 @@ export default function EditStaffModal({
   const [designation, setDesignation] = useState("");
   const [qualification, setQualification] = useState("");
   const [experience, setExperience] = useState("");
+  const [department, setDepartment] = useState("");
 
   // ── Password reset ─────────────────────────────────────────────────
   const [resetPassword, setResetPassword] = useState(false);
@@ -90,6 +91,7 @@ export default function EditStaffModal({
         setBio(s.bio ?? "");
         setStatus(s.status ?? "ACTIVE");
         setDesignation(s.designation ?? "");
+        setDepartment(s.department ?? "");
 
         // Reset password-reset UI state on every fresh load
         setResetPassword(false);
@@ -184,6 +186,7 @@ export default function EditStaffModal({
           state: stateVal,
           bio,
           status,
+          department,
           ...(resetPassword && password.trim()
             ? { password: password.trim() }
             : {}),
@@ -436,7 +439,8 @@ export default function EditStaffModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Qualification / Experience / Department */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-semibold text-[#0a1c3a]">
                     Qualification
@@ -461,6 +465,20 @@ export default function EditStaffModal({
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
                     className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-semibold text-[#0a1c3a]">
+                    Department
+                  </label>
+
+                  <input
+                    type="text"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    placeholder="Enter Department"
+                    className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
               </div>

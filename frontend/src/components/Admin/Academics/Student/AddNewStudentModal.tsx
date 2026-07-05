@@ -367,6 +367,7 @@ export default function AddNewStudentModal({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="off"
                   placeholder="student@school.com"
                   className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -397,6 +398,7 @@ export default function AddNewStudentModal({
                   type="text"
                   value={rollNumber}
                   onChange={(e) => setRollNumber(e.target.value)}
+                  autoComplete="off"
                   placeholder="12"
                   className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />

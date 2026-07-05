@@ -33,6 +33,7 @@ export default function AddNewStaffModal({
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [stateVal, setStateVal] = useState("");
+  const [department, setDepartment] = useState("");
   const [bloodGroup, setBloodGroup] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
@@ -87,6 +88,7 @@ export default function AddNewStaffModal({
     setRole("");
     setSubject("");
     setClassAssigned("");
+    setDepartment("");
     setPhoneDigits("");
     setEmail("");
     setPassword("");
@@ -201,6 +203,7 @@ export default function AddNewStaffModal({
             city,
             state: stateVal,
             bloodGroup,
+            department,
           }
         : {
             firstName,
@@ -220,6 +223,7 @@ export default function AddNewStaffModal({
             state: stateVal,
             bloodGroup,
             bio,
+            department,
           };
 
       const res = await fetch(endpoint, {
@@ -310,7 +314,9 @@ export default function AddNewStaffModal({
                   type="text"
                   value={employeeId}
                   onChange={(e) => setEmployeeId(e.target.value)}
+                  autoComplete="off"
                   placeholder="Enter ID"
+                  name="employee-id-field"
                   className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
                     errors.employeeId
                       ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
@@ -449,6 +455,7 @@ export default function AddNewStaffModal({
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
                     placeholder="Auto-generated from Employee ID"
+                    autoComplete="new-password"
                     className={`w-full rounded-xl border bg-white px-4 py-2.5 pr-10 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none transition-all ${
                       errors.password
                         ? "border-red-500 focus:ring-2 focus:ring-red-500/20"
@@ -566,7 +573,7 @@ export default function AddNewStaffModal({
               </div>
             </div>
 
-            {/* Class Assigned Row */}
+            {/* Class Assigned & Department Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-semibold text-[#0a1c3a]">
@@ -580,8 +587,20 @@ export default function AddNewStaffModal({
                   className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
-            </div>
 
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-semibold text-[#0a1c3a]">
+                  Department
+                </label>
+                <input
+                  type="text"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  placeholder="Enter Department"
+                  className="w-full rounded-xl border border-gray-200/80 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+            </div>
             {/* Professional Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">

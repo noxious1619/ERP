@@ -1,4 +1,4 @@
-import { Printer, Download, ArrowLeft, Send } from "lucide-react";
+import { Printer, ArrowLeft, Send } from "lucide-react";
 interface PreviewStepProps {
   title: string;
   academicYear: string;
@@ -42,10 +42,6 @@ export default function PreviewStep({
     window.print();
   };
 
-  const handleExportPDF = () => {
-    alert("Exporting Datesheet to PDF format...");
-  };
-
   // Format date helper: e.g. "2026-06-16" -> "Tue, Jun 16, 2026"
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "N/A";
@@ -76,12 +72,6 @@ export default function PreviewStep({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-semibold text-xs rounded-lg transition shadow-3xs cursor-pointer"
           >
             <Printer className="h-3.5 w-3.5 text-gray-500" /> PRINT DATESHEET
-          </button>
-          <button
-            onClick={handleExportPDF}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-semibold text-xs rounded-lg transition shadow-3xs cursor-pointer"
-          >
-            <Download className="h-3.5 w-3.5 text-gray-500" /> EXPORT PDF
           </button>
         </div>
       </div>

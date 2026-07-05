@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from "react"
-import { X, ChevronDown } from "lucide-react"
-import axios from "axios"
+import { useState, useEffect, useRef } from "react";
+import { X, ChevronDown } from "lucide-react";
+import axios from "axios";
 import { API_BASE_URL } from "../../../../lib/api";
 
 interface AddSubjectModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
-  classes: any[]
-  subjectToEdit?: any | null
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  classes: any[];
+  subjectToEdit?: any | null;
 }
 
 export default function AddSubjectModal({
@@ -18,150 +18,170 @@ export default function AddSubjectModal({
   classes,
   subjectToEdit = null,
 }: AddSubjectModalProps) {
-  const [subjectName, setSubjectName] = useState("")
-  const [subjectCode, setSubjectCode] = useState("")
-  const [classVal, setClassVal] = useState("")
-  const [selectedSections, setSelectedSections] = useState<string[]>([])
-  const [subjectType, setSubjectType] = useState<"Theory" | "Lab">("Theory")
+  const [subjectName, setSubjectName] = useState("");
+  const [subjectCode, setSubjectCode] = useState("");
+  const [classVal, setClassVal] = useState("");
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
+  const [subjectType, setSubjectType] = useState<"Theory" | "Lab">("Theory");
 
   // Dynamic Options
-  const [sectionsList, setSectionsList] = useState<any[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  // const [sectionsList, setSectionsList] = useState<any[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const wrapperRef = useRef<HTMLDivElement>(null)
-  const isEditMode = !!subjectToEdit
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const isEditMode = !!subjectToEdit;
 
   // Prevent scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ""
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = ""
-    }
-  }, [isOpen])
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   // Fetch sections and prepopulate details on open
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
-    const fetchSections = async (classId: string) => {
-      try {
-        const token = localStorage.getItem("token")
-        const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes/${classId}/sections`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (res.data.success) {
-          setSectionsList(res.data.data)
-        }
-      } catch (err) {
-        console.error("Error fetching sections:", err)
-      }
-    }
+    // const fetchSections = async (classId: string) => {
+    //   try {
+    //     const token = localStorage.getItem("token");
+    //     const res = await axios.get(
+    //       `${API_BASE_URL}/api/admin/subjects/classes/${classId}/sections`,
+    //       {
+    //         headers: { Authorization: `Bearer ${token}` },
+    //       },
+    //     );
+    //     // if (res.data.success) {
+    //     //   setSectionsList(res.data.data);
+    //     // }
+    //   } catch (err) {
+    //     console.error("Error fetching sections:", err);
+    //   }
+    // };
 
     const fetchSubjectDetails = async (id: string) => {
       try {
-        const token = localStorage.getItem("token")
-        const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${API_BASE_URL}/api/admin/subjects/${id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         if (res.data.success) {
-          const detail = res.data.data
-          setSubjectName(detail.name)
-          setSubjectCode(detail.code)
-          setSubjectType(detail.type)
-          setClassVal(detail.classId)
-          setSelectedSections(detail.sectionIds || [])
+          const detail = res.data.data;
+          setSubjectName(detail.name);
+          setSubjectCode(detail.code);
+          setSubjectType(detail.type);
+          setClassVal(detail.classId);
+          setSelectedSections(detail.sectionIds || []);
           if (detail.classId) {
-            fetchSections(detail.classId)
+            // fetchSections(detail.classId);
           }
         }
       } catch (err) {
-        console.error("Error fetching subject details:", err)
+        console.error("Error fetching subject details:", err);
       }
-    }
+    };
 
-    setError(null)
+    setError(null);
 
     if (isEditMode && subjectToEdit) {
-      fetchSubjectDetails(subjectToEdit.id)
+      fetchSubjectDetails(subjectToEdit.id);
     } else {
-      setSubjectName("")
-      setSubjectCode("")
-      setSubjectType("Theory")
-      setClassVal("")
-      setSelectedSections([])
-      setSectionsList([])
+      setSubjectName("");
+      setSubjectCode("");
+      setSubjectType("Theory");
+      setClassVal("");
+      setSelectedSections([]);
+      // setSectionsList([]);
     }
-  }, [isOpen, isEditMode, subjectToEdit])
+  }, [isOpen, isEditMode, subjectToEdit]);
 
   // Handle class selection change
   const handleClassChange = async (newClassId: string) => {
-    setClassVal(newClassId)
-    setSelectedSections([])
-    setError(null)
+    setClassVal(newClassId);
+    setSelectedSections([]);
+    setError(null);
     if (!newClassId) {
-      setSectionsList([])
-      return
+      // setSectionsList([]);
+      return;
     }
     try {
-      const token = localStorage.getItem("token")
-      const res = await axios.get(`${API_BASE_URL}/api/admin/subjects/classes/${newClassId}/sections`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `${API_BASE_URL}/api/admin/subjects/classes/${newClassId}/sections`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.data.success) {
-        setSectionsList(res.data.data)
+        // setSectionsList(res.data.data);
       }
     } catch (err) {
-      console.error("Error fetching sections for class:", err)
+      console.error("Error fetching sections for class:", err);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    if (!subjectName.trim() || !subjectCode.trim() || !classVal || selectedSections.length === 0) {
-      setError("All fields are required. Please select a class and at least one section.")
-      return
+    if (!subjectName.trim() || !subjectCode.trim() || !classVal) {
+      setError(
+        "All fields are required. Please select a class and at least one section.",
+      );
+      return;
     }
 
     try {
-      setIsSubmitting(true)
-      const token = localStorage.getItem("token")
+      setIsSubmitting(true);
+      const token = localStorage.getItem("token");
       const payload = {
         name: subjectName.trim(),
         code: subjectCode.trim(),
         type: subjectType,
         classId: classVal,
         sectionIds: selectedSections,
-      }
+      };
 
       if (isEditMode && subjectToEdit) {
-        await axios.patch(`${API_BASE_URL}/api/admin/subjects/${subjectToEdit.id}`, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        await axios.patch(
+          `${API_BASE_URL}/api/admin/subjects/${subjectToEdit.id}`,
+          payload,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
       } else {
         await axios.post(`${API_BASE_URL}/api/admin/subjects`, payload, {
           headers: { Authorization: `Bearer ${token}` },
-        })
+        });
       }
 
-      setIsSubmitting(false)
-      onSuccess()
+      setIsSubmitting(false);
+      onSuccess();
     } catch (err: any) {
-      setIsSubmitting(false)
-      setError(err.response?.data?.message || "Failed to submit subject details.")
+      setIsSubmitting(false);
+      setError(
+        err.response?.data?.message || "Failed to submit subject details.",
+      );
     }
-  }
+  };
 
   return (
-    <div ref={wrapperRef} className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overscroll-none animate-in fade-in duration-200">
+    <div
+      ref={wrapperRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0a1523]/35 backdrop-blur-[6px] p-4 overscroll-none animate-in fade-in duration-200"
+    >
       {/* Backdrop click to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
@@ -192,13 +212,15 @@ export default function AddSubjectModal({
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* Subject Name Field */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Subject Name</label>
+            <label className="text-sm font-semibold text-[#0a1c3a]">
+              Subject Name
+            </label>
             <input
               type="text"
               value={subjectName}
               onChange={(e) => {
-                setSubjectName(e.target.value)
-                setError(null)
+                setSubjectName(e.target.value);
+                setError(null);
               }}
               placeholder="Enter Subject Name"
               className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
@@ -207,13 +229,15 @@ export default function AddSubjectModal({
 
           {/* Subject Code Field */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Subject Code</label>
+            <label className="text-sm font-semibold text-[#0a1c3a]">
+              Subject Code
+            </label>
             <input
               type="text"
               value={subjectCode}
               onChange={(e) => {
-                setSubjectCode(e.target.value)
-                setError(null)
+                setSubjectCode(e.target.value);
+                setError(null);
               }}
               placeholder="Enter Subject Code"
               className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
@@ -224,7 +248,9 @@ export default function AddSubjectModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Class Field */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-[#0a1c3a]">Class</label>
+              <label className="text-sm font-semibold text-[#0a1c3a]">
+                Class
+              </label>
               <div className="relative">
                 <select
                   value={classVal}
@@ -243,7 +269,7 @@ export default function AddSubjectModal({
             </div>
 
             {/* Section Selection (1 or more) */}
-            <div className="flex flex-col gap-2">
+            {/* <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-[#0a1c3a]">Assigned Sections</label>
               {!classVal ? (
                 <div className="text-xs text-gray-400 italic bg-gray-50 border border-gray-100 px-4 py-3.5 rounded-2xl h-[50px] flex items-center">
@@ -294,18 +320,20 @@ export default function AddSubjectModal({
                   })}
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Subject Type Field */}
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-semibold text-[#0a1c3a]">Subject Type</label>
+            <label className="text-sm font-semibold text-[#0a1c3a]">
+              Subject Type
+            </label>
             <div className="relative">
               <select
                 value={subjectType}
                 onChange={(e) => {
-                  setSubjectType(e.target.value as "Theory" | "Lab")
-                  setError(null)
+                  setSubjectType(e.target.value as "Theory" | "Lab");
+                  setError(null);
                 }}
                 className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3.5 pr-10 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer font-medium"
               >
@@ -331,11 +359,15 @@ export default function AddSubjectModal({
               disabled={isSubmitting}
               className="flex-1 rounded-2xl bg-[#4285F4] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-600 cursor-pointer shadow-sm disabled:opacity-75 flex items-center justify-center gap-1.5"
             >
-              {isSubmitting ? "Submitting..." : isEditMode ? "Update Subject" : "Add Subject"}
+              {isSubmitting
+                ? "Submitting..."
+                : isEditMode
+                  ? "Update Subject"
+                  : "Add Subject"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

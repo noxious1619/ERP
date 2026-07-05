@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { X, ChevronDown } from "lucide-react"
 import axios from "axios"
 import { type TimetableBlock } from "./TimetableGrid"
@@ -12,8 +12,6 @@ interface EditPeriodModalProps {
   classId: string
   sectionId: string
 }
-
-
 
 export default function EditPeriodModal({
   isOpen,
@@ -34,44 +32,83 @@ export default function EditPeriodModal({
 
   const [subjectsList, setSubjectsList] = useState<any[]>([])
   const [teachersList, setTeachersList] = useState<any[]>([])
+  const [isLoadingTeachers, setIsLoadingTeachers] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Custom Subject dropdown open/close state
+  const [isSubjectOpen, setIsSubjectOpen] = useState(false)
+  const subjectDropdownRef = useRef<HTMLDivElement>(null)
+
   const isEditMode = block ? (block.type === "subject" || block.type === "break") : false
 
-  // Load teachers and subjects when modal opens
+  // Close subject dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (subjectDropdownRef.current && !subjectDropdownRef.current.contains(e.target as Node)) {
+        setIsSubjectOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Load subjects when modal opens
   useEffect(() => {
     if (!isOpen || !classId) return
 
-    const fetchDropdownOptions = async () => {
+    const fetchSubjects = async () => {
       try {
         const token = localStorage.getItem("token")
         const headers = { Authorization: `Bearer ${token}` }
 
-        const [subjectsRes, teachersRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/admin/subjects`, {
-            params: { classId },
-            headers,
-          }),
-          axios.get(`${API_BASE_URL}/api/admin/subjects/teachers`, {
-            headers,
-          }),
-        ])
+        const subjectsRes = await axios.get(`${API_BASE_URL}/api/admin/subjects`, {
+          params: { classId },
+          headers,
+        })
 
         if (subjectsRes.data.success) {
           setSubjectsList(subjectsRes.data.data)
         }
+      } catch (err) {
+        console.error("Failed to load subjects:", err)
+      }
+    }
+
+    fetchSubjects()
+  }, [isOpen, classId])
+
+  // Load teachers whenever the selected subject changes (filtered to that subject)
+  useEffect(() => {
+    if (!isOpen || !subjectId) {
+      setTeachersList([])
+      return
+    }
+
+    const fetchTeachersForSubject = async () => {
+      try {
+        setIsLoadingTeachers(true)
+        const token = localStorage.getItem("token")
+        const headers = { Authorization: `Bearer ${token}` }
+
+        const teachersRes = await axios.get(`${API_BASE_URL}/api/admin/subjects/teachers`, {
+          params: { subjectId, sectionId },
+          headers,
+        })
+
         if (teachersRes.data.success) {
           setTeachersList(teachersRes.data.data)
         }
       } catch (err) {
-        console.error("Failed to load dropdown choices:", err)
+        console.error("Failed to load teachers for subject:", err)
+      } finally {
+        setIsLoadingTeachers(false)
       }
     }
 
-    fetchDropdownOptions()
-  }, [isOpen, classId])
+    fetchTeachersForSubject()
+  }, [isOpen, subjectId, sectionId])
 
   // Pre-populate input fields based on block details
   useEffect(() => {
@@ -107,6 +144,8 @@ export default function EditPeriodModal({
   }, [isOpen, block])
 
   if (!isOpen || !block) return null
+
+  const selectedSubject = subjectsList.find((s) => s.id === subjectId)
 
   // Handle Form Submit (Add / Update)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,7 +210,7 @@ export default function EditPeriodModal({
       const headers = { Authorization: `Bearer ${token}` }
 
       await axios.delete(`${API_BASE_URL}/api/timetable/${block.id}`, { headers })
-      
+
       setIsDeleting(false)
       onSuccess()
     } catch (err: any) {
@@ -275,23 +314,62 @@ export default function EditPeriodModal({
           ) : (
             /* Class Block Inputs */
             <>
-              {/* Subject Select */}
-              <div className="flex flex-col gap-1.5">
+              {/* Subject Select — custom dropdown with internal scrollbar */}
+              <div className="flex flex-col gap-1.5" ref={subjectDropdownRef}>
                 <label className="text-xs font-semibold text-gray-700">Subject</label>
                 <div className="relative">
-                  <select
-                    value={subjectId}
-                    onChange={(e) => setSubjectId(e.target.value)}
-                    className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3 pr-10 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer font-medium"
+                  <button
+                    type="button"
+                    onClick={() => setIsSubjectOpen((prev) => !prev)}
+                    className={`w-full flex items-center justify-between rounded-2xl border bg-white px-4 py-3 text-sm text-left text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium cursor-pointer ${
+                      isSubjectOpen ? "border-blue-500 ring-2 ring-blue-500/20" : "border-gray-200/80"
+                    }`}
                   >
-                    <option value="">Select Subject</option>
-                    {subjectsList.map((sub) => (
-                      <option key={sub.id} value={sub.id}>
-                        {sub.name} ({sub.code})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                    <span className={selectedSubject ? "text-gray-800" : "text-gray-400"}>
+                      {selectedSubject ? `${selectedSubject.name} (${selectedSubject.code})` : "Select Subject"}
+                    </span>
+                    <ChevronDown
+                      className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                        isSubjectOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {isSubjectOpen && (
+                    <div className="absolute z-20 mt-1.5 w-full rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                      <div className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSubjectId("")
+                            setTeacherId("")
+                            setIsSubjectOpen(false)
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 cursor-pointer"
+                        >
+                          Select Subject
+                        </button>
+                        {subjectsList.map((sub) => (
+                          <button
+                            type="button"
+                            key={sub.id}
+                            onClick={() => {
+                              setSubjectId(sub.id)
+                              setTeacherId("")
+                              setIsSubjectOpen(false)
+                            }}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors ${
+                              subjectId === sub.id
+                                ? "bg-[#4285F4] text-white"
+                                : "text-gray-800 hover:bg-gray-50"
+                            }`}
+                          >
+                            {sub.name} ({sub.code})
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -302,9 +380,18 @@ export default function EditPeriodModal({
                   <select
                     value={teacherId}
                     onChange={(e) => setTeacherId(e.target.value)}
-                    className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3 pr-10 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer font-medium"
+                    disabled={!subjectId || isLoadingTeachers}
+                    className="w-full rounded-2xl border border-gray-200/80 bg-white px-4 py-3 pr-10 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <option value="">Select Teacher</option>
+                    <option value="">
+                      {!subjectId
+                        ? "Select a subject first"
+                        : isLoadingTeachers
+                        ? "Loading teachers..."
+                        : teachersList.length === 0
+                        ? "No teachers assigned to this subject"
+                        : "Select Teacher"}
+                    </option>
                     {teachersList.map((t) => (
                       <option key={t.id} value={t.id}>
                         {t.name}

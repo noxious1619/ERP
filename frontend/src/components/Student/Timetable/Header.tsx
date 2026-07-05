@@ -1,11 +1,16 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import profileImage from "../../../assets/Student/Timetable/Header/profile.png";
 import { getDynamicHeaderDate } from "../../../utils/dateHelpers";
 interface TimetableHeaderProps {
   sectionLabel?: string;
+  profilePath?: string;
+  profileImageUrl?: string;
 }
 
-const TimetableHeader = ({ sectionLabel }: TimetableHeaderProps) => {
+const TimetableHeader = ({
+  sectionLabel,
+  profilePath = "/student/profile",
+  profileImageUrl,
+}: TimetableHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isWeekly = location.pathname === "/student/timetable/weekly";
@@ -57,17 +62,26 @@ const TimetableHeader = ({ sectionLabel }: TimetableHeaderProps) => {
           )}
         </div> */}
 
-        {/* Profile */}
-        <div
-          onClick={() => navigate("/student/profile")}
-          className="h-[52px] w-[52px] overflow-hidden rounded-full border-[3px] border-white shadow-md cursor-pointer"
+        {/* Profile Avatar — navigates to the path passed via prop */}
+        <button
+          onClick={() => navigate(profilePath)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden
+                     ring-2 ring-white shadow-sm hover:ring-blue-300 transition-all cursor-pointer"
+          aria-label="Go to profile"
         >
-          <img
-            src={profileImage}
-            alt="Student"
-            className="h-full w-full object-cover"
-          />
-        </div>
+          {profileImageUrl && localStorage.getItem("role") !== "TEACHER" ? (
+            <img
+              src={profileImageUrl}
+              alt="Profile"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            // Fallback: solid blue circle with first initial — replace when API is wired
+            <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white text-sm font-bold">
+              P
+            </div>
+          )}
+        </button>
       </div>
     </div>
   );

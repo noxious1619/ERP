@@ -15,7 +15,7 @@ interface TopBarProps {
 
 const TopBar: React.FC<TopBarProps> = ({
   profileImageUrl,
-  profilePath = "/student/profile", // safe default — won't break existing student usage
+  profilePath = "/student/profile", 
 }) => {
   const navigate = useNavigate();
 

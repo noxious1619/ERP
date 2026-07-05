@@ -457,49 +457,34 @@ export const getWeeklyTimetableBySection = async (
   }
 };
 
-export const getDailyTeacherTimetable = async (
-  req: Request,
-  res: Response
-) => {
+export const getDailyTeacherTimetable = async (req: Request, res: Response) => {
   try {
     const teacherId = req.params.teacherId as string;
     const day = req.query.day as string;
 
     if (!teacherId) {
-      return res.status(400).json({
-        success: false,
-        message: "Teacher ID parameter is required.",
-      });
+      return res.status(400).json({ success: false, message: "Teacher ID parameter is required." });
+    }
+    if (!day || typeof day !== "string") {
+      return res.status(400).json({ success: false, message: "Valid day parameter is required." });
     }
 
-    if (!day || typeof day !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "Valid day parameter is required.",
-      });
+    // Same guard as every other timetable endpoint
+    if (day.trim().toLowerCase() === "sunday") {
+      return res.status(200).json({ success: true, count: 0, data: [] });
     }
 
     const formattedDay = day.toUpperCase() as any;
 
-    // Verify teacher exists
-    const teacherProfile = await prisma.teacher.findUnique({
-      where: {
-        id: teacherId,
-      },
-    });
-
+    const teacherProfile = await prisma.teacher.findUnique({ where: { id: teacherId } });
     if (!teacherProfile) {
-      return res.status(404).json({
-        success: false,
-        message: "Teacher profile not found.",
-      });
+      return res.status(404).json({ success: false, message: "Teacher profile not found." });
     }
-   
 
     const filter = req.query.filter as string | undefined;
 
     const whereClause: any = {
-     teacherId: teacherId, 
+      teacherId: teacherProfile.userId, // ✅ resolve Teacher.id → User.id
       day: formattedDay,
       isBreak: false,
     };

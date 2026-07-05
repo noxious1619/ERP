@@ -9,6 +9,8 @@ import exams from "../../../assets/Student/Dashboard/Navbar/exam.png";
 import setting from "../../../assets/Student/Dashboard/Navbar/setting.png";
 import notice from "../../../assets/Student/Dashboard/Navbar/notice.png";
 
+import { ClipboardList } from "lucide-react";
+
 type NavItem = {
   label: string;
   icon: string;
@@ -20,6 +22,7 @@ const navItems: NavItem[] = [
   { label: "Timetable", icon: timetable, href: "/student/timetable" },
   { label: "Homework", icon: homework, href: "/student/homework" },
   { label: "Exams", icon: exams, href: "/student/exams" },
+  { label: "Results", icon: "results-lucide", href: "/student/results" },
   { label: "Attendance ", icon: attendance, href: "/student/attendance" },
   { label: "Notices", icon: notice, href: "/student/notices" },
   { label: "Settings", icon: setting, href: "/student/settings" },
@@ -84,18 +87,27 @@ const Sidebar: React.FC = () => {
                 }
               `}
             >
-              <img
-                src={item.icon}
-                alt={item.label}
-                className={`
-    shrink-0 
-    ${
-      item.label === "Profile"
-        ? "w-10 h-10 rounded-full border-2 border-white shadow-sm"
-        : "w-6 h-6"
-    }
-  `}
-              />
+              {item.icon === "results-lucide" ? (
+                <ClipboardList
+                  className={`
+                    shrink-0 w-6 h-6
+                    ${isActive ? "text-[#2b3674]" : "text-[#8a92a6]"}
+                  `}
+                />
+              ) : (
+                <img
+                  src={item.icon}
+                  alt={item.label}
+                  className={`
+                    shrink-0 
+                    ${
+                      item.label === "Profile"
+                        ? "w-10 h-10 rounded-full border-2 border-white shadow-sm"
+                        : "w-6 h-6"
+                    }
+                  `}
+                />
+              )}
 
               <span
                 className={`

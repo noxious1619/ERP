@@ -6,8 +6,10 @@ import timetable from "../../../assets/Student/Dashboard/Navbar/timetable.png";
 import homework from "../../../assets/Student/Dashboard/Navbar/homework.png";
 import attendance from "../../../assets/Student/Dashboard/Navbar/attendance.png";
 import exams from "../../../assets/Student/Dashboard/Navbar/exam.png";
-import setting from "../../../assets/Student/Dashboard/Navbar/setting.png";
+// import setting from "../../../assets/Student/Dashboard/Navbar/setting.png";
 import notice from "../../../assets/Student/Dashboard/Navbar/notice.png";
+
+import { ClipboardList } from "lucide-react";
 
 type NavItem = {
   label: string;
@@ -20,9 +22,10 @@ const navItems: NavItem[] = [
   { label: "Timetable", icon: timetable, href: "/teacher/timetable" },
   { label: "Homework",  icon: homework,  href: "/teacher/homework" },
   { label: "Exams",     icon: exams,     href: "/teacher/exams" },
+  { label: "Results",   icon: "results-lucide", href: "/teacher/results" },
   { label: "Attendance",icon: attendance,href: "/teacher/attendance" },
   { label: "Notices",   icon: notice,    href: "/teacher/notices" },
-  { label: "Settings",  icon: setting,   href: "/teacher/settings" },
+  // { label: "Settings",  icon: setting,   href: "/teacher/settings" },
 ];
 
 const TeacherNavbar: React.FC = () => {
@@ -83,7 +86,16 @@ const TeacherNavbar: React.FC = () => {
                 }
               `}
             >
-              <img src={item.icon} alt={item.label} className="w-6 h-6 shrink-0" />
+              {item.icon === "results-lucide" ? (
+                <ClipboardList
+                  className={`
+                    shrink-0 w-6 h-6
+                    ${isActive ? "text-[#2b3674]" : "text-[#8a92a6]"}
+                  `}
+                />
+              ) : (
+                <img src={item.icon} alt={item.label} className="w-6 h-6 shrink-0" />
+              )}
               <span
                 className={`
                   whitespace-nowrap transition-all duration-300

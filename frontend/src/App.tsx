@@ -11,9 +11,10 @@ import Attendance from "./pages/Student/Attendance";
 import Homework from "./pages/Student/Homework";
 import NoticeBoard from "./pages/Student/NoticeBoard";
 import Exam from "./pages/Student/Exam";
+import StudentResults from "./pages/Student/Results"; // Results page component
 
 // ==========================================
-// TEACHER IMPORTS
+// TEACHER IMPORTSs
 // ==========================================
 import { AuthProvider } from "./context/AuthContext";
 import TeacherNoticeBoard from "./pages/Teacher/TeacherNoticeBoard";
@@ -24,6 +25,7 @@ import TeacherHomework from "./pages/Teacher/TeacherHomework";
 import TeacherHomeworkDetail from "./pages/Teacher/TeacherHomeworkDetail";
 import TeacherSubmissionView from "./pages/Teacher/TeacherSubmissionView";
 import AttendanceManagement from "./pages/Teacher/Attendancemanagement";
+import TeacherResults from "./pages/Teacher/Results"; // Teacher results page component
 
 // ==========================================
 // ADMIN IMPORTS
@@ -72,6 +74,7 @@ const App = () => {
         <Route path="/student/homework" element={<Homework />} />
         <Route path="/student/notices" element={<NoticeBoard />} />
         <Route path="/student/exams" element={<Exam />} />
+        <Route path="/student/results" element={<StudentResults />} />
         {/* ========================================== */}
         {/* TEACHER ROUTES                             */}
         {/* ========================================== */}
@@ -96,6 +99,7 @@ const App = () => {
         <Route path="/teacher/exams" element={<Teacherdatesheet />} />
         {/* Teacher Dashboard */}
         <Route path="/teacher/dashboard" element={<Teacherdashboard />} />
+        <Route path="/teacher/results" element={<TeacherResults />} />
 
         {/* ========================================== */}
         {/* ADMIN ROUTES                               */}

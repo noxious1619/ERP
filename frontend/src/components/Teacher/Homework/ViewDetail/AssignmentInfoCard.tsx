@@ -45,7 +45,7 @@ const AssignmentInfoCard = ({ info }: AssignmentInfoProps) => {
     id: 1, // Static placeholder identifier required by the type
     title: currentTitle,
     subject: currentSubject,
-    status: "ASSIGNED",
+    status: "PENDING",
     dueDate: info?.dueDate ? new Date(info.dueDate).toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' }) : "—",
     dueTime: info?.dueDate ? new Date(info.dueDate).toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' }) : "—",
     givenBy: "Teacher Session", 

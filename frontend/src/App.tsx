@@ -40,6 +40,7 @@ import AdminDashboard from "./pages/Admin/Dashboard/Dashboard";
 import AdminNotices from "./pages/Admin/Communication/Notices";
 import AdminDatesheet from "./pages/Admin/Academics/Exams/Datesheet";
 import AdminAttendance from "./pages/Admin/Academics/Attendance";
+import AdminResults from "./pages/Admin/Academics/Results";
 import Teacherdatesheet from "./pages/Teacher/Teacherdatesheet";
 import Teacherdashboard from "./pages/Teacher/Teacherdashboard";
 import AdminProfilePage from "./pages/Admin/AdminProfilePage";
@@ -127,6 +128,10 @@ const App = () => {
         <Route
           path="/admin/academics/attendance"
           element={<AdminAttendance />}
+        />
+        <Route
+          path="/admin/academics/results"
+          element={<AdminResults />}
         />
         <Route path="/admin/profile" element={<AdminProfilePage />} />
         <Route path="/admin/academics/staff/:id" element={<StaffProfile />} />

@@ -55,6 +55,7 @@ const NAV: NavItem[] = [
           { label: "Exam Template", href: "#" },
         ],
       },
+      { label: "Results", href: "/admin/academics/results" },
     ],
   },
   {

@@ -484,7 +484,7 @@ export const getDailyTeacherTimetable = async (req: Request, res: Response) => {
     const filter = req.query.filter as string | undefined;
 
     const whereClause: any = {
-      teacherId: teacherProfile.userId, // ✅ resolve Teacher.id → User.id
+      teacherId: teacherProfile.id, // ✅ Timetable.teacherId stores Teacher.id — matches createTimetableEntry
       day: formattedDay,
       isBreak: false,
     };
